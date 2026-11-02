@@ -13,12 +13,31 @@ jobs:
       uses: android-actions/setup-android@v4
       with:
         packages: 'platform-tools'
-    - name: Run custom build script
+        
+    - name: Build (Part 1 - Setup & Layouts)
       run: |
-        chmod +x build.sh
-        ./build.sh
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: INX-Loader-APK
-        path: app/build/outputs/apk/debug/app-debug.apk
+        wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip
+        unzip -q gradle-8.2-bin.zip
+        export PATH="$PWD/gradle-8.2/bin:$PATH"
+        rm -rf app *.gradle *.properties
+        mkdir -p app/src/main/java/com/example/shtile app/src/main/res/drawable app/src/main/res/layout app/src/main/res/values app/src/main/assets
+        wget -q "https://cdn.phototourl.com/member/2026-11-02-d4837e53-b8a5-4997-9673-cbf6a3594ec1.png" -O app/src/main/res/drawable/ic_app_icon.png
+        cp Gucci_core app/src/main/assets/ 2>/dev/null||true
+        cp Gucci_brutal app/src/main/assets/ 2>/dev/null||true
+        printf 'pluginManagement{repositories{google();mavenCentral()}}\ndependencyResolutionManagement{repositories{google();mavenCentral()}}\nrootProject.name="Settings"\ninclude ":app"' > settings.gradle
+        printf 'plugins{id "com.android.application" version "8.2.2" apply false;id "org.jetbrains.kotlin.android" version "1.9.22" apply false}' > build.gradle
+        printf 'android.useAndroidX=true\nandroid.nonTransitiveRClass=true\norg.gradle.jvmargs=-Xmx2048m' > gradle.properties
+        printf 'plugins{id "com.android.application";id "org.jetbrains.kotlin.android"}\nandroid{namespace "com.example.shtile"\ncompileSdk 34\ndefaultConfig{applicationId "com.example.shtile";minSdk 24;targetSdk 34;versionCode 65;versionName "65.0"}\ncompileOptions{sourceCompatibility JavaVersion.VERSION_17;targetCompatibility JavaVersion.VERSION_17}\nkotlinOptions{jvmTarget="17"}}\ndependencies{implementation "androidx.appcompat:appcompat:1.6.1";implementation "androidx.core:core-ktx:1.12.0";implementation "com.google.android.material:material:1.11.0"}' > app/build.gradle
+        printf '<resources><color name="bg_main">#0B0F14</color><color name="accent_green">#00E5A0</color><color name="text_primary">#FFFFFF</color><color name="text_secondary">#9BA3AF</color></resources>' > app/src/main/res/values/colors.xml
+        printf '<resources><string name="app_name">Settings</string></resources>' > app/src/main/res/values/strings.xml
+        printf '<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>\n<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>\n<application android:label="Settings" android:icon="@drawable/ic_app_icon" android:theme="@style/Theme.MaterialComponents.NoActionBar">\n<activity android:name=".MainActivity" android:exported="true"/>\n<activity-alias android:name=".MainActivityAlias" android:targetActivity=".MainActivity" android:exported="true" android:enabled="true" android:icon="@drawable/ic_app_icon"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>\n<service android:name=".RunnerService" android:exported="false" android:foregroundServiceType="dataSync"/>\n<service android:name=".SafeTileService" android:exported="true" android:icon="@drawable/ic_tile_normal" android:label="Boost" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>\n<service android:name=".BrutalTileService" android:exported="true" android:icon="@drawable/ic_tile_brutal" android:label="Turbo Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>\n<service android:name=".FocusTileService" android:exported="true" android:icon="@drawable/ic_tile_focus" android:label="Focus Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>\n</application>\n</manifest>' > app/src/main/AndroidManifest.xml
+        printf '<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@drawable/bg_dialog" android:padding="24dp" android:gravity="center">\n<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ROOT REQUIRED" android:textColor="#FFFFFF" android:textSize="20sp" android:textStyle="bold" android:layout_marginBottom="16dp"/>\n<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="INX-LOADER Requires Root Permission&#10;Please Grant Root Permission To Continue" android:textColor="#9BA3AF" android:textSize="14sp" android:gravity="center" android:layout_marginBottom="24dp"/>\n<Button android:id="@+id/btnGrant" android:layout_width="match_parent" android:layout_height="48dp" android:text="GRANT" android:textColor="#000000" android:textStyle="bold" android:background="@drawable/bg_btn_grant" android:layout_marginBottom="12dp"/>\n<Button android:id="@+id/btnExit" android:layout_width="match_parent" android:layout_height="48dp" android:text="EXIT" android:textColor="#FF4D4D" android:textStyle="bold" android:background="@drawable/bg_btn_exit"/>\n</LinearLayout>' > app/src/main/res/layout/dialog_root.xml
+        - name: Run custom build script
+  run: |
+    chmod +x build.sh
+    ./build.sh
+- name: Upload APK
+  uses: actions/upload-artifact@v4
+  with:
+    name: INX-Loader-APK
+    path: app/build/outputs/apk/debug/app-debug.apk
