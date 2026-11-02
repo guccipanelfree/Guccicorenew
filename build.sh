@@ -42,6 +42,36 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 </application>
 </manifest>
 EOF
+cat > app/src/main/res/layout/dialog_root.xml << 'EOF'
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@drawable/bg_dialog" android:padding="24dp" android:gravity="center">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ROOT REQUIRED" android:textColor="#FFFFFF" android:textSize="20sp" android:textStyle="bold" android:layout_marginBottom="16dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="INX-LOADER Requires Root Permission&#10;Please Grant Root Permission To Continue" android:textColor="#9BA3AF" android:textSize="14sp" android:gravity="center" android:textAlignment="center" android:layout_marginBottom="24dp"/>
+<Button android:id="@+id/btnGrant" android:layout_width="match_parent" android:layout_height="48dp" android:text="GRANT" android:textColor="#000000" android:textStyle="bold" android:background="@drawable/bg_btn_grant" android:layout_marginBottom="12dp"/>
+<Button android:id="@+id/btnExit" android:layout_width="match_parent" android:layout_height="48dp" android:text="EXIT" android:textColor="#FF4D4D" android:textStyle="bold" android:background="@drawable/bg_btn_exit"/>
+</LinearLayout>
+EOF
+cat > app/src/main/res/layout/activity_main.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/bg_main" android:fillViewport="true">
+<LinearLayout android:orientation="vertical" android:padding="24dp" android:layout_width="match_parent" android:layout_height="wrap_content">
+<TextView android:id="@+id/titleText" android:text="INX-LOADER PANEL" android:textColor="#FFFFFF" android:textSize="32sp" android:textStyle="bold" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<TextView android:id="@+id/subtitleText" android:text="Invisible X Loader Owner- GUCCI" android:textColor="#777777" android:textSize="14sp" android:layout_marginTop="4dp" android:layout_marginBottom="32dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<LinearLayout android:orientation="vertical" android:padding="20dp" android:background="@drawable/bg_box_dark" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp">
+<TextView android:text="LICENSE KEY" android:textColor="@color/accent_green" android:textSize="12sp" android:textStyle="bold" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<EditText android:id="@+id/keyInput" android:hint="Enter key..." android:inputType="text" android:padding="12dp" android:background="#00000000" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+</LinearLayout>
+<LinearLayout android:orientation="vertical" android:padding="20dp" android:background="@drawable/bg_box_dark" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="24dp">
+<TextView android:text="SELECT DRIVER (1-10)" android:textColor="@color/accent_green" android:textSize="12sp" android:textStyle="bold" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<EditText android:id="@+id/brutalInput" android:hint="e.g. 7" android:inputType="number" android:padding="12dp" android:background="#00000000" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+<TextView android:id="@+id/driverNameText" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold" android:layout_marginTop="4dp" android:paddingStart="12dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+</LinearLayout>
+<Button android:id="@+id/saveKeyBtn" android:layout_width="match_parent" android:layout_height="56dp" android:text="SAVE CONFIGURATION" android:textColor="#000000" android:textSize="14sp" android:textStyle="bold" android:background="@drawable/bg_btn_save" android:layout_marginBottom="16dp"/>
+<Button android:id="@+id/loadFilesBtn" android:layout_width="wrap_content" android:layout_height="44dp" android:layout_marginTop="16dp" android:layout_gravity="center_horizontal" android:paddingStart="48dp" android:paddingEnd="48dp" android:text="LOAD INX" android:textColor="@color/accent_green" android:textSize="13sp" android:textStyle="bold" android:background="@drawable/bg_btn_load"/>
+<TextView android:paddingTop="40dp" android:gravity="center" android:text="Use Quick Setting tiles to load INX-Payload" android:textColor="#555555" android:textSize="12sp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+<TextView android:id="@+id/contactAdminText" android:paddingTop="16dp" android:gravity="center" android:text="Contact Admin for Help" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold" android:paddingBottom="20dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+</LinearLayout>
+</ScrollView>
+EOF
 cat > app/src/main/res/values/colors.xml << 'EOF'
 <resources><color name="bg_main">#0B0F14</color><color name="bg_card">#151B23</color><color name="accent_green">#00E5A0</color><color name="text_primary">#FFFFFF</color><color name="text_secondary">#9BA3AF</color></resources>
 EOF
@@ -67,43 +97,13 @@ cat > app/src/main/res/drawable/bg_btn_exit.xml << 'EOF'
 <shape xmlns:android="http://schemas.android.com/apk/res/android"><solid android:color="#00000000"/><stroke android:width="1dp" android:color="#FF4D4D"/><corners android:radius="12dp"/></shape>
 EOF
 cat > app/src/main/res/drawable/ic_tile_normal.xml << 'EOF'
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="M12,2 L15,7 L15,15 L21,19 L15,19 L15,20 L9,20 L9,19 L3,19 L9,15 L9,7 Z M12,8 A1.5,1.5 0 1,0 12,11 A1.5,1.5 0 1,0 12,8 Z"/><path android:fillColor="#FFFFFFFF" android:pathData="M10.5,20 L12,23 L13.5,20 Z"/></vector>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="M12,1.5 C14.5,4.5 16,6.5 16,7 L8,7 C8,6.5 9.5,4.5 12,1.5 Z M7.5,8 L16.5,8 L16.5,15.5 L7.5,15.5 Z M12,9 A1.8,1.8 0 1,0 12,12.6 A1.8,1.8 0 1,0 12,9 Z M7.5,12 C4.5,13 3,15.5 3,19.5 L3,21 L7.5,16.5 Z M16.5,12 C19.5,13 21,15.5 21,19.5 L21,21 L16.5,16.5 Z M8,16 L16,16 L16,18 L8,18 Z M9.5,18.5 C9.5,18.5 10.5,21 12,23.5 C13.5,21 14.5,18.5 14.5,18.5 L13,20.5 L12,19 L11,20.5 Z"/></vector>
 EOF
 cat > app/src/main/res/drawable/ic_tile_brutal.xml << 'EOF'
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M7,2v11h3v9l7,-12h-4l4,-8z"/></vector>
 EOF
 cat > app/src/main/res/drawable/ic_tile_focus.xml << 'EOF'
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M12,7c2.76,0 5,2.24 5,5 0,0.65 -0.13,1.26 -0.36,1.83l2.92,2.92c1.51,-1.26 2.7,-2.89 3.43,-4.75 -1.73,-4.39 -6,-7.5 -11,-7.5 -1.4,0 -2.74,0.25 -3.98,0.7l2.16,2.16C10.74,7.13 11.35,7 12,7zM2,4.27l2.28,2.28 0.46,0.46C3.08,8.3 1.78,10.02 1,12c1.73,4.39 6,7.5 11,7.5 1.55,0 3.03,-0.3 4.38,-0.84l0.42,0.42L19.73,22 21,20.73 3.27,3 2,4.27zM7.53,9.8l1.55,1.55c-0.05,0.21 -0.08,0.43 -0.08,0.65 0,1.66 1.34,3 3,3 0.22,0 0.44,-0.03 0.65,-0.08l1.55,1.55c-0.67,0.33 -1.41,0.53 -2.2,0.53 -2.76,0 -5,-2.24 -5,-5 0,-0.79 0.2,-1.53 0.53,-2.2zM11.84,9.02l3.15,3.15 0.02,-0.16c0,-1.66 -1.34,-3 -3,-3l-0.17,0.01z"/></vector>
-EOF
-cat > app/src/main/res/layout/dialog_root.xml << 'EOF'
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@drawable/bg_dialog" android:padding="24dp" android:gravity="center">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ROOT REQUIRED" android:textColor="#FFFFFF" android:textSize="20sp" android:textStyle="bold" android:layout_marginBottom="16dp"/>
-<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="INX-LOADER Requires Root Permission&#10;Please Grant Root Permission To Continue" android:textColor="#9BA3AF" android:textSize="14sp" android:gravity="center" android:layout_marginBottom="24dp"/>
-<Button android:id="@+id/btnGrant" android:layout_width="match_parent" android:layout_height="48dp" android:text="GRANT" android:textColor="#000000" android:textStyle="bold" android:background="@drawable/bg_btn_grant" android:layout_marginBottom="12dp"/>
-<Button android:id="@+id/btnExit" android:layout_width="match_parent" android:layout_height="48dp" android:text="EXIT" android:textColor="#FF4D4D" android:textStyle="bold" android:background="@drawable/bg_btn_exit"/>
-</LinearLayout>
-EOF
-cat > app/src/main/res/layout/activity_main.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/bg_main" android:fillViewport="true">
-<LinearLayout android:orientation="vertical" android:padding="24dp" android:layout_width="match_parent" android:layout_height="wrap_content">
-<TextView android:id="@+id/titleText" android:text="INX-LOADER PANEL" android:textColor="#FFFFFF" android:textSize="32sp" android:textStyle="bold" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-<TextView android:id="@+id/subtitleText" android:text="Invisible X Loader Owner- GUCCI" android:textColor="#777777" android:textSize="14sp" android:layout_marginTop="4dp" android:layout_marginBottom="32dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-<LinearLayout android:orientation="vertical" android:padding="20dp" android:background="@drawable/bg_box_dark" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp">
-<TextView android:text="LICENSE KEY" android:textColor="@color/accent_green" android:textSize="12sp" android:textStyle="bold" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-<EditText android:id="@+id/keyInput" android:hint="Enter key..." android:inputType="text" android:padding="12dp" android:background="#00000000" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_width="match_parent" android:layout_height="wrap_content"/>
-</LinearLayout>
-<LinearLayout android:orientation="vertical" android:padding="20dp" android:background="@drawable/bg_box_dark" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="24dp">
-<TextView android:text="SELECT DRIVER (1-10)" android:textColor="@color/accent_green" android:textSize="12sp" android:textStyle="bold" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-<EditText android:id="@+id/brutalInput" android:hint="e.g. 7" android:inputType="number" android:padding="12dp" android:background="#00000000" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_width="match_parent" android:layout_height="wrap_content"/>
-<TextView android:id="@+id/driverNameText" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold" android:layout_marginTop="4dp" android:paddingStart="12dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-</LinearLayout>
-<Button android:id="@+id/saveKeyBtn" android:layout_width="match_parent" android:layout_height="56dp" android:text="SAVE CONFIGURATION" android:textColor="#000000" android:textSize="14sp" android:textStyle="bold" android:background="@drawable/bg_btn_save" android:layout_marginBottom="16dp"/>
-<Button android:id="@+id/loadFilesBtn" android:layout_width="wrap_content" android:layout_height="44dp" android:layout_marginTop="16dp" android:layout_gravity="center_horizontal" android:paddingStart="48dp" android:paddingEnd="48dp" android:text="LOAD INX" android:textColor="@color/accent_green" android:textSize="13sp" android:textStyle="bold" android:background="@drawable/bg_btn_load"/>
-<TextView android:paddingTop="40dp" android:gravity="center" android:text="Use Quick Setting tiles to load INX-Payload" android:textColor="#555555" android:textSize="12sp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
-<TextView android:id="@+id/contactAdminText" android:paddingTop="16dp" android:gravity="center" android:text="Contact Admin for Help" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold" android:paddingBottom="20dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
-</LinearLayout>
-</ScrollView>
 EOF
 cat > app/src/main/java/com/example/shtile/Installer.kt << 'EOF'
 package com.example.shtile
