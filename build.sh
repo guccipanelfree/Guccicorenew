@@ -1,53 +1,152 @@
 #!/bin/bash
 set -e
+
 wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip
-unzip -oq gradle-8.2-bin.zip
+unzip -q gradle-8.2-bin.zip
 export PATH="$PWD/gradle-8.2/bin:$PATH"
+
 rm -rf app build.gradle settings.gradle gradle.properties
 mkdir -p app/src/main/java/com/example/shtile app/src/main/res/drawable app/src/main/res/layout app/src/main/res/values app/src/main/assets
 cp Gucci_core app/src/main/assets/ 2>/dev/null || true
 cp Gucci_brutal app/src/main/assets/ 2>/dev/null || true
 
-echo "pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }; dependencyResolutionManagement { repositories { google(); mavenCentral() } }; rootProject.name = 'Settings'; include ':app'" > settings.gradle
-echo "plugins { id 'com.android.application' version '8.2.2' apply false; id 'org.jetbrains.kotlin.android' version '1.9.22' apply false }" > build.gradle
-echo -e "android.useAndroidX=true\nandroid.nonTransitiveRClass=true\norg.gradle.jvmargs=-Xmx2048m" > gradle.properties
-echo "plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }; android { namespace 'com.example.shtile'; compileSdk 34; defaultConfig { applicationId 'com.example.shtile'; minSdk 24; targetSdk 34; versionCode 68; versionName '68.0' }; compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }; kotlinOptions { jvmTarget = '17' } }; dependencies { implementation 'androidx.appcompat:appcompat:1.6.1'; implementation 'androidx.core:core-ktx:1.12.0'; implementation 'com.google.android.material:material:1.11.0' }" > app/build.gradle
-echo "<?xml version='1.0' encoding='utf-8'?><manifest xmlns:android='http://schemas.android.com/apk/res/android'><uses-permission android:name='android.permission.FOREGROUND_SERVICE'/><uses-permission android:name='android.permission.FOREGROUND_SERVICE_DATA_SYNC'/><application android:allowBackup='true' android:label='Settings' android:theme='@style/Theme.AppCompat.NoActionBar'><activity android:name='.MainActivity' android:exported='true'/><activity-alias android:name='.MainActivityAlias' android:targetActivity='.MainActivity' android:exported='true' android:enabled='true'><intent-filter><action android:name='android.intent.action.MAIN'/><category android:name='android.intent.category.LAUNCHER'/></intent-filter></activity-alias><service android:name='.RunnerService' android:exported='false' android:foregroundServiceType='dataSync'/><service android:name='.SafeTileService' android:exported='true' android:icon='@drawable/ic_tile_normal' android:label='Boost' android:permission='android.permission.BIND_QUICK_SETTINGS_TILE'><intent-filter><action android:name='android.service.quicksettings.action.QS_TILE'/></intent-filter></service><service android:name='.BrutalTileService' android:exported='true' android:icon='@drawable/ic_tile_brutal' android:label='Turbo Mode' android:permission='android.permission.BIND_QUICK_SETTINGS_TILE'><intent-filter><action android:name='android.service.quicksettings.action.QS_TILE'/></intent-filter></service><service android:name='.FocusTileService' android:exported='true' android:icon='@drawable/ic_tile_focus' android:label='Focus Mode' android:permission='android.permission.BIND_QUICK_SETTINGS_TILE'><intent-filter><action android:name='android.service.quicksettings.action.QS_TILE'/></intent-filter></service></application></manifest>" > app/src/main/AndroidManifest.xml
-echo "<?xml version='1.0' encoding='utf-8'?><resources><color name='bg_main'>#0B0F14</color><color name='bg_card'>#151B23</color><color name='accent_green'>#00E5A0</color><color name='text_primary'>#FFFFFF</color><color name='text_secondary'>#9BA3AF</color><color name='dialog_bg'>#1E242C</color><color name='dialog_green'>#00FCA8</color><color name='dialog_red'>#FF5E5E</color></resources>" > app/src/main/res/values/colors.xml
-echo "<ripple xmlns:android='http://schemas.android.com/apk/res/android' android:color='#33FFFFFF'><item><shape android:shape='rectangle'><solid android:color='@color/accent_green'/><corners android:radius='12dp'/></shape></item></ripple>" > app/src/main/res/drawable/bg_btn_save.xml
-echo "<ripple xmlns:android='http://schemas.android.com/apk/res/android' android:color='#33FFFFFF'><item><shape android:shape='rectangle'><solid android:color='#232A35'/><stroke android:width='1dp' android:color='@color/accent_green'/><corners android:radius='22dp'/></shape></item></ripple>" > app/src/main/res/drawable/bg_btn_load.xml
-echo "<shape xmlns:android='http://schemas.android.com/apk/res/android' android:shape='rectangle'><solid android:color='@color/dialog_bg'/><corners android:radius='20dp'/></shape>" > app/src/main/res/drawable/bg_dialog.xml
-echo "<shape xmlns:android='http://schemas.android.com/apk/res/android' android:shape='rectangle'><solid android:color='@color/dialog_green'/><corners android:radius='12dp'/></shape>" > app/src/main/res/drawable/bg_btn_grant.xml
-echo "<shape xmlns:android='http://schemas.android.com/apk/res/android' android:shape='rectangle'><stroke android:width='1dp' android:color='@color/dialog_red'/><corners android:radius='12dp'/></shape>" > app/src/main/res/drawable/bg_btn_exit.xml
-echo "<?xml version='1.0' encoding='utf-8'?><LinearLayout xmlns:android='http://schemas.android.com/apk/res/android' android:layout_width='match_parent' android:layout_height='wrap_content' android:orientation='vertical' android:background='@drawable/bg_dialog' android:padding='24dp' android:layout_margin='32dp' android:gravity='center'><TextView android:layout_width='wrap_content' android:layout_height='wrap_content' android:text='ROOT REQUIRED' android:textColor='@color/text_primary' android:textSize='22sp' android:textStyle='bold' android:layout_marginBottom='12dp'/><TextView android:layout_width='wrap_content' android:layout_height='wrap_content' android:text='INX-LOADER requires root. Please grant access to continue.' android:textColor='@color/text_secondary' android:textSize='14sp' android:gravity='center' android:layout_marginBottom='24dp'/><Button android:id='@+id/btnGrant' android:layout_width='match_parent' android:layout_height='48dp' android:text='GRANT' android:textColor='#000000' android:textStyle='bold' android:textSize='16sp' android:background='@drawable/bg_btn_grant' android:layout_marginBottom='12dp' android:stateListAnimator='@null'/><Button android:id='@+id/btnExit' android:layout_width='match_parent' android:layout_height='48dp' android:text='EXIT' android:textColor='@color/dialog_red' android:textStyle='bold' android:textSize='16sp' android:background='@drawable/bg_btn_exit' android:stateListAnimator='@null'/></LinearLayout>" > app/src/main/res/layout/dialog_root.xml
-echo "<?xml version='1.0' encoding='utf-8'?><ScrollView xmlns:android='http://schemas.android.com/apk/res/android' android:layout_width='match_parent' android:layout_height='match_parent' android:background='#0B0F14'><LinearLayout android:orientation='vertical' android:padding='24dp' android:layout_width='match_parent' android:layout_height='wrap_content'><TextView android:text='INX-LOADER PANEL' android:textColor='#FFFFFF' android:textSize='28sp' android:textStyle='bold' android:layout_width='wrap_content' android:layout_height='wrap_content'/><TextView android:id='@+id/subtitleText' android:text='Owner- GUCCI' android:textColor='#9BA3AF' android:textSize='14sp' android:layout_marginBottom='24dp' android:layout_width='wrap_content' android:layout_height='wrap_content'/><TextView android:text='LICENSE KEY' android:textColor='#9BA3AF' android:textSize='12sp' android:layout_width='wrap_content' android:layout_height='wrap_content'/><EditText android:id='@+id/keyInput' android:hint='Enter key...' android:inputType='text' android:background='#151B23' android:textColor='#FFFFFF' android:textColorHint='#9BA3AF' android:padding='12dp' android:layout_marginBottom='16dp' android:layout_width='match_parent' android:layout_height='wrap_content'/><TextView android:text='SELECT DRIVER (1-10)' android:textColor='#9BA3AF' android:textSize='12sp' android:layout_width='wrap_content' android:layout_height='wrap_content'/><EditText android:id='@+id/brutalInput' android:hint='e.g. 7' android:inputType='number' android:background='#151B23' android:textColor='#FFFFFF' android:textColorHint='#9BA3AF' android:padding='12dp' android:layout_width='match_parent' android:layout_height='wrap_content'/><TextView android:id='@+id/driverNameText' android:textColor='#00E5A0' android:textStyle='bold' android:layout_marginBottom='24dp' android:layout_width='wrap_content' android:layout_height='wrap_content'/><Button android:id='@+id/saveKeyBtn' android:text='SAVE CONFIGURATION' android:textColor='#000000' android:backgroundTint='#00E5A0' android:layout_marginBottom='16dp' android:layout_width='match_parent' android:layout_height='wrap_content'/><Button android:id='@+id/loadFilesBtn' android:text='LOAD INX' android:textColor='#00E5A0' android:backgroundTint='#232A35' android:layout_marginBottom='24dp' android:layout_width='match_parent' android:layout_height='wrap_content'/><TextView android:id='@+id/status' android:textColor='#9BA3AF' android:layout_width='match_parent' android:layout_height='wrap_content'/><TextView android:layout_width='match_parent' android:layout_height='wrap_content' android:paddingTop='24dp' android:gravity='center' android:text='Use Quick Setting tiles to load INX-Payload' android:textColor='#556070' android:textSize='12sp'/><TextView android:id='@+id/contactAdminText' android:text='Contact Admin for Help' android:textColor='#00E5A0' android:textStyle='bold' android:layout_marginTop='12dp' android:gravity='center' android:layout_width='match_parent' android:layout_height='wrap_content'/></LinearLayout></ScrollView>" > app/src/main/res/layout/activity_main.xml
-echo "<vector xmlns:android='http://schemas.android.com/apk/res/android' android:width='24dp' android:height='24dp' android:viewportWidth='24' android:viewportHeight='24'><path android:fillColor='#FFFFFFFF' android:pathData='M12,2c-1.5,0-3,2-3,5v7h6V7C15,4,13.5,2,12,2z M9,16h6v2H9V16z M10,19h4v2h-4V19z M6,8H4v6h2V8z M20,8h-2v6h2V8z'/></vector>" > app/src/main/res/drawable/ic_tile_normal.xml
-echo "<vector xmlns:android='http://schemas.android.com/apk/res/android' android:width='24dp' android:height='24dp' android:viewportWidth='24' android:viewportHeight='24'><path android:fillColor='#FFFFFFFF' android:pathData='M7,2v11h3v9l7,-12h-4l4,-8z'/></vector>" > app/src/main/res/drawable/ic_tile_brutal.xml
-echo "<vector xmlns:android='http://schemas.android.com/apk/res/android' android:width='24dp' android:height='24dp' android:viewportWidth='24' android:viewportHeight='24'><path android:fillColor='#FFFFFFFF' android:pathData='M12,8C9.79,8 8,9.79 8,12C8,14.21 9.79,16 12,16C14.21,16 16,14.21 16,12C16,9.79 14.21,8 12,8ZM12,14C10.9,14 10,13.1 10,12C10,10.9 10.9,10 12,10C13.1,10 14,10.9 14,12C14,13.1 13.1,14 12,14Z'/><path android:fillColor='#FFFFFFFF' android:pathData='M7.5,5.5C4.5,8.5 4.5,15.5 7.5,18.5L9,17C6.8,14.5 6.8,9.5 9,7L7.5,5.5Z'/><path android:fillColor='#FFFFFFFF' android:pathData='M16.5,5.5L15,7C17.2,9.5 17.2,14.5 15,17L16.5,18.5C19.5,15.5 19.5,8.5 16.5,5.5Z'/></vector>" > app/src/main/res/drawable/ic_tile_focus.xml
-echo "<resources><string name='app_name'>Settings</string></resources>" > app/src/main/res/values/strings.xml
+cat > settings.gradle << 'EOF'
+pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+dependencyResolutionManagement { repositories { google(); mavenCentral() } }
+rootProject.name = "Settings"
+include ':app'
+EOF
+
+cat > build.gradle << 'EOF'
+plugins { id 'com.android.application' version '8.2.2' apply false; id 'org.jetbrains.kotlin.android' version '1.9.22' apply false }
+EOF
+
+cat > gradle.properties << 'EOF'
+android.useAndroidX=true
+android.nonTransitiveRClass=true
+org.gradle.jvmargs=-Xmx2048m
+EOF
+
+cat > app/build.gradle << 'EOF'
+plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
+android {
+    namespace 'com.example.shtile'
+    compileSdk 34
+    defaultConfig { applicationId "com.example.shtile"; minSdk 24; targetSdk 34; versionCode 62; versionName "62.0" }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    kotlinOptions { jvmTarget = '17' }
+}
+dependencies { implementation 'androidx.appcompat:appcompat:1.6.1'; implementation 'androidx.core:core-ktx:1.12.0' }
+EOF
+
+cat > app/src/main/AndroidManifest.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+<application android:allowBackup="true" android:label="Settings" android:theme="@style/Theme.AppCompat.NoActionBar">
+<activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity>
+<service android:name=".RunnerService" android:exported="false" android:foregroundServiceType="dataSync"/>
+<service android:name=".SafeTileService" android:exported="true" android:icon="@drawable/ic_tile_normal" android:label="Boost" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
+<service android:name=".BrutalTileService" android:exported="true" android:icon="@drawable/ic_tile_brutal" android:label="Turbo Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
+<service android:name=".FocusTileService" android:exported="true" android:icon="@drawable/ic_tile_focus" android:label="Focus Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
+</application>
+</manifest>
+EOF
+
+cat > app/src/main/res/layout/activity_main.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#0B0F14">
+<LinearLayout android:orientation="vertical" android:padding="24dp" android:layout_width="match_parent" android:layout_height="wrap_content">
+<TextView android:text="INX-LOADER PANEL" android:textColor="#FFFFFF" android:textSize="28sp" android:textStyle="bold" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<TextView android:id="@+id/subtitleText" android:text="Owner- GUCCI" android:textColor="#00E5A0" android:textSize="14sp" android:layout_marginBottom="24dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<TextView android:text="LICENSE KEY" android:textColor="#9BA3AF" android:textSize="12sp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<EditText android:id="@+id/keyInput" android:hint="Enter key..." android:inputType="text" android:background="#151B23" android:textColor="#FFFFFF" android:textColorHint="#9BA3AF" android:padding="12dp" android:layout_marginBottom="16dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+<TextView android:text="SELECT DRIVER (1-10)" android:textColor="#9BA3AF" android:textSize="12sp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<EditText android:id="@+id/brutalInput" android:hint="e.g. 7" android:inputType="number" android:background="#151B23" android:textColor="#FFFFFF" android:textColorHint="#9BA3AF" android:padding="12dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+<TextView android:id="@+id/driverNameText" android:textColor="#00E5A0" android:textStyle="bold" android:layout_marginBottom="24dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<Button android:id="@+id/saveKeyBtn" android:text="SAVE CONFIGURATION" android:textColor="#000000" android:backgroundTint="#00E5A0" android:layout_marginBottom="16dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+<Button android:id="@+id/loadFilesBtn" android:text="LOAD INX" android:textColor="#00E5A0" android:backgroundTint="#232A35" android:layout_marginBottom="24dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+<TextView android:id="@+id/status" android:textColor="#9BA3AF" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+<TextView android:id="@+id/contactAdminText" android:text="Contact Admin for Help" android:textColor="#00E5A0" android:textStyle="bold" android:layout_marginTop="24dp" android:gravity="center" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+</LinearLayout>
+</ScrollView>
+EOF
+
+cat > app/src/main/res/drawable/ic_tile_normal.xml << 'EOF'
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M12,4A10,10 0,1 0,22 14A10,10 0,0 0,12 4M12,6A8,8 0,1 1,4 14A8,8 0,0 1,12 6M12,8A6,6 0,0 0,6 14A6,6 0,0 0,12 20A6,6 0,0 0,18 14A6,6 0,0 0,12 8M12,10L15,14L12,14Z"/></vector>
+EOF
+cat > app/src/main/res/drawable/ic_tile_brutal.xml << 'EOF'
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M7,2v11h3v9l7,-12h-4l4,-8z"/></vector>
+EOF
+cat > app/src/main/res/drawable/ic_tile_focus.xml << 'EOF'
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M12,4.5C7,4.5 2.73,7.61 1,12c1.73,4.39 6,7.5 11,7.5s9.27,-3.11 11,-7.5c-1.73,-4.39 -6,-7.5 -11,-7.5zM12,17c-2.76,0 -5,-2.24 -5,-5s2.24,-5 5,-5 5,2.24 5,5 -2.24,5 -5,5zM12,9c-1.66,0 -3,1.34 -3,3s1.34,3 3,3 3,-1.34 3,-3 -1.34,-3 -3,-3z"/></vector>
+EOF
+cat > app/src/main/res/values/strings.xml << 'EOF'
+<resources><string name="app_name">Settings</string></resources>
+EOF
 
 cat > app/src/main/java/com/example/shtile/Installer.kt << 'EOF'
-package com.example.shtile; import android.content.Context; import android.os.Handler; import android.os.Looper; import java.io.File; object Installer { fun installAll(c: Context, d: ((Boolean) -> Unit)? = null) { Thread { var ok = true; for (n in listOf("Gucci_core", "Gucci_brutal")) { try { val b = c.assets.open(n).readBytes(); val f = File(c.cacheDir, n); f.writeBytes(b); val p = ProcessBuilder("su", "-c", "cp ${f.absolutePath} /data/local/tmp/$n && chmod 755 /data/local/tmp/$n").redirectErrorStream(true).start(); p.inputStream.bufferedReader().readText(); if (p.waitFor() != 0) ok = false; f.delete() } catch (e: Exception) { ok = false } }; Handler(Looper.getMainLooper()).post { d?.invoke(ok) } }.start() } }
+package com.example.shtile
+import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import java.io.File
+object Installer { fun installAll(context: Context, onDone: ((Boolean) -> Unit)? = null) { Thread { var ok = true; for (n in listOf("Gucci_core", "Gucci_brutal")) { try { val b = context.assets.open(n).readBytes(); val t = File(context.cacheDir, n); t.writeBytes(b); val p = ProcessBuilder("su", "-c", "cp ${t.absolutePath} /data/local/tmp/$n && chmod 755 /data/local/tmp/$n").redirectErrorStream(true).start(); p.inputStream.bufferedReader().readText(); if (p.waitFor() != 0) ok = false; t.delete() } catch (e: Exception) { ok = false } }; Handler(Looper.getMainLooper()).post { onDone?.invoke(ok) } }.start() } }
 EOF
 
 cat > app/src/main/java/com/example/shtile/RunnerService.kt << 'EOF'
-package com.example.shtile; import android.app.*; import android.content.Intent; import android.os.*; import android.widget.Toast; import androidx.core.app.NotificationCompat; class RunnerService : Service() { override fun onStartCommand(i: Intent?, f: Int, s: Int): Int { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager; if (nm.getNotificationChannel("c") == null) nm.createNotificationChannel(NotificationChannel("c", "c", NotificationManager.IMPORTANCE_MIN)) }; try { startForeground(1, NotificationCompat.Builder(this, "c").setSmallIcon(android.R.drawable.stat_notify_sync_noanim).build()) } catch (e: Exception) {}; val a = i?.action; Thread { try { val p = getSharedPreferences("GucciPrefs", MODE_PRIVATE); val c = if (a == "BRUTAL") "cd /data/local/tmp && (echo 2; sleep 5; echo ${p.getString("brutal_option", "7")}; sleep 2) | ./Gucci_brutal" else { val k = p.getString("license_key", "")?.trim(); if (k.isNullOrEmpty()) { Handler(Looper.getMainLooper()).post { Toast.makeText(applicationContext, "Save Key first!", Toast.LENGTH_LONG).show() }; stopSelf(); return@Thread }; "cd /data/local/tmp && (sleep 4; echo '$k'; sleep 2) | ./Gucci_core" }; val pr = ProcessBuilder("su", "-c", c).redirectErrorStream(true).start(); pr.inputStream.bufferedReader().readText(); pr.waitFor() } catch (e: Exception) {}; stopForeground(true); stopSelf() }.start(); return START_NOT_STICKY }; override fun onBind(i: Intent?): IBinder? = null }
+package com.example.shtile
+import android.app.*
+import android.content.Intent
+import android.os.*
+import android.widget.Toast
+import androidx.core.app.NotificationCompat
+class RunnerService : Service() { override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager; if (nm.getNotificationChannel("c") == null) nm.createNotificationChannel(NotificationChannel("c", "c", NotificationManager.IMPORTANCE_MIN)) }; try { startForeground(1, NotificationCompat.Builder(this, "c").setSmallIcon(android.R.drawable.stat_notify_sync_noanim).build()) } catch (e: Exception) {}; val a = intent?.action; Thread { try { val p = getSharedPreferences("GucciPrefs", MODE_PRIVATE); val c = if (a == "BRUTAL") "cd /data/local/tmp && (echo 2; sleep 5; echo ${p.getString("brutal_option", "7")}; sleep 2) | ./Gucci_brutal" else { val k = p.getString("license_key", "")?.trim(); if (k.isNullOrEmpty()) { Handler(Looper.getMainLooper()).post { Toast.makeText(applicationContext, "Save License Key first!", Toast.LENGTH_LONG).show() }; stopSelf(); return@Thread }; "cd /data/local/tmp && (sleep 4; echo '$k'; sleep 2) | ./Gucci_core" }; val pr = ProcessBuilder("su", "-c", c).redirectErrorStream(true).start(); pr.inputStream.bufferedReader().readText(); pr.waitFor() } catch (e: Exception) {}; stopForeground(true); stopSelf() }.start(); return START_NOT_STICKY }; override fun onBind(intent: Intent?): IBinder? = null }
 EOF
 
 cat > app/src/main/java/com/example/shtile/SafeTileService.kt << 'EOF'
-package com.example.shtile; import android.content.Intent; import android.os.Build; import android.service.quicksettings.Tile; import android.service.quicksettings.TileService; class SafeTileService : TileService() { override fun onStartListening() { qsTile?.apply { label = "Boost"; state = Tile.STATE_INACTIVE; updateTile() } }; override fun onClick() { val i = Intent(this, RunnerService::class.java).apply { action = "NORMAL" }; if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i) } }
+package com.example.shtile
+import android.content.Intent
+import android.os.Build
+import android.service.quicksettings.Tile
+import android.service.quicksettings.TileService
+class SafeTileService : TileService() { override fun onStartListening() { qsTile?.apply { label = "Boost"; state = Tile.STATE_INACTIVE; updateTile() } }; override fun onClick() { val i = Intent(this, RunnerService::class.java).apply { action = "NORMAL" }; if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i) } }
 EOF
 
 cat > app/src/main/java/com/example/shtile/BrutalTileService.kt << 'EOF'
-package com.example.shtile; import android.content.Intent; import android.os.Build; import android.service.quicksettings.Tile; import android.service.quicksettings.TileService; class BrutalTileService : TileService() { override fun onStartListening() { qsTile?.apply { label = "Turbo Mode"; state = Tile.STATE_INACTIVE; updateTile() } }; override fun onClick() { val i = Intent(this, RunnerService::class.java).apply { action = "BRUTAL" }; if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i) } }
+package com.example.shtile
+import android.content.Intent
+import android.os.Build
+import android.service.quicksettings.Tile
+import android.service.quicksettings.TileService
+class BrutalTileService : TileService() { override fun onStartListening() { qsTile?.apply { label = "Turbo Mode"; state = Tile.STATE_INACTIVE; updateTile() } }; override fun onClick() { val i = Intent(this, RunnerService::class.java).apply { action = "BRUTAL" }; if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i) } }
 EOF
 
 cat > app/src/main/java/com/example/shtile/FocusTileService.kt << 'EOF'
-package com.example.shtile; import android.content.ComponentName; import android.content.pm.PackageManager; import android.os.Handler; import android.os.Looper; import android.service.quicksettings.Tile; import android.service.quicksettings.TileService; class FocusTileService : TileService() { private val c = ComponentName("com.example.shtile", "com.example.shtile.MainActivityAlias"); override fun onStartListening() { u() }; override fun onClick() { Thread { try { val h = packageManager.getComponentEnabledSetting(c) == PackageManager.COMPONENT_ENABLED_STATE_DISABLED; val cmd = if (h) "pm enable com.example.shtile/com.example.shtile.MainActivityAlias" else "pm disable-user --user 0 com.example.shtile/com.example.shtile.MainActivityAlias"; ProcessBuilder("su", "-c", cmd).start().waitFor() } catch (e: Exception) {}; Handler(Looper.getMainLooper()).post { u() } }.start() }; private fun u() { val s = packageManager.getComponentEnabledSetting(c); qsTile?.apply { label = "Focus Mode"; state = if (s == PackageManager.COMPONENT_ENABLED_STATE_DISABLED) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE; updateTile() } } }
+package com.example.shtile
+import android.content.ComponentName
+import android.content.pm.PackageManager
+import android.service.quicksettings.Tile
+import android.service.quicksettings.TileService
+class FocusTileService : TileService() { private val c by lazy { ComponentName(applicationContext, MainActivity::class.java) }; override fun onStartListening() { updateState() }; override fun onClick() { val pm = packageManager; val s = pm.getComponentEnabledSetting(c); val n = if (s == PackageManager.COMPONENT_ENABLED_STATE_DISABLED) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED; pm.setComponentEnabledSetting(c, n, PackageManager.DONT_KILL_APP); updateState() }; private fun updateState() { val s = packageManager.getComponentEnabledSetting(c); qsTile?.apply { label = "Focus Mode"; state = if (s == PackageManager.COMPONENT_ENABLED_STATE_DISABLED) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE; updateTile() } } }
 EOF
 
 cat > app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
-package com.example.shtile; import android.app.Dialog; import android.content.Context; import android.content.Intent; import android.graphics.Color; import android.graphics.Typeface; import android.net.Uri; import android.os.Bundle; import android.os.Handler; import android.os.Looper; import android.text.Editable; import android.text.Spannable; import android.text.SpannableString; import android.text.TextWatcher; import android.text.style.ForegroundColorSpan; import android.text.style.StyleSpan; import android.view.Window; import android.widget.*; import androidx.appcompat.app.AppCompatActivity; class MainActivity : AppCompatActivity() { override fun onCreate(s: Bundle?) { super.onCreate(s); setContentView(R.layout.activity_main); val p = getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE); val st = findViewById<TextView>(R.id.status); val ki = findViewById<EditText>(R.id.keyInput); val bi = findViewById<EditText>(R.id.brutalInput); val dn = findViewById<TextView>(R.id.driverNameText); val sub = findViewById<TextView>(R.id.subtitleText); val ca = findViewById<TextView>(R.id.contactAdminText); val span = SpannableString("Owner- GUCCI"); span.setSpan(ForegroundColorSpan(Color.parseColor("#00E5A0")), 7, 12, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE); span.setSpan(StyleSpan(Typeface.BOLD), 7, 12, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE); sub.text = span; fun chk() { Thread { val r = try { val pr = ProcessBuilder("su", "-c", "id").start(); pr.inputStream.bufferedReader().readText().contains("uid=0") } catch (e: Exception) { false }; Handler(Looper.getMainLooper()).post { if (!r) { val dialog = Dialog(this); dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); dialog.setContentView(R.layout.dialog_root); dialog.setCancelable(false); val bG = dialog.findViewById<Button>(R.id.btnGrant); val bE = dialog.findViewById<Button>(R.id.btnExit); bG.setOnClickListener { dialog.dismiss(); chk() }; bE.setOnClickListener { dialog.dismiss(); finish() }; dialog.show() } else { Installer.installAll(this) } } }.start() }; chk(); val tg = { try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/Gucci8240"))) } catch (e: Exception) {} }; ca.setOnClickListener { tg() }; ki.setText(p.getString("license_key", "")); bi.setText(p.getString("brutal_option", "7")); val m = mapOf("1" to "QX1", "2" to "GT", "3" to "rt-dev", "4" to "rt-proc", "5" to "QX(2)", "6" to "KPM", "7" to "DitPro KPM", "8" to "KMA KPM", "9" to "LDK KPM", "10" to "Paradise"); bi.addTextChangedListener(object : TextWatcher { override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}; override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) { dn.text = m[s.toString().trim()] ?: "Unknown" }; override fun afterTextChanged(s: Editable?) {} }); dn.text = m[bi.text.toString()] ?: "Unknown"; findViewById<Button>(R.id.saveKeyBtn).setOnClickListener { p.edit().putString("license_key", ki.text.toString().trim()).putString("brutal_option", bi.text.toString().trim()).apply(); st.text = "\u2705 System Configured" }; findViewById<Button>(R.id.loadFilesBtn).setOnClickListener { st.text = "Installing..."; Installer.installAll(this) { ok -> st.text = if (ok) "\u2705 Files Loaded" else "\u274C Failed. Check root." } } } }
+package com.example.shtile
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.View
+import android.widget.*
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+class MainActivity : AppCompatActivity() { override fun onCreate(s: Bundle?) { super.onCreate(s); setContentView(R.layout.activity_main); val p = getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE); val st = findViewById<TextView>(R.id.status); val ki = findViewById<EditText>(R.id.keyInput); val bi = findViewById<EditText>(R.id.brutalInput); val dn = findViewById<TextView>(R.id.driverNameText); val sub = findViewById<TextView>(R.id.subtitleText); val ca = findViewById<TextView>(R.id.contactAdminText); fun chkRoot() { Thread { val r = try { val pr = ProcessBuilder("su", "-c", "id").start(); pr.inputStream.bufferedReader().readText().contains("uid=0") } catch (e: Exception) { false }; Handler(Looper.getMainLooper()).post { if (!r) { AlertDialog.Builder(this).setTitle("ROOT REQUIRED").setMessage("INX-LOADER requires root. Please grant access.").setPositiveButton("GRANT") { _, _ -> chkRoot() }.setNegativeButton("EXIT") { _, _ -> finish() }.setCancelable(false).show() } else { Installer.installAll(this) } } }.start() }; chkRoot(); sub.setOnClickListener { try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/Gucci8240"))) } catch (e: Exception) {} }; ca.setOnClickListener { sub.performClick() }; ki.setText(p.getString("license_key", "")); bi.setText(p.getString("brutal_option", "7")); val m = mapOf("1" to "QX1", "2" to "GT", "3" to "rt-dev", "4" to "rt-proc", "5" to "QX(2)", "6" to "KPM", "7" to "DitPro KPM", "8" to "KMA KPM", "9" to "LDK KPM", "10" to "Paradise"); bi.addTextChangedListener(object : TextWatcher { override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}; override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) { dn.text = m[s.toString().trim()] ?: "Unknown" }; override fun afterTextChanged(s: Editable?) {} }); dn.text = m[bi.text.toString()] ?: "Unknown"; findViewById<Button>(R.id.saveKeyBtn).setOnClickListener { p.edit().putString("license_key", ki.text.toString().trim()).putString("brutal_option", bi.text.toString().trim()).apply(); st.text = "✅ System Configured" }; findViewById<Button>(R.id.loadFilesBtn).setOnClickListener { st.text = "Installing..."; Installer.installAll(this) { ok -> st.text = if (ok) "✅ Files Loaded" else "❌ Failed. Check root." } } } }
 EOF
 
 gradle assembleDebug --stacktrace
