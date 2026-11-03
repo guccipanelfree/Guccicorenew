@@ -38,7 +38,7 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
 <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-<application android:allowBackup="true" android:label="Settings" android:icon="@drawable/ic_app_icon" android:theme="@style/Theme.MaterialComponents.NoActionBar">
+<application android:allowBackup="true" android:label="Settings" android:icon="@drawable/ic_app_icon" android:theme="@style/Theme.Material3.Dark.NoActionBar">
 <activity android:name=".MainActivity" android:exported="true"/>
 <activity android:name=".HideAppsActivity" android:exported="false"/>
 <activity-alias android:name=".MainActivityAlias" android:targetActivity=".MainActivity" android:exported="true" android:enabled="true" android:icon="@drawable/ic_app_icon"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
