@@ -237,7 +237,7 @@ class HideAppsActivity : AppCompatActivity() {
         loadApps()
         search.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
-            override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) { adapter?.filter?.filter(s) }
+            override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) { adapter?.filter(s) }
             override fun afterTextChanged(s: android.text.Editable?) {}
         })
         applyBtn.setOnClickListener {
