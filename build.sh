@@ -234,15 +234,19 @@ class PackageReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_PACKAGE_ADDED) {
             val isReplacing = intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)
-            if (isReplacing) return // Ignore updates
+            if (isReplacing) return // Ignore app updates
 
             val pkg = intent.data?.encodedSchemeSpecificPart ?: return
             val prefs = context.getSharedPreferences("HidePrefs", Context.MODE_PRIVATE)
             val isPayHidden = prefs.getBoolean("is_pay_hidden", false)
             val safeApps = prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()
 
-            // AUTO-TARGET: If tile is ON and the newly installed app is in our list, hide it instantly
+            // AUTO-TARGET: If tile is ON and the newly installed app is in our list
             if (isPayHidden && safeApps.contains(pkg)) {
+                
+                // Keeps the background process alive silently
+                val pendingResult = goAsync()
+                
                 Thread {
                     try {
                         val p = Runtime.getRuntime().exec("su")
@@ -252,7 +256,10 @@ class PackageReceiver : BroadcastReceiver() {
                         os.flush()
                         os.close()
                         p.waitFor()
-                    } catch (e: Exception) {}
+                    } catch (e: Exception) {
+                    } finally {
+                        pendingResult.finish() // Tell Android we are done silently
+                    }
                 }.start()
             }
         }
