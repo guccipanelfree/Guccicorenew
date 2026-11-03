@@ -42,7 +42,13 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <service android:name=".BrutalTileService" android:exported="true" android:icon="@drawable/ic_tile_brutal" android:label="Turbo Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
 <service android:name=".FocusTileService" android:exported="true" android:icon="@drawable/ic_tile_focus" android:label="Focus Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
 <service android:name=".PayTileService" android:exported="true" android:icon="@drawable/ic_tile_pay" android:label="Payment Protection" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
-<service android:name=".True5gTileService" android:exported="true" android:icon="@drawable/ic_tile_5g" android:label="True 5G" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
+<receiver android:name=".PackageReceiver" android:exported="true">
+    <intent-filter>
+        <action android:name="android.intent.action.PACKAGE_ADDED" />
+        <action android:name="android.intent.action.PACKAGE_REPLACED" />
+        <data android:scheme="package" />
+    </intent-filter>
+</receiver>
 </application>
 </manifest>
 EOF
@@ -90,12 +96,8 @@ cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/bg_main" android:padding="16dp">
 <EditText android:id="@+id/searchInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Search apps..." android:textColor="#FFFFFF" android:textColorHint="#888888" android:backgroundTint="@color/accent_green" android:padding="12dp" android:layout_alignParentTop="true"/>
-<RadioGroup android:id="@+id/modeRadioGroup" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_below="@id/searchInput" android:layout_marginTop="8dp" android:weightSum="2">
-    <RadioButton android:id="@+id/radioSafe" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Safe Hide" android:textColor="#FFFFFF" android:checked="true"/>
-    <RadioButton android:id="@+id/radioCrazy" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Crazy Hide" android:textColor="#FFFFFF"/>
-</RadioGroup>
-<ListView android:id="@+id/appsList" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_below="@id/modeRadioGroup" android:layout_above="@id/applyBtn" android:layout_marginTop="8dp" android:layout_marginBottom="8dp"/>
-<Button android:id="@+id/applyBtn" android:layout_width="match_parent" android:layout_height="56dp" android:text="APPLY SAFE HIDE" android:textColor="#000000" android:textStyle="bold" android:background="@drawable/bg_btn_save" android:layout_alignParentBottom="true"/>
+<ListView android:id="@+id/appsList" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_below="@id/searchInput" android:layout_above="@id/applyBtn" android:layout_marginTop="8dp" android:layout_marginBottom="8dp"/>
+<Button android:id="@+id/applyBtn" android:layout_width="match_parent" android:layout_height="56dp" android:text="APPLY SELECTION" android:textColor="#000000" android:textStyle="bold" android:background="@drawable/bg_btn_save" android:layout_alignParentBottom="true"/>
 </RelativeLayout>
 EOF
 cat > app/src/main/res/layout/list_item_app.xml << 'EOF'
@@ -144,9 +146,6 @@ cat > app/src/main/res/drawable/ic_hide.xml << 'EOF'
 EOF
 cat > app/src/main/res/drawable/ic_tile_pay.xml << 'EOF'
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M12,1L3,5v6c0,5.55 3.84,10.74 9,12 5.16,-1.26 9,-6.45 9,-12V5l-9,-4zm-2,16l-4,-4 1.41,-1.41L10,14.17l6.59,-6.59L18,9l-8,8z"/></vector>
-EOF
-cat > app/src/main/res/drawable/ic_tile_5g.xml << 'EOF'
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M19,10h-2V8h2c1.1,0,2-0.9,2-2V4c0-1.1-0.9-2-2-2h-4v2h4v2h-2c-1.1,0-2,0.9-2,2v4c0,1.1,0.9,2,2,2h2c1.1,0,2-0.9,2-2v-2C21,10.9,20.1,10,19,10z M11,2H5v8h6V8H7V6h4V2z M21,20H3v2h18V20z"/></vector>
 EOF
 cat > app/src/main/java/com/example/shtile/Installer.kt << 'EOF'
 package com.example.shtile
@@ -201,7 +200,7 @@ class PayTileService : TileService() {
         val prefs = getSharedPreferences("HidePrefs", MODE_PRIVATE)
         val isCurrentlyHidden = prefs.getBoolean("is_pay_hidden", false)
         val hiddenApps = prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()
-        if (hiddenApps.isEmpty()) { Toast.makeText(this, "No apps selected for Safe Hide", Toast.LENGTH_SHORT).show(); return }
+        if (hiddenApps.isEmpty()) { Toast.makeText(this, "No apps selected in Hide menu", Toast.LENGTH_SHORT).show(); return }
         val newState = !isCurrentlyHidden
         Thread {
             try {
@@ -224,45 +223,39 @@ class PayTileService : TileService() {
     }
 }
 EOF
-cat > app/src/main/java/com/example/shtile/True5gTileService.kt << 'EOF'
+cat > app/src/main/java/com/example/shtile/PackageReceiver.kt << 'EOF'
 package com.example.shtile
-import android.service.quicksettings.Tile
-import android.service.quicksettings.TileService
-import android.widget.Toast
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
 import java.io.DataOutputStream
-class True5gTileService : TileService() {
-    override fun onStartListening() { updateState() }
-    override fun onClick() {
-        val prefs = getSharedPreferences("HidePrefs", MODE_PRIVATE)
-        val isCurrentlyHidden = prefs.getBoolean("is_5g_hidden", false)
-        val hiddenApps = prefs.getStringSet("crazy_apps", emptySet()) ?: emptySet()
-        if (hiddenApps.isEmpty()) { Toast.makeText(this, "No apps selected for Crazy Hide", Toast.LENGTH_SHORT).show(); return }
-        val newState = !isCurrentlyHidden
-        Toast.makeText(this, if (newState) "Crazy Hiding..." else "Restoring...", Toast.LENGTH_SHORT).show()
-        Thread {
-            try {
-                val cmd = StringBuilder()
-                for (pkg in hiddenApps) {
-                    if (newState) {
-                        cmd.append("cp \$(pm path $pkg | cut -d: -f2) /data/local/tmp/\$pkg.apk 2>/dev/null; ")
-                        cmd.append("pm uninstall -k --user 0 $pkg; ")
-                    } else {
-                        cmd.append("cmd package install-existing --user 0 $pkg; ")
-                        cmd.append("if ! pm list packages | grep -q $pkg; then pm install -r /data/local/tmp/\$pkg.apk; fi; ")
-                        cmd.append("pm enable $pkg; ")
-                    }
-                }
-                val p = Runtime.getRuntime().exec("su")
-                val os = DataOutputStream(p.outputStream)
-                os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor()
-                prefs.edit().putBoolean("is_5g_hidden", newState).apply()
-            } catch (e: Exception) {}
-        }.start()
-        updateState(newState)
-    }
-    private fun updateState(forceState: Boolean? = null) {
-        val isHidden = forceState ?: getSharedPreferences("HidePrefs", MODE_PRIVATE).getBoolean("is_5g_hidden", false)
-        qsTile?.apply { label = "True 5G"; state = if (isHidden) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE; updateTile() }
+
+class PackageReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == Intent.ACTION_PACKAGE_ADDED) {
+            val isReplacing = intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)
+            if (isReplacing) return // Ignore updates
+
+            val pkg = intent.data?.encodedSchemeSpecificPart ?: return
+            val prefs = context.getSharedPreferences("HidePrefs", Context.MODE_PRIVATE)
+            val isPayHidden = prefs.getBoolean("is_pay_hidden", false)
+            val safeApps = prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()
+
+            // AUTO-TARGET: If tile is ON and the newly installed app is in our list, hide it instantly
+            if (isPayHidden && safeApps.contains(pkg)) {
+                Thread {
+                    try {
+                        val p = Runtime.getRuntime().exec("su")
+                        val os = DataOutputStream(p.outputStream)
+                        os.writeBytes("pm hide $pkg; pm disable-user --user 0 $pkg\n")
+                        os.writeBytes("exit\n")
+                        os.flush()
+                        os.close()
+                        p.waitFor()
+                    } catch (e: Exception) {}
+                }.start()
+            }
+        }
     }
 }
 EOF
@@ -276,71 +269,47 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-
-data class AppItem(val name: String, val pkg: String, val icon: Drawable, var isSafe: Boolean, var isCrazy: Boolean)
-
+data class AppItem(val name: String, val pkg: String, val icon: Drawable, var isChecked: Boolean)
 class HideAppsActivity : AppCompatActivity() {
     private val appList = ArrayList<AppItem>()
     private var adapter: AppAdapter? = null
     private val prefs by lazy { getSharedPreferences("HidePrefs", MODE_PRIVATE) }
-    private var isSafeMode = true
-
     override fun onCreate(s: Bundle?) {
         super.onCreate(s)
         setContentView(R.layout.activity_hide_apps)
         val search = findViewById<EditText>(R.id.searchInput)
         val applyBtn = findViewById<Button>(R.id.applyBtn)
-        val radioGroup = findViewById<RadioGroup>(R.id.modeRadioGroup)
-        
         loadApps()
-
-        radioGroup.setOnCheckedChangeListener { _, checkedId ->
-            isSafeMode = checkedId == R.id.radioSafe
-            applyBtn.text = if (isSafeMode) "APPLY SAFE HIDE" else "APPLY CRAZY HIDE"
-            adapter?.filter(search.text)
-        }
-
         search.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
             override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) { adapter?.filter(s) }
             override fun afterTextChanged(s: android.text.Editable?) {}
         })
-
         applyBtn.setOnClickListener {
-            val safePkgs = HashSet<String>()
-            val crazyPkgs = HashSet<String>()
-            for (item in appList) { 
-                if (item.isSafe) safePkgs.add(item.pkg) 
-                if (item.isCrazy) crazyPkgs.add(item.pkg) 
-            }
-            prefs.edit().putStringSet("safe_apps", safePkgs).apply()
-            prefs.edit().putStringSet("crazy_apps", crazyPkgs).apply()
-            Toast.makeText(this, "Selection Saved! Use the Tiles to toggle.", Toast.LENGTH_LONG).show()
+            val selectedPkgs = HashSet<String>()
+            for (item in appList) { if (item.isChecked) selectedPkgs.add(item.pkg) }
+            prefs.edit().putStringSet("safe_apps", selectedPkgs).apply()
+            Toast.makeText(this, "Selection Saved! Use Payment Protection tile to toggle.", Toast.LENGTH_LONG).show()
         }
     }
-
     private fun loadApps() {
         Thread {
             val pm = packageManager
             appList.clear()
-            val safePkgs = prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()
-            val crazyPkgs = prefs.getStringSet("crazy_apps", emptySet()) ?: emptySet()
+            val hiddenPkgs = prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()
             val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
-            
             for (app in apps) {
                 if (app.packageName == packageName) continue
                 if ((app.flags and ApplicationInfo.FLAG_SYSTEM) == 0 || pm.getLaunchIntentForPackage(app.packageName) != null) {
                     try {
                         val name = pm.getApplicationLabel(app).toString()
                         if (name.isNotEmpty() && !name.startsWith("com.")) {
-                            val isSafe = safePkgs.contains(app.packageName)
-                            val isCrazy = crazyPkgs.contains(app.packageName)
-                            appList.add(AppItem(name, app.packageName, app.loadIcon(pm), isSafe, isCrazy))
+                            val isChecked = hiddenPkgs.contains(app.packageName)
+                            appList.add(AppItem(name, app.packageName, app.loadIcon(pm), isChecked))
                         }
                     } catch (e: Exception) {}
                 }
             }
-            
             Handler(Looper.getMainLooper()).post {
                 adapter = AppAdapter(this@HideAppsActivity, appList)
                 findViewById<ListView>(R.id.appsList).adapter = adapter
@@ -348,38 +317,31 @@ class HideAppsActivity : AppCompatActivity() {
             }
         }.start()
     }
-
     inner class AppAdapter(context: android.content.Context, private val items: ArrayList<AppItem>) : android.widget.BaseAdapter() {
         private val inflater = android.view.LayoutInflater.from(context)
         private var filteredItems = ArrayList<AppItem>()
-
         override fun getCount(): Int = filteredItems.size
         override fun getItem(position: Int): Any = filteredItems[position]
         override fun getItemId(position: Int): Long = position.toLong()
-
         override fun getView(position: Int, convertView: android.view.View?, parent: android.view.ViewGroup): android.view.View {
             val v = convertView ?: inflater.inflate(R.layout.list_item_app, parent, false)
             val item = filteredItems[position]
-            
             v.findViewById<TextView>(R.id.appName).text = item.name
             v.findViewById<TextView>(R.id.appPkg).text = item.pkg
             v.findViewById<ImageView>(R.id.appIcon).setImageDrawable(item.icon)
-            
             val cb = v.findViewById<CheckBox>(R.id.appCheck)
             cb.setOnCheckedChangeListener(null)
-            cb.isChecked = if (isSafeMode) item.isSafe else item.isCrazy
-            
+            cb.isChecked = item.isChecked
             cb.setOnCheckedChangeListener { _, isChecked -> 
-                if (isSafeMode) item.isSafe = isChecked else item.isCrazy = isChecked
+                item.isChecked = isChecked 
                 filter((findViewById<EditText>(R.id.searchInput)).text)
             }
             return v
         }
-
         fun filter(charSequence: CharSequence?) {
             val query = charSequence?.toString()?.lowercase() ?: ""
             val baseList = if (query.isEmpty()) items else items.filter { it.name.lowercase().contains(query) || it.pkg.lowercase().contains(query) }
-            filteredItems = ArrayList(baseList.sortedWith(compareByDescending<AppItem> { if (isSafeMode) it.isSafe else it.isCrazy }.thenBy { it.name }))
+            filteredItems = ArrayList(baseList.sortedWith(compareByDescending<AppItem> { it.isChecked }.thenBy { it.name }))
             notifyDataSetChanged()
         }
     }
