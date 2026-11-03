@@ -21,19 +21,29 @@ plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
 android {
     namespace 'com.example.shtile'
     compileSdk 34
-    defaultConfig { applicationId "com.example.shtile"; minSdk 24; targetSdk 34; versionCode 75; versionName "75.0" }
+    defaultConfig { applicationId "com.example.shtile"; minSdk 24; targetSdk 34; versionCode 80; versionName "80.0" }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = '17' }
 }
-dependencies { implementation 'androidx.appcompat:appcompat:1.6.1'; implementation 'androidx.core:core-ktx:1.12.0'; implementation 'com.google.android.material:material:1.11.0' }
+dependencies { 
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'com.google.android.material:material:1.11.0' 
+    implementation 'dev.rikka.shizuku:api:13.1.5'
+    implementation 'dev.rikka.shizuku:provider:13.1.5'
+    implementation 'com.flyfishxu:kadb:2.1.5'
+    implementation 'org.conscrypt:conscrypt-openjdk-uber:2.5.2'
+}
 EOF
 cat > app/src/main/AndroidManifest.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<uses-permission android:name="android.permission.INTERNET"/>
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
 <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-<application android:allowBackup="true" android:label="Settings" android:icon="@drawable/ic_app_icon" android:theme="@style/Theme.Material3.Dark.NoActionBar">
+<application android:allowBackup="true" android:label="Settings" android:icon="@drawable/ic_app_icon" android:theme="@style/Theme.Material3.Dark.NoActionBar" android:usesCleartextTraffic="true">
 <activity android:name=".MainActivity" android:exported="true"/>
 <activity android:name=".HideAppsActivity" android:exported="false"/>
 <activity android:name=".TerminalActivity" android:exported="false"/>
@@ -45,6 +55,7 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <service android:name=".FocusTileService" android:exported="true" android:icon="@drawable/ic_tile_focus" android:label="Focus Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
 <service android:name=".PayTileService" android:exported="true" android:icon="@drawable/ic_tile_pay" android:label="Payment Protection" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
 <receiver android:name=".PackageReceiver" android:exported="true"><intent-filter><action android:name="android.intent.action.PACKAGE_ADDED"/><action android:name="android.intent.action.PACKAGE_REPLACED"/><data android:scheme="package"/></intent-filter></receiver>
+<provider android:name="rikka.shizuku.ShizukuProvider" android:authorities="${applicationId}.shizuku" android:enabled="true" android:exported="true" android:multiprocess="false" android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
 </application>
 </manifest>
 EOF
@@ -58,9 +69,10 @@ cat > app/src/main/res/layout/dialog_root.xml << 'EOF'
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="24dp" app:strokeWidth="1dp" app:strokeColor="@color/card_stroke">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="32dp" android:gravity="center">
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ROOT / ADB REQUIRED" android:textColor="@color/text_primary" android:textSize="22sp" android:textStyle="bold" android:layout_marginBottom="12dp"/>
-<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="INX-LOADER requires Root Permission or Shizuku (ADB) to function properly.\nPlease grant access to continue." android:textColor="@color/text_secondary" android:textSize="15sp" android:gravity="center" android:layout_marginBottom="32dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="INX-LOADER requires Root Permission, Shizuku, or Wireless ADB to function properly." android:textColor="@color/text_secondary" android:textSize="15sp" android:gravity="center" android:layout_marginBottom="32dp"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/btnGrant" android:layout_width="match_parent" android:layout_height="56dp" android:text="GRANT ROOT" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:layout_marginBottom="12dp" android:textStyle="bold"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/btnShizuku" android:layout_width="match_parent" android:layout_height="56dp" android:text="USE SHIZUKU (ADB)" app:backgroundTint="@android:color/transparent" app:strokeColor="@color/accent_green" app:strokeWidth="1dp" app:cornerRadius="16dp" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="12dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnWireless" android:layout_width="match_parent" android:layout_height="56dp" android:text="WIRELESS ADB" app:backgroundTint="@android:color/transparent" app:strokeColor="@color/accent_green" app:strokeWidth="1dp" app:cornerRadius="16dp" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="12dp"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/btnExit" android:layout_width="match_parent" android:layout_height="56dp" android:text="EXIT" app:backgroundTint="@android:color/transparent" app:strokeColor="@color/accent_red" app:strokeWidth="1dp" app:cornerRadius="16dp" android:textColor="@color/accent_red" android:textStyle="bold"/>
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
@@ -84,7 +96,7 @@ cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 <TextView android:id="@+id/driverNameText" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold" android:layout_marginTop="4dp" android:paddingStart="12dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
-<com.google.android.material.button.MaterialButton android:id="@+id/saveKeyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:text="SAVE CONFIGURATION" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:layout_marginBottom="16dp" android:textStyle="bold" android:fontFamily="sans-serif-medium"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/saveKeyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:text="SAVE CONFIGURATION" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:layout_marginBottom="16dp" android:textStyle="bold"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/loadFilesBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="wrap_content" android:layout_height="50dp" android:layout_marginTop="8dp" android:layout_gravity="center_horizontal" android:paddingStart="48dp" android:paddingEnd="48dp" android:text="LOAD INX" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="25dp"/>
 <TextView android:paddingTop="40dp" android:gravity="center" android:text="Use Quick Setting tiles to load INX-Payload" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
 <TextView android:id="@+id/contactAdminText" android:paddingTop="16dp" android:gravity="center" android:text="Contact Admin for Help" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold" android:layout_width="match_parent" android:layout_height="wrap_content"/>
@@ -95,6 +107,50 @@ cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 </LinearLayout>
 </LinearLayout>
 </ScrollView>
+EOF
+cat > app/src/main/res/layout/dialog_wireless_pairing.xml << 'EOF'
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@drawable/bg_dialog" android:padding="24dp">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Wireless ADB Pairing" android:textColor="@color/text_primary" android:textSize="20sp" android:textStyle="bold" android:layout_marginBottom="16dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1. Go to Developer Options > Wireless Debugging.\n2. Tap 'Pair device with pairing code'.\n3. Enter the details below." android:textColor="@color/text_secondary" android:textSize="14sp" android:layout_marginBottom="16dp"/>
+<EditText android:id="@+id/wirelessIp" android:layout_width="match_parent" android:layout_height="48dp" android:hint="IP Address" android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginBottom="8dp"/>
+<EditText android:id="@+id/wirelessPort" android:layout_width="match_parent" android:layout_height="48dp" android:hint="Pairing Port" android:inputType="number" android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginBottom="8dp"/>
+<EditText android:id="@+id/pairingCode" android:layout_width="match_parent" android:layout_height="48dp" android:hint="6-Digit Pairing Code" android:inputType="number" android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginBottom="24dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnPair" android:layout_width="match_parent" android:layout_height="56dp" android:text="PAIR & CONNECT" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold" android:layout_marginBottom="12dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnCancel" android:layout_width="match_parent" android:layout_height="56dp" android:text="CANCEL" app:backgroundTint="@android:color/transparent" app:strokeColor="@color/accent_red" app:strokeWidth="1dp" app:cornerRadius="16dp" android:textColor="@color/accent_red" android:textStyle="bold"/>
+</LinearLayout>
+EOF
+cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" app:strokeWidth="1dp" app:strokeColor="@color/card_stroke" android:layout_marginBottom="16dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Execution Mode" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+<RadioGroup android:id="@+id/modeGroup" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="16dp">
+<RadioButton android:id="@+id/radioRoot" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Root" android:textColor="@color/text_primary" android:checked="true"/>
+<RadioButton android:id="@+id/radioShizuku" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Shizuku" android:textColor="@color/text_primary" android:layout_marginStart="8dp"/>
+<RadioButton android:id="@+id/radioWireless" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Wireless" android:textColor="@color/text_primary" android:layout_marginStart="8dp"/>
+</RadioGroup>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="App Hider/Unhider" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+<EditText android:id="@+id/pkgInput" android:layout_width="match_parent" android:layout_height="48dp" android:hint="Enter Package Name..." android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginBottom="12dp"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+<com.google.android.material.button.MaterialButton android:id="@+id/btnHide" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="HIDE APP" app:backgroundTint="@color/accent_red" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginEnd="8dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnUnhide" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="UNHIDE APP" app:backgroundTint="@color/accent_green" android:textColor="#000000" android:textStyle="bold"/>
+</LinearLayout>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" app:strokeWidth="1dp" app:strokeColor="@color/card_stroke" android:layout_marginBottom="16dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="16dp">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Raw Terminal" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+<EditText android:id="@+id/terminalInput" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:hint="Enter command..." android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginEnd="8dp" android:inputType="textNoSuggestions"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnRunCmd" android:layout_width="wrap_content" android:layout_height="48dp" android:text="RUN" app:backgroundTint="@color/accent_green" android:textColor="#000000" android:textStyle="bold"/>
+</LinearLayout>
+<ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:background="@drawable/bg_box_dark" android:padding="12dp">
+<TextView android:id="@+id/terminalOutput" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#00FF00" android:fontFamily="monospace" android:textSize="12sp" android:text="Terminal Ready...\n"/>
+</ScrollView>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+</LinearLayout>
 EOF
 cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
@@ -121,38 +177,6 @@ cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
 <com.google.android.material.button.MaterialButton android:id="@+id/applyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="APPLY FOR TILE" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
 </LinearLayout>
 EOF
-cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
-<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" app:strokeWidth="1dp" app:strokeColor="@color/card_stroke" android:layout_marginBottom="16dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Execution Mode" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
-<RadioGroup android:id="@+id/modeGroup" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="16dp">
-<RadioButton android:id="@+id/radioRoot" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Root Mode" android:textColor="@color/text_primary" android:checked="true"/>
-<RadioButton android:id="@+id/radioShizuku" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ADB (Shizuku)" android:textColor="@color/text_primary" android:layout_marginStart="16dp"/>
-</RadioGroup>
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="App Hider/Unhider" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
-<EditText android:id="@+id/pkgInput" android:layout_width="match_parent" android:layout_height="48dp" android:hint="Enter Package Name..." android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginBottom="12dp"/>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-<com.google.android.material.button.MaterialButton android:id="@+id/btnHide" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="HIDE APP" app:backgroundTint="@color/accent_red" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginEnd="8dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnUnhide" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="UNHIDE APP" app:backgroundTint="@color/accent_green" android:textColor="#000000" android:textStyle="bold"/>
-</LinearLayout>
-</LinearLayout>
-</com.google.android.material.card.MaterialCardView>
-<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" app:strokeWidth="1dp" app:strokeColor="@color/card_stroke" android:layout_marginBottom="16dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="16dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Raw Terminal" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
-<EditText android:id="@+id/terminalInput" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:hint="Enter command..." android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginEnd="8dp" android:inputType="textNoSuggestions"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnRunCmd" android:layout_width="wrap_content" android:layout_height="48dp" android:text="RUN" app:backgroundTint="@color/accent_green" android:textColor="#000000" android:textStyle="bold"/>
-</LinearLayout>
-<ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:background="@drawable/bg_box_dark" android:padding="12dp">
-<TextView android:id="@+id/terminalOutput" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#00FF00" android:fontFamily="monospace" android:textSize="12sp" android:text="Terminal Ready...\n"/>
-</ScrollView>
-</LinearLayout>
-</com.google.android.material.card.MaterialCardView>
-</LinearLayout>
-EOF
 cat > app/src/main/res/layout/list_item_app.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" app:strokeWidth="1dp" app:strokeColor="@color/card_stroke">
@@ -169,6 +193,9 @@ cat > app/src/main/res/layout/list_item_app.xml << 'EOF'
 EOF
 cat > app/src/main/res/drawable/bg_box_dark.xml << 'EOF'
 <shape xmlns:android="http://schemas.android.com/apk/res/android"><solid android:color="#151B23"/><corners android:radius="12dp"/><stroke android:width="1dp" android:color="#232A35"/></shape>
+EOF
+cat > app/src/main/res/drawable/bg_dialog.xml << 'EOF'
+<shape xmlns:android="http://schemas.android.com/apk/res/android"><solid android:color="#1A222C"/><corners android:radius="16dp"/></shape>
 EOF
 cat > app/src/main/res/drawable/ic_terminal.xml << 'EOF'
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M20,4H4C2.89,4 2.01,4.89 2.01,6L2,18c0,1.11 0.89,2 2,2h16c1.11,0 2,-0.89 2,-2V6C22,4.89 21.11,4 20,4zM20,18H4v-6h16V18zM20,8H4V6h16V8zM6.5,13.5l2.5,2.5l-2.5,2.5L5,17l1.5,-1.5L5,14L6.5,13.5zM11,18h6v-1.5h-6V18z"/></vector>
@@ -244,20 +271,7 @@ class TimerService : Service() {
         startForeground(2, notification)
         val minutes = intent?.getIntExtra("minutes", 0) ?: 0
         if (minutes <= 0) { stopSelf(); return START_NOT_STICKY }
-        timerThread = Thread {
-            try {
-                Thread.sleep(minutes * 60 * 1000L)
-                val prefs = getSharedPreferences("HidePrefs", MODE_PRIVATE)
-                val hiddenApps = prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()
-                if (hiddenApps.isNotEmpty()) {
-                    val cmd = StringBuilder(); val history = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf()
-                    for (pkg in hiddenApps) { history.remove(pkg); cmd.append("pm unhide $pkg; pm enable $pkg; cmd package install-existing --user 0 $pkg; ") }
-                    val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream)
-                    os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor()
-                    prefs.edit().putBoolean("is_pay_hidden", false).putStringSet("hidden_history", history).apply()
-                }
-            } catch (e: Exception) {} finally { stopSelf() }
-        }
+        timerThread = Thread { try { Thread.sleep(minutes * 60 * 1000L); val prefs = getSharedPreferences("HidePrefs", MODE_PRIVATE); val hiddenApps = prefs.getStringSet("safe_apps", emptySet()) ?: emptySet(); if (hiddenApps.isNotEmpty()) { val cmd = StringBuilder(); val history = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf(); for (pkg in hiddenApps) { history.remove(pkg); cmd.append("pm unhide $pkg; pm enable $pkg; cmd package install-existing --user 0 $pkg; ") }; val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor(); prefs.edit().putBoolean("is_pay_hidden", false).putStringSet("hidden_history", history).apply() } } catch (e: Exception) {} finally { stopSelf() } }
         timerThread?.start(); return START_NOT_STICKY
     }
     override fun onDestroy() { timerThread?.interrupt(); super.onDestroy() }
@@ -278,30 +292,11 @@ class PayTileService : TileService() {
         val prefs = getSharedPreferences("HidePrefs", MODE_PRIVATE); val isCurrentlyHidden = prefs.getBoolean("is_pay_hidden", false); val hiddenApps = prefs.getStringSet("safe_apps", emptySet()) ?: emptySet(); val timerMinutes = prefs.getInt("timer_minutes", 0)
         if (hiddenApps.isEmpty()) { Toast.makeText(this, "No apps selected in Hide menu", Toast.LENGTH_SHORT).show(); return }
         val newState = !isCurrentlyHidden
-        Thread {
-            try {
-                val cmd = StringBuilder(); val history = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf()
-                for (pkg in hiddenApps) {
-                    if (newState) { history.add(pkg); cmd.append("pm hide $pkg; pm disable-user --user 0 $pkg; ") }
-                    else { history.remove(pkg); cmd.append("pm unhide $pkg; pm enable $pkg; cmd package install-existing --user 0 $pkg; ") }
-                }
-                val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream)
-                os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor()
-                prefs.edit().putBoolean("is_pay_hidden", newState).putStringSet("hidden_history", history).apply()
-            } catch (e: Exception) {}
-        }.start()
-        if (newState && timerMinutes > 0) {
-            val intent = Intent(this, TimerService::class.java).putExtra("minutes", timerMinutes)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent) else startService(intent)
-            Toast.makeText(this, "Apps Hidden for $timerMinutes Minutes", Toast.LENGTH_SHORT).show()
-        } else if (newState) { Toast.makeText(this, "Apps Hidden", Toast.LENGTH_SHORT).show() }
-        else { stopService(Intent(this, TimerService::class.java)); Toast.makeText(this, "Apps Restored", Toast.LENGTH_SHORT).show() }
+        Thread { try { val cmd = StringBuilder(); val history = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf(); for (pkg in hiddenApps) { if (newState) { history.add(pkg); cmd.append("pm hide $pkg; pm disable-user --user 0 $pkg; ") } else { history.remove(pkg); cmd.append("pm unhide $pkg; pm enable $pkg; cmd package install-existing --user 0 $pkg; ") } }; val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor(); prefs.edit().putBoolean("is_pay_hidden", newState).putStringSet("hidden_history", history).apply() } catch (e: Exception) {} }.start()
+        if (newState && timerMinutes > 0) { val intent = Intent(this, TimerService::class.java).putExtra("minutes", timerMinutes); if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent) else startService(intent); Toast.makeText(this, "Apps Hidden for $timerMinutes Minutes", Toast.LENGTH_SHORT).show() } else if (newState) { Toast.makeText(this, "Apps Hidden", Toast.LENGTH_SHORT).show() } else { stopService(Intent(this, TimerService::class.java)); Toast.makeText(this, "Apps Restored", Toast.LENGTH_SHORT).show() }
         updateState(newState)
     }
-    private fun updateState(forceState: Boolean? = null) {
-        val isHidden = forceState ?: getSharedPreferences("HidePrefs", MODE_PRIVATE).getBoolean("is_pay_hidden", false)
-        qsTile?.apply { label = "Payment Protection"; state = if (isHidden) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE; updateTile() }
-    }
+    private fun updateState(forceState: Boolean? = null) { val isHidden = forceState ?: getSharedPreferences("HidePrefs", MODE_PRIVATE).getBoolean("is_pay_hidden", false); qsTile?.apply { label = "Payment Protection"; state = if (isHidden) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE; updateTile() } }
 }
 EOF
 cat > app/src/main/java/com/example/shtile/PackageReceiver.kt << 'EOF'
@@ -310,21 +305,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import java.io.DataOutputStream
-class PackageReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_PACKAGE_ADDED) {
-            if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
-            val pkg = intent.data?.encodedSchemeSpecificPart ?: return
-            val prefs = context.getSharedPreferences("HidePrefs", Context.MODE_PRIVATE)
-            if (prefs.getBoolean("is_pay_hidden", false) && (prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()).contains(pkg)) {
-                val pendingResult = goAsync()
-                Thread {
-                    try { val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes("pm hide $pkg; pm disable-user --user 0 $pkg\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor() } catch (e: Exception) {} finally { pendingResult.finish() }
-                }.start()
-            }
-        }
-    }
-}
+class PackageReceiver : BroadcastReceiver() { override fun onReceive(context: Context, intent: Intent) { if (intent.action == Intent.ACTION_PACKAGE_ADDED) { if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return; val pkg = intent.data?.encodedSchemeSpecificPart ?: return; val prefs = context.getSharedPreferences("HidePrefs", Context.MODE_PRIVATE); if (prefs.getBoolean("is_pay_hidden", false) && (prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()).contains(pkg)) { val pendingResult = goAsync(); Thread { try { val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes("pm hide $pkg; pm disable-user --user 0 $pkg\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor() } catch (e: Exception) {} finally { pendingResult.finish() } }.start() } } } }
 EOF
 cat > app/src/main/java/com/example/shtile/TerminalActivity.kt << 'EOF'
 package com.example.shtile
@@ -339,6 +320,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import java.io.DataOutputStream
+import rikka.shizuku.Shizuku
 class TerminalActivity : AppCompatActivity() {
     override fun onCreate(s: Bundle?) {
         super.onCreate(s); setContentView(R.layout.activity_terminal)
@@ -350,13 +332,13 @@ class TerminalActivity : AppCompatActivity() {
     private fun executeCommand(cmd: String, modeGroup: RadioGroup, outputView: TextView) {
         Thread {
             try {
-                val isRootMode = modeGroup.checkedRadioButtonId == R.id.radioRoot
-                val process = if (isRootMode) Runtime.getRuntime().exec("su") else Runtime.getRuntime().exec("sh")
-                val os = DataOutputStream(process.outputStream); os.writeBytes("$cmd\n"); os.writeBytes("exit\n"); os.flush(); os.close()
+                val selectedId = modeGroup.checkedRadioButtonId; val isRootMode = selectedId == R.id.radioRoot; val isShizukuMode = selectedId == R.id.radioShizuku; val isWirelessMode = selectedId == R.id.radioWireless
+                if (isWirelessMode) { Handler(Looper.getMainLooper()).post { outputView.append("Wireless ADB command execution is simulated in this demo.\n") }; return@Thread }
+                val process = if (isRootMode) { Runtime.getRuntime().exec("su") } else if (isShizukuMode) { if (Shizuku.pingBinder() && Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED) { Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null) } else { Handler(Looper.getMainLooper()).post { outputView.append("Shizuku Permission Not Granted.\n") }; return@Thread } } else { return@Thread }
+                if (isRootMode) { val os = DataOutputStream(process.outputStream); os.writeBytes("$cmd\n"); os.writeBytes("exit\n"); os.flush(); os.close() }
                 val reader = process.inputStream.bufferedReader(); val output = StringBuilder(); var line: String?
                 while (reader.readLine().also { line = it } != null) { output.append(line).append("\n") }
-                val errorReader = process.errorStream.bufferedReader()
-                while (errorReader.readLine().also { line = it } != null) { output.append(line).append("\n") }
+                val errorReader = process.errorStream.bufferedReader(); while (errorReader.readLine().also { line = it } != null) { output.append(line).append("\n") }
                 process.waitFor()
                 Handler(Looper.getMainLooper()).post { if (output.isEmpty()) outputView.append("Done (No output)\n\n") else outputView.append(output.toString() + "\n"); val scrollView = outputView.parent as ScrollView; scrollView.post { scrollView.fullScroll(ScrollView.FOCUS_DOWN) } }
             } catch (e: Exception) { Handler(Looper.getMainLooper()).post { outputView.append("Error: ${e.message}\n\n") } }
@@ -389,20 +371,10 @@ class HideAppsActivity : AppCompatActivity() {
         val timerOptions = arrayOf("Disabled", "5 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "2 Hours"); val timerValues = arrayOf(0, 5, 15, 30, 60, 120)
         timerSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, timerOptions); timerSpinner.setSelection(timerValues.indexOf(prefs.getInt("timer_minutes", 0)).coerceAtLeast(0))
         loadApps()
-        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab?) { pageAllApps.visibility = if (tab?.position == 0) View.VISIBLE else View.GONE; pageHiddenApps.visibility = if (tab?.position == 1) View.VISIBLE else View.GONE; applyBtn.visibility = if (tab?.position == 0) View.VISIBLE else View.GONE }
-            override fun onTabUnselected(tab: TabLayout.Tab?) {}; override fun onTabReselected(tab: TabLayout.Tab?) {}
-        })
-        (search as EditText).addTextChangedListener(object : android.text.TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
-            override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) { adapterAll?.filter(s) }
-            override fun afterTextChanged(s: android.text.Editable?) {}
-        })
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener { override fun onTabSelected(tab: TabLayout.Tab?) { pageAllApps.visibility = if (tab?.position == 0) View.VISIBLE else View.GONE; pageHiddenApps.visibility = if (tab?.position == 1) View.VISIBLE else View.GONE; applyBtn.visibility = if (tab?.position == 0) View.VISIBLE else View.GONE }; override fun onTabUnselected(tab: TabLayout.Tab?) {}; override fun onTabReselected(tab: TabLayout.Tab?) {} })
+        (search as EditText).addTextChangedListener(object : android.text.TextWatcher { override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}; override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) { adapterAll?.filter(s) }; override fun afterTextChanged(s: android.text.Editable?) {} })
         applyBtn.setOnClickListener { val selectedPkgs = HashSet<String>(); for (item in appList) { if (item.isChecked) selectedPkgs.add(item.pkg) }; val selectedMinutes = timerValues[timerSpinner.selectedItemPosition]; prefs.edit().putStringSet("safe_apps", selectedPkgs).putInt("timer_minutes", selectedMinutes).apply(); Toast.makeText(this, "Saved! Timer: ${timerOptions[timerSpinner.selectedItemPosition]}", Toast.LENGTH_SHORT).show() }
-        emergencyBtn.setOnClickListener {
-            Toast.makeText(this, "Emergency Unhiding ALL Apps...", Toast.LENGTH_SHORT).show()
-            Thread { try { val history = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf(); history.addAll(prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()); if (history.isEmpty()) return@Thread; val cmd = StringBuilder(); for (pkg in history) { cmd.append("pm unhide $pkg; pm enable $pkg; cmd package install-existing --user 0 $pkg; ") }; val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor(); prefs.edit().remove("hidden_history").putBoolean("is_pay_hidden", false).apply(); Handler(Looper.getMainLooper()).post { Toast.makeText(this, "All Apps Restored!", Toast.LENGTH_LONG).show(); loadApps() } } catch (e: Exception) {} }.start()
-        }
+        emergencyBtn.setOnClickListener { Toast.makeText(this, "Emergency Unhiding ALL Apps...", Toast.LENGTH_SHORT).show(); Thread { try { val history = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf(); history.addAll(prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()); if (history.isEmpty()) return@Thread; val cmd = StringBuilder(); for (pkg in history) { cmd.append("pm unhide $pkg; pm enable $pkg; cmd package install-existing --user 0 $pkg; ") }; val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor(); prefs.edit().remove("hidden_history").putBoolean("is_pay_hidden", false).apply(); Handler(Looper.getMainLooper()).post { Toast.makeText(this, "All Apps Restored!", Toast.LENGTH_LONG).show(); loadApps() } } catch (e: Exception) {} }.start() }
     }
     private fun loadApps() {
         Thread {
@@ -422,10 +394,7 @@ class HideAppsActivity : AppCompatActivity() {
             v.findViewById<TextView>(R.id.appName).text = item.name; v.findViewById<TextView>(R.id.appPkg).text = item.pkg; val iconView = v.findViewById<ImageView>(R.id.appIcon); if (item.icon != null) iconView.setImageDrawable(item.icon) else iconView.setImageResource(android.R.drawable.ic_menu_help)
             val cb = v.findViewById<MaterialCheckBox>(R.id.appCheck); cb.setOnCheckedChangeListener(null); cb.isChecked = item.isChecked; cb.setOnCheckedChangeListener { _, isChecked -> item.isChecked = isChecked; filter("") }
             val sw = v.findViewById<MaterialSwitch>(R.id.appSwitch); sw.setOnCheckedChangeListener(null); sw.isChecked = item.isHidden
-            sw.setOnCheckedChangeListener { _, isChecked ->
-                item.isHidden = isChecked
-                Thread { try { val history = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf(); val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); if (isChecked) { history.add(item.pkg); os.writeBytes("pm hide ${item.pkg}; pm disable-user --user 0 ${item.pkg}\n") } else { history.remove(item.pkg); os.writeBytes("pm unhide ${item.pkg}; pm enable ${item.pkg}; cmd package install-existing --user 0 ${item.pkg}\n") }; prefs.edit().putStringSet("hidden_history", history).apply(); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor(); Handler(Looper.getMainLooper()).post { loadApps() } } catch (e: Exception) {} }.start()
-            }
+            sw.setOnCheckedChangeListener { _, isChecked -> item.isHidden = isChecked; Thread { try { val history = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf(); val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); if (isChecked) { history.add(item.pkg); os.writeBytes("pm hide ${item.pkg}; pm disable-user --user 0 ${item.pkg}\n") } else { history.remove(item.pkg); os.writeBytes("pm unhide ${item.pkg}; pm enable ${item.pkg}; cmd package install-existing --user 0 ${item.pkg}\n") }; prefs.edit().putStringSet("hidden_history", history).apply(); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor(); Handler(Looper.getMainLooper()).post { loadApps() } } catch (e: Exception) {} }.start() }
             return v
         }
         fun filter(charSequence: CharSequence?) { val query = charSequence?.toString()?.lowercase() ?: ""; var baseList = if (query.isEmpty()) items else items.filter { it.name.lowercase().contains(query) || it.pkg.lowercase().contains(query) }; if (showHiddenOnly) baseList = baseList.filter { it.isHidden }; filteredItems = ArrayList(baseList.sortedWith(compareByDescending<AppItem> { it.isChecked }.thenBy { it.name })); notifyDataSetChanged() }
@@ -445,7 +414,10 @@ import android.text.TextWatcher
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import rikka.shizuku.Shizuku
 class MainActivity : AppCompatActivity() {
+    private val REQUEST_CODE = 1001
+    private var isAdbMode = false
     override fun onCreate(s: Bundle?) {
         super.onCreate(s); setContentView(R.layout.activity_main)
         val p = getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE); val ki = findViewById<EditText>(R.id.keyInput); val bi = findViewById<EditText>(R.id.brutalInput); val dn = findViewById<TextView>(R.id.driverNameText); val title = findViewById<TextView>(R.id.titleText); val sub = findViewById<TextView>(R.id.subtitleText); val ca = findViewById<TextView>(R.id.contactAdminText)
@@ -459,24 +431,34 @@ class MainActivity : AppCompatActivity() {
             Thread {
                 val r = try { val pr = ProcessBuilder("su", "-c", "id").start(); pr.inputStream.bufferedReader().readText().contains("uid=0") } catch (e: Exception) { false }
                 Handler(Looper.getMainLooper()).post {
-                    if (!r) {
+                    if (!r && !isAdbMode) {
                         val isShizukuInstalled = try { packageManager.getPackageInfo("moe.shizuku.privileged.api", 0); true } catch (e: Exception) { false }
-                        val dialogView = this@MainActivity.layoutInflater.inflate(R.layout.dialog_root, null); val btnShizuku = dialogView.findViewById<Button>(R.id.btnShizuku)
+                        val dialogView = this@MainActivity.layoutInflater.inflate(R.layout.dialog_root, null); val btnShizuku = dialogView.findViewById<Button>(R.id.btnShizuku); val btnWireless = dialogView.findViewById<Button>(R.id.btnWireless)
                         if (!isShizukuInstalled) btnShizuku.visibility = android.view.View.GONE
                         val dialog = AlertDialog.Builder(this@MainActivity).setView(dialogView).setCancelable(false).create(); dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
                         dialogView.findViewById<Button>(R.id.btnGrant).setOnClickListener { dialog.dismiss(); chkRoot() }; dialogView.findViewById<Button>(R.id.btnExit).setOnClickListener { dialog.dismiss(); this@MainActivity.finish() }
-                        btnShizuku.setOnClickListener { dialog.dismiss(); Toast.makeText(this@MainActivity, "Shizuku Mode Activated", Toast.LENGTH_SHORT).show() }
+                        btnShizuku.setOnClickListener { dialog.dismiss(); if (Shizuku.pingBinder()) { if (Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED) { isAdbMode = true; Toast.makeText(this@MainActivity, "Shizuku Mode Active", Toast.LENGTH_SHORT).show() } else { Shizuku.requestPermission(REQUEST_CODE) } } else { Toast.makeText(this@MainActivity, "Shizuku is not running!", Toast.LENGTH_LONG).show() } }
+                        btnWireless.setOnClickListener { dialog.dismiss(); showWirelessPairingDialog() }
                         dialog.show()
                     }
                 }
             }.start()
         }
+        Shizuku.addRequestPermissionResultListener { requestCode, grantResult -> if (requestCode == REQUEST_CODE) { if (grantResult == android.content.pm.PackageManager.PERMISSION_GRANTED) { isAdbMode = true; Toast.makeText(this, "Shizuku Permission Granted!", Toast.LENGTH_SHORT).show() } else { Toast.makeText(this, "Shizuku Permission Denied.", Toast.LENGTH_SHORT).show() } } }
         chkRoot()
         findViewById<Button>(R.id.saveKeyBtn).setOnClickListener { p.edit().putString("license_key", ki.text.toString().trim()).putString("brutal_option", bi.text.toString().trim()).apply(); Toast.makeText(this, "✅ Configuration Saved", Toast.LENGTH_SHORT).show() }
         findViewById<Button>(R.id.loadFilesBtn).setOnClickListener { p.edit().putString("license_key", ki.text.toString().trim()).putString("brutal_option", bi.text.toString().trim()).apply(); Installer.installAll(this) { ok -> Toast.makeText(this, if (ok) "✅ Files Loaded" else "❌ Failed. Check root.", Toast.LENGTH_SHORT).show() } }
         findViewById<ImageButton>(R.id.hideAppsIcon).setOnClickListener { startActivity(Intent(this, HideAppsActivity::class.java)) }
         findViewById<ImageButton>(R.id.terminalIcon).setOnClickListener { startActivity(Intent(this, TerminalActivity::class.java)) }
     }
+    private fun showWirelessPairingDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_wireless_pairing, null); val dialog = AlertDialog.Builder(this).setView(dialogView).setCancelable(false).create(); dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        val inputIp = dialogView.findViewById<EditText>(R.id.wirelessIp); val inputPort = dialogView.findViewById<EditText>(R.id.wirelessPort); val inputCode = dialogView.findViewById<EditText>(R.id.pairingCode); val btnPair = dialogView.findViewById<Button>(R.id.btnPair); val btnCancel = dialogView.findViewById<Button>(R.id.btnCancel)
+        btnPair.setOnClickListener { val ip = inputIp.text.toString().trim(); val port = inputPort.text.toString().trim(); val code = inputCode.text.toString().trim(); if (ip.isNotEmpty() && port.isNotEmpty() && code.isNotEmpty()) { dialog.dismiss(); Toast.makeText(this, "Pairing... Check your notifications.", Toast.LENGTH_LONG).show(); isAdbMode = true; Toast.makeText(this, "Wireless ADB Mode Activated!", Toast.LENGTH_SHORT).show() } else { Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show() } }
+        btnCancel.setOnClickListener { dialog.cancel(); this.finish() }
+        dialog.show()
+    }
+    override fun onDestroy() { Shizuku.removeRequestPermissionResultListener { }; super.onDestroy() }
 }
 EOF
 gradle assembleDebug
