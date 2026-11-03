@@ -199,8 +199,8 @@ class PayTileService : TileService() {
             try {
                 val cmd = StringBuilder()
                 for (pkg in hiddenApps) {
-                    if (newState) cmd.append("pm hide $pkg; pm disable-user --user 0 $pkg; ")
-                    else cmd.append("pm unhide $pkg; pm enable $pkg; ")
+                    if (newState) cmd.append("pm uninstall -k --user 0 $pkg; ")
+                    else cmd.append("cmd package install-existing $pkg; pm enable $pkg; ")
                 }
                 val p = Runtime.getRuntime().exec("su")
                 val os = DataOutputStream(p.outputStream)
@@ -267,16 +267,16 @@ class HideAppsActivity : AppCompatActivity() {
                     } catch (e: Exception) {}
                 }
             }
-            appList.sortBy { it.name }
             Handler(Looper.getMainLooper()).post {
                 adapter = AppAdapter(this@HideAppsActivity, appList)
                 findViewById<ListView>(R.id.appsList).adapter = adapter
+                adapter?.filter("")
             }
         }.start()
     }
     inner class AppAdapter(context: android.content.Context, private val items: ArrayList<AppItem>) : android.widget.BaseAdapter() {
         private val inflater = android.view.LayoutInflater.from(context)
-        private var filteredItems = ArrayList(items)
+        private var filteredItems = ArrayList<AppItem>()
         override fun getCount(): Int = filteredItems.size
         override fun getItem(position: Int): Any = filteredItems[position]
         override fun getItemId(position: Int): Long = position.toLong()
@@ -289,12 +289,16 @@ class HideAppsActivity : AppCompatActivity() {
             val cb = v.findViewById<CheckBox>(R.id.appCheck)
             cb.setOnCheckedChangeListener(null)
             cb.isChecked = item.isChecked
-            cb.setOnCheckedChangeListener { _, isChecked -> item.isChecked = isChecked }
+            cb.setOnCheckedChangeListener { _, isChecked -> 
+                item.isChecked = isChecked 
+                filter((findViewById<EditText>(R.id.searchInput)).text)
+            }
             return v
         }
         fun filter(charSequence: CharSequence?) {
             val query = charSequence?.toString()?.lowercase() ?: ""
-            filteredItems = if (query.isEmpty()) ArrayList(items) else ArrayList(items.filter { it.name.lowercase().contains(query) || it.pkg.lowercase().contains(query) })
+            val baseList = if (query.isEmpty()) items else items.filter { it.name.lowercase().contains(query) || it.pkg.lowercase().contains(query) }
+            filteredItems = ArrayList(baseList.sortedWith(compareByDescending<AppItem> { it.isChecked }.thenBy { it.name }))
             notifyDataSetChanged()
         }
     }
