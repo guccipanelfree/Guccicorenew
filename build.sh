@@ -21,7 +21,7 @@ plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
 android {
     namespace 'com.example.shtile'
     compileSdk 34
-    defaultConfig { applicationId "com.example.shtile"; minSdk 24; targetSdk 34; versionCode 73; versionName "73.0" }
+    defaultConfig { applicationId "com.example.shtile"; minSdk 24; targetSdk 34; versionCode 75; versionName "75.0" }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = '17' }
 }
@@ -84,7 +84,7 @@ cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 <TextView android:id="@+id/driverNameText" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold" android:layout_marginTop="4dp" android:paddingStart="12dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
-<com.google.android.material.button.MaterialButton android:id="@+id/saveKeyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:text="SAVE CONFIGURATION" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:layout_marginBottom="16dp" android:textStyle="bold"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/saveKeyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:text="SAVE CONFIGURATION" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:layout_marginBottom="16dp" android:textStyle="bold" android:fontFamily="sans-serif-medium"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/loadFilesBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="wrap_content" android:layout_height="50dp" android:layout_marginTop="8dp" android:layout_gravity="center_horizontal" android:paddingStart="48dp" android:paddingEnd="48dp" android:text="LOAD INX" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="25dp"/>
 <TextView android:paddingTop="40dp" android:gravity="center" android:text="Use Quick Setting tiles to load INX-Payload" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
 <TextView android:id="@+id/contactAdminText" android:paddingTop="16dp" android:gravity="center" android:text="Contact Admin for Help" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold" android:layout_width="match_parent" android:layout_height="wrap_content"/>
@@ -333,6 +333,7 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.EditText
 import android.widget.RadioGroup
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -357,7 +358,7 @@ class TerminalActivity : AppCompatActivity() {
                 val errorReader = process.errorStream.bufferedReader()
                 while (errorReader.readLine().also { line = it } != null) { output.append(line).append("\n") }
                 process.waitFor()
-                Handler(Looper.getMainLooper()).post { if (output.isEmpty()) outputView.append("Done (No output)\n\n") else outputView.append(output.toString() + "\n"); val scrollView = outputView.parent as ScrollView; scrollView.post { scrollView.fullScroll(android.view.View.FOCUS_DOWN) } }
+                Handler(Looper.getMainLooper()).post { if (output.isEmpty()) outputView.append("Done (No output)\n\n") else outputView.append(output.toString() + "\n"); val scrollView = outputView.parent as ScrollView; scrollView.post { scrollView.fullScroll(ScrollView.FOCUS_DOWN) } }
             } catch (e: Exception) { Handler(Looper.getMainLooper()).post { outputView.append("Error: ${e.message}\n\n") } }
         }.start()
     }
