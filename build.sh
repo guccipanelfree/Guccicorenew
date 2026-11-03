@@ -199,8 +199,13 @@ class PayTileService : TileService() {
             try {
                 val cmd = StringBuilder()
                 for (pkg in hiddenApps) {
-                    if (newState) cmd.append("pm uninstall -k --user 0 $pkg; ")
-                    else cmd.append("cmd package install-existing $pkg; pm enable $pkg; ")
+                    if (newState) {
+                        // CRAZY SAFE HIDE: Double freeze!
+                        cmd.append("pm hide $pkg; pm disable-user --user 0 $pkg; ")
+                    } else {
+                        // SAFE UNHIDE
+                        cmd.append("pm unhide $pkg; pm enable $pkg; ")
+                    }
                 }
                 val p = Runtime.getRuntime().exec("su")
                 val os = DataOutputStream(p.outputStream)
