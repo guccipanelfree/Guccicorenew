@@ -102,8 +102,8 @@ cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 <TextView android:id="@+id/driverNameText" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold" android:layout_marginTop="4dp" android:paddingStart="12dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
-<com.google.android.material.button.MaterialButton android:id="@+id/saveKeyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:text="SAVE CONFIGURATION" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="18dp" android:layout_marginBottom="16dp" android:textStyle="bold" android:letterSpacing="0.05"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/loadFilesBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="wrap_content" android:layout_height="54dp" android:layout_marginTop="8dp" android:layout_gravity="center_horizontal" android:paddingStart="48dp" android:paddingEnd="48dp" android:text="LOAD INX" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:strokeWidth="2dp" app:cornerRadius="27dp" android:textStyle="bold" android:letterSpacing="0.05"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/saveKeyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:text="SAVE CONFIGURATION" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="18dp" android:layout_marginBottom="16dp" android:textStyle="bold"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/loadFilesBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="wrap_content" android:layout_height="54dp" android:layout_marginTop="8dp" android:layout_gravity="center_horizontal" android:paddingStart="48dp" android:paddingEnd="48dp" android:text="LOAD INX" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:strokeWidth="2dp" app:cornerRadius="27dp" android:textStyle="bold"/>
 <TextView android:paddingTop="40dp" android:gravity="center" android:text="Use Quick Setting tiles to load INX-Payload" android:textColor="@color/text_secondary" android:textSize="13sp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
 <TextView android:id="@+id/contactAdminText" android:paddingTop="16dp" android:gravity="center" android:text="Contact Admin for Help" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold" android:layout_width="match_parent" android:layout_height="wrap_content"/>
 <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
@@ -321,9 +321,12 @@ class TerminalActivity : AppCompatActivity() {
         Thread {
             try {
                 val selectedId = modeGroup.checkedRadioButtonId; val isRootMode = selectedId == R.id.radioRoot; val isShizukuMode = selectedId == R.id.radioShizuku
-                val process = if (isRootMode) { Runtime.getRuntime().exec("su") } else if (isShizukuMode) { if (Shizuku.pingBinder() && Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED) { Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null) } else { Handler(Looper.getMainLooper()).post { outputView.append("Shizuku Permission Not Granted.\n") }; return@Thread } } else { return@Thread }
-                if (isRootMode) { val os = DataOutputStream(process.outputStream); os.writeBytes("$cmd\n"); os.writeBytes("exit\n"); os.flush(); os.close() }
-                val reader = process.inputStream.bufferedReader(); val output = StringBuilder(); var line: String?
+                if (isShizukuMode && (!Shizuku.pingBinder() || Shizuku.checkSelfPermission() != android.content.pm.PackageManager.PERMISSION_GRANTED)) {
+                    Handler(Looper.getMainLooper()).post { outputView.append("Shizuku Permission Not Granted.\n") }; return@Thread
+                }
+                val process: Process? = if (isRootMode) { Runtime.getRuntime().exec("su") } else if (isShizukuMode) { Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null) } else { return@Thread }
+                if (isRootMode) { val os = DataOutputStream(process!!.outputStream); os.writeBytes("$cmd\n"); os.writeBytes("exit\n"); os.flush(); os.close() }
+                val reader = process!!.inputStream.bufferedReader(); val output = StringBuilder(); var line: String?
                 while (reader.readLine().also { line = it } != null) { output.append(line).append("\n") }
                 val errorReader = process.errorStream.bufferedReader(); while (errorReader.readLine().also { line = it } != null) { output.append(line).append("\n") }
                 process.waitFor()
@@ -349,17 +352,18 @@ import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.tabs.TabLayout
+import com.google.android.material.textfield.TextInputEditText
 data class AppItem(val name: String, val pkg: String, val icon: Drawable?, var isChecked: Boolean, var isHidden: Boolean)
 class HideAppsActivity : AppCompatActivity() {
     private val appList = ArrayList<AppItem>(); private var adapterAll: AppAdapter? = null; private var adapterHidden: AppAdapter? = null; private val prefs by lazy { getSharedPreferences("HidePrefs", MODE_PRIVATE) }
     override fun onCreate(s: Bundle?) {
         super.onCreate(s); setContentView(R.layout.activity_hide_apps)
-        val tabLayout = findViewById<TabLayout>(R.id.tabLayout); val pageAllApps = findViewById<View>(R.id.pageAllApps); val pageHiddenApps = findViewById<View>(R.id.pageHiddenApps); val search = findViewById<TextView>(R.id.searchInput); val applyBtn = findViewById<MaterialButton>(R.id.applyBtn); val emergencyBtn = findViewById<MaterialButton>(R.id.emergencyBtn); val timerSpinner = findViewById<Spinner>(R.id.timerSpinner)
+        val tabLayout = findViewById<TabLayout>(R.id.tabLayout); val pageAllApps = findViewById<View>(R.id.pageAllApps); val pageHiddenApps = findViewById<View>(R.id.pageHiddenApps); val search = findViewById<TextInputEditText>(R.id.searchInput); val applyBtn = findViewById<MaterialButton>(R.id.applyBtn); val emergencyBtn = findViewById<MaterialButton>(R.id.emergencyBtn); val timerSpinner = findViewById<Spinner>(R.id.timerSpinner)
         val timerOptions = arrayOf("Disabled", "5 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "2 Hours"); val timerValues = arrayOf(0, 5, 15, 30, 60, 120)
         timerSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, timerOptions); timerSpinner.setSelection(timerValues.indexOf(prefs.getInt("timer_minutes", 0)).coerceAtLeast(0))
         loadApps()
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener { override fun onTabSelected(tab: TabLayout.Tab?) { pageAllApps.visibility = if (tab?.position == 0) View.VISIBLE else View.GONE; pageHiddenApps.visibility = if (tab?.position == 1) View.VISIBLE else View.GONE; applyBtn.visibility = if (tab?.position == 0) View.VISIBLE else View.GONE }; override fun onTabUnselected(tab: TabLayout.Tab?) {}; override fun onTabReselected(tab: TabLayout.Tab?) {} })
-        (search as EditText).addTextChangedListener(object : android.text.TextWatcher { override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}; override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) { adapterAll?.filter(s) }; override fun afterTextChanged(s: android.text.Editable?) {} })
+        search.addTextChangedListener(object : android.text.TextWatcher { override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}; override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) { adapterAll?.filter(s) }; override fun afterTextChanged(s: android.text.Editable?) {} })
         applyBtn.setOnClickListener { val selectedPkgs = HashSet<String>(); for (item in appList) { if (item.isChecked) selectedPkgs.add(item.pkg) }; val selectedMinutes = timerValues[timerSpinner.selectedItemPosition]; prefs.edit().putStringSet("safe_apps", selectedPkgs).putInt("timer_minutes", selectedMinutes).apply(); Toast.makeText(this, "Saved! Timer: ${timerOptions[timerSpinner.selectedItemPosition]}", Toast.LENGTH_SHORT).show() }
         emergencyBtn.setOnClickListener { Toast.makeText(this, "Emergency Unhiding ALL Apps...", Toast.LENGTH_SHORT).show(); Thread { try { val history = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf(); history.addAll(prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()); if (history.isEmpty()) return@Thread; val cmd = StringBuilder(); for (pkg in history) { cmd.append("pm unhide $pkg; pm enable $pkg; cmd package install-existing --user 0 $pkg; ") }; val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor(); prefs.edit().remove("hidden_history").putBoolean("is_pay_hidden", false).apply(); Handler(Looper.getMainLooper()).post { Toast.makeText(this, "All Apps Restored!", Toast.LENGTH_LONG).show(); loadApps() } } catch (e: Exception) {} }.start() }
     }
@@ -405,7 +409,7 @@ import rikka.shizuku.Shizuku
 class MainActivity : AppCompatActivity() {
     private val REQUEST_CODE = 1001
     private var isAdbMode = false
-    private val shizukuListener = Shizuku.OnRequestPermissionResultListener { requestCode, grantResult -> if (requestCode == REQUEST_CODE) { if (grantResult == android.content.pm.PackageManager.PERMISSION_GRANTED) { isAdbMode = true; Toast.makeText(this, "Shizuku Permission Granted!", Toast.LENGTH_SHORT).show() } else { Toast.makeText(this, "Shizuku Permission Denied.", Toast.LENGTH_SHORT).show() } } }
+    private val shizukuListener = Shizuku.OnRequestPermissionResultListener { requestCode, grantResult -> if (requestCode == REQUEST_CODE) { if (grantResult == android.content.pm.PackageManager.PERMISSION_GRANTED) { isAdbMode = true; Toast.makeText(this@MainActivity, "Shizuku Permission Granted!", Toast.LENGTH_SHORT).show() } else { Toast.makeText(this@MainActivity, "Shizuku Permission Denied.", Toast.LENGTH_SHORT).show() } } }
     override fun onCreate(s: Bundle?) {
         super.onCreate(s); setContentView(R.layout.activity_main)
         val p = getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE); val ki = findViewById<EditText>(R.id.keyInput); val bi = findViewById<EditText>(R.id.brutalInput); val dn = findViewById<TextView>(R.id.driverNameText); val title = findViewById<TextView>(R.id.titleText); val sub = findViewById<TextView>(R.id.subtitleText); val ca = findViewById<TextView>(R.id.contactAdminText)
@@ -441,4 +445,4 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() { Shizuku.removeRequestPermissionResultListener(shizukuListener); super.onDestroy() }
 }
 EOF
-gradle assembleDebug
+gradle assembleDebug --stacktrace
