@@ -17,11 +17,11 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Add Swap Space (Prevent Memory Crash)
+      - name: Add Swap Space
         run: |
           sudo swapoff /swapfile 2>/dev/null || true
           sudo rm -f /swapfile
-          sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
+          sudo fallocate -l 4G /swapfile
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
           sudo swapon /swapfile
@@ -32,7 +32,7 @@ jobs:
       - name: Build APK
         run: bash build.sh
 
-      - name: Upload APK artifact
+      - name: Upload APK
         if: success()
         uses: actions/upload-artifact@74fad66b98a6d799dc004d3353ccd0e6f6b2530e
         with:
