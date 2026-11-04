@@ -282,6 +282,7 @@ cat > app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
 package com.example.shtile
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -295,7 +296,18 @@ import rikka.shizuku.Shizuku
 class MainActivity : AppCompatActivity() {
     private val REQUEST_CODE = 1001
     private var isAdbMode = false
-    private val shizukuListener = Shizuku.OnRequestPermissionResultListener { requestCode, grantResult -> if (requestCode == REQUEST_CODE) { if (grantResult == android.content.pm.PackageManager.PERMISSION_GRANTED) { isAdbMode = true; Toast.makeText(this@MainActivity, "Shizuku Permission Granted!", Toast.LENGTH_SHORT).show() } else { Toast.makeText(this@MainActivity, "Shizuku Permission Denied.", Toast.LENGTH_SHORT).show() } } }
+    private val shizukuListener = object : Shizuku.OnRequestPermissionResultListener {
+        override fun onRequestPermissionResult(requestCode: Int, grantResult: Int) {
+            if (requestCode == REQUEST_CODE) {
+                if (grantResult == PackageManager.PERMISSION_GRANTED) {
+                    isAdbMode = true
+                    Toast.makeText(this@MainActivity, "Shizuku Permission Granted!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this@MainActivity, "Shizuku Permission Denied.", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
     override fun onCreate(s: Bundle?) {
         super.onCreate(s); setContentView(R.layout.activity_main)
         val p = getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE); val ki = findViewById<EditText>(R.id.keyInput); val bi = findViewById<EditText>(R.id.brutalInput); val dn = findViewById<TextView>(R.id.driverNameText); val title = findViewById<TextView>(R.id.titleText); val sub = findViewById<TextView>(R.id.subtitleText); val ca = findViewById<TextView>(R.id.contactAdminText)
@@ -315,7 +327,7 @@ class MainActivity : AppCompatActivity() {
                         if (!isShizukuInstalled) btnShizuku.visibility = android.view.View.GONE
                         val dialog = AlertDialog.Builder(this@MainActivity).setView(dialogView).setCancelable(false).create(); dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
                         dialogView.findViewById<Button>(R.id.btnGrant).setOnClickListener { dialog.dismiss(); chkRoot() }; dialogView.findViewById<Button>(R.id.btnExit).setOnClickListener { dialog.dismiss(); this@MainActivity.finish() }
-                        btnShizuku.setOnClickListener { dialog.dismiss(); if (Shizuku.pingBinder()) { if (Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED) { isAdbMode = true; Toast.makeText(this@MainActivity, "Shizuku Mode Active", Toast.LENGTH_SHORT).show() } else { Shizuku.requestPermission(REQUEST_CODE) } } else { Toast.makeText(this@MainActivity, "Shizuku is not running!", Toast.LENGTH_LONG).show() } }
+                        btnShizuku.setOnClickListener { dialog.dismiss(); if (Shizuku.pingBinder()) { if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) { isAdbMode = true; Toast.makeText(this@MainActivity, "Shizuku Mode Active", Toast.LENGTH_SHORT).show() } else { Shizuku.requestPermission(REQUEST_CODE) } } else { Toast.makeText(this@MainActivity, "Shizuku is not running!", Toast.LENGTH_LONG).show() } }
                         dialog.show()
                     }
                 }
