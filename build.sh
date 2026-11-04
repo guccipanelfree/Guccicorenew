@@ -15,12 +15,10 @@ EOF
 cat > gradle.properties << 'EOF'
 android.useAndroidX=true
 android.nonTransitiveRClass=true
-android.enableJetifier=false
-org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8
+org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=1024m -Dfile.encoding=UTF-8
 org.gradle.daemon=false
 org.gradle.parallel=false
 org.gradle.workers.max=1
-kotlin.compiler.execution.strategy=in-process
 EOF
 cat > app/build.gradle << 'EOF'
 plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
@@ -445,7 +443,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.saveKeyBtn).setOnClickListener { p.edit().putString("license_key", ki.text.toString().trim()).putString("brutal_option", bi.text.toString().trim()).apply(); Toast.makeText(this, "✅ Configuration Saved", Toast.LENGTH_SHORT).show() }
         findViewById<Button>(R.id.loadFilesBtn).setOnClickListener { p.edit().putString("license_key", ki.text.toString().trim()).putString("brutal_option", bi.text.toString().trim()).apply(); Installer.installAll(this) { ok -> Toast.makeText(this, if (ok) "✅ Files Loaded" else "❌ Failed. Check root.", Toast.LENGTH_SHORT).show() } }
         findViewById<ImageButton>(R.id.hideAppsIcon).setOnClickListener { startActivity(Intent(this, HideAppsActivity::class.java)) }
-        findViewById<ImageButton>(R.id.terminalIcon).setOnClickListener { startActivity(Intent(this, TerminalActivity::class.java)) }
+        findViewById<ImageButton>(R.id.terminalIcon).setOnClickListener { startActivity(this, TerminalActivity::class.java) }
     }
     override fun onDestroy() { Shizuku.removeRequestPermissionResultListener(shizukuListener); super.onDestroy() }
 }
