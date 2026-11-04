@@ -29,30 +29,16 @@ android {
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = '17' }
 }
-dependencies { 
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'com.google.android.material:material:1.11.0' 
-    implementation 'dev.rikka.shizuku:api:13.1.5'
-    implementation 'dev.rikka.shizuku:provider:13.1.5'
-}
+dependencies { implementation 'androidx.appcompat:appcompat:1.6.1'; implementation 'androidx.core:core-ktx:1.12.0'; implementation 'com.google.android.material:material:1.11.0'; implementation 'dev.rikka.shizuku:api:13.1.5'; implementation 'dev.rikka.shizuku:provider:13.1.5' }
 EOF
 cat > app/src/main/AndroidManifest.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-<uses-permission android:name="android.permission.INTERNET"/>
-<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
-<uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-<uses-permission android:name="moe.shizuku.manager.permission.API_V23"/>
+<uses-permission android:name="android.permission.INTERNET"/><uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/><uses-permission android:name="android.permission.FOREGROUND_SERVICE"/><uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/><uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" /><uses-permission android:name="moe.shizuku.manager.permission.API_V23"/>
 <application android:allowBackup="true" android:label="Settings" android:icon="@drawable/ic_app_icon" android:theme="@style/Theme.Material3.Dark.NoActionBar" android:usesCleartextTraffic="true">
-<activity android:name=".MainActivity" android:exported="true"/>
-<activity android:name=".HideAppsActivity" android:exported="false"/>
-<activity android:name=".TerminalActivity" android:exported="false"/>
+<activity android:name=".MainActivity" android:exported="true"/><activity android:name=".HideAppsActivity" android:exported="false"/><activity android:name=".TerminalActivity" android:exported="false"/>
 <activity-alias android:name=".MainActivityAlias" android:targetActivity=".MainActivity" android:exported="true" android:enabled="true" android:icon="@drawable/ic_app_icon"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
-<service android:name=".RunnerService" android:exported="false" android:foregroundServiceType="dataSync"/>
-<service android:name=".TimerService" android:exported="false" android:foregroundServiceType="dataSync"/>
+<service android:name=".RunnerService" android:exported="false" android:foregroundServiceType="dataSync"/><service android:name=".TimerService" android:exported="false" android:foregroundServiceType="dataSync"/>
 <service android:name=".SafeTileService" android:exported="true" android:icon="@drawable/ic_tile_normal" android:label="Boost" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
 <service android:name=".BrutalTileService" android:exported="true" android:icon="@drawable/ic_tile_brutal" android:label="Turbo Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
 <service android:name=".FocusTileService" android:exported="true" android:icon="@drawable/ic_tile_focus" android:label="Focus Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
@@ -224,7 +210,7 @@ class TerminalActivity : AppCompatActivity() {
                 if (isShizukuMode && (!Shizuku.pingBinder() || Shizuku.checkSelfPermission() != android.content.pm.PackageManager.PERMISSION_GRANTED)) {
                     Handler(Looper.getMainLooper()).post { outputView.append("Shizuku Permission Not Granted.\n") }; return@Thread
                 }
-                val process = if (isRootMode) { Runtime.getRuntime().exec("su") } else if (isShizukuMode) { Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null) } else { return@Thread }
+                val process: Process = if (isRootMode) { Runtime.getRuntime().exec("su") } else if (isShizukuMode) { Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null) } else { return@Thread }
                 if (isRootMode) { val os = DataOutputStream(process.outputStream); os.writeBytes("$cmd\n"); os.writeBytes("exit\n"); os.flush(); os.close() }
                 val reader = process.inputStream.bufferedReader(); val output = StringBuilder(); var line: String?
                 while (reader.readLine().also { line = it } != null) { output.append(line).append("\n") }
@@ -309,7 +295,7 @@ import rikka.shizuku.Shizuku
 class MainActivity : AppCompatActivity() {
     private val REQUEST_CODE = 1001
     private var isAdbMode = false
-    private val shizukuListener = Shizuku.OnRequestPermissionResultListener { requestCode, grantResult -> if (requestCode == REQUEST_CODE) { if (grantResult == android.content.pm.PackageManager.PERMISSION_GRANTED) { isAdbMode = true; Toast.makeText(this, "Shizuku Permission Granted!", Toast.LENGTH_SHORT).show() } else { Toast.makeText(this, "Shizuku Permission Denied.", Toast.LENGTH_SHORT).show() } } }
+    private val shizukuListener = Shizuku.OnRequestPermissionResultListener { requestCode, grantResult -> if (requestCode == REQUEST_CODE) { if (grantResult == android.content.pm.PackageManager.PERMISSION_GRANTED) { isAdbMode = true; Toast.makeText(this@MainActivity, "Shizuku Permission Granted!", Toast.LENGTH_SHORT).show() } else { Toast.makeText(this@MainActivity, "Shizuku Permission Denied.", Toast.LENGTH_SHORT).show() } } }
     override fun onCreate(s: Bundle?) {
         super.onCreate(s); setContentView(R.layout.activity_main)
         val p = getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE); val ki = findViewById<EditText>(R.id.keyInput); val bi = findViewById<EditText>(R.id.brutalInput); val dn = findViewById<TextView>(R.id.driverNameText); val title = findViewById<TextView>(R.id.titleText); val sub = findViewById<TextView>(R.id.subtitleText); val ca = findViewById<TextView>(R.id.contactAdminText)
