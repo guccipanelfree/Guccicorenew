@@ -15,7 +15,8 @@ EOF
 cat > gradle.properties << 'EOF'
 android.useAndroidX=true
 android.nonTransitiveRClass=true
-org.gradle.jvmargs=-Xmx2048m
+org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=512m
+kotlin.daemon.jvmargs=-Xmx2048m
 EOF
 cat > app/build.gradle << 'EOF'
 plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
