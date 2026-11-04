@@ -15,7 +15,8 @@ EOF
 cat > gradle.properties << 'EOF'
 android.useAndroidX=true
 android.nonTransitiveRClass=true
-org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -Dfile.encoding=UTF-8
+android.enableJetifier=false
+org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8
 org.gradle.daemon=false
 org.gradle.parallel=false
 org.gradle.workers.max=1
