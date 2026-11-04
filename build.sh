@@ -338,9 +338,10 @@ class TerminalActivity : AppCompatActivity() {
             try {
                 val isRootMode = modeGroup.checkedRadioButtonId == R.id.radioRoot
                 val process = if (isRootMode) { Runtime.getRuntime().exec("su") } else { Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)!! }
-                val os = DataOutputStream(process.outputStream)
-                if (isRootMode) { os.writeBytes("$cmd\n"); os.writeBytes("exit\n") }
-                os.flush(); os.close()
+                if (isRootMode) {
+                    val os = DataOutputStream(process.outputStream)
+                    os.writeBytes("$cmd\n"); os.writeBytes("exit\n"); os.flush(); os.close()
+                }
                 val reader = process.inputStream.bufferedReader(); val output = StringBuilder(); var line: String?
                 while (reader.readLine().also { line = it } != null) { output.append(line).append("\n") }
                 val errorReader = process.errorStream.bufferedReader()
@@ -373,12 +374,12 @@ class HideAppsActivity : AppCompatActivity() {
     private val appList = ArrayList<AppItem>(); private var adapterAll: AppAdapter? = null; private var adapterHidden: AppAdapter? = null; private val prefs by lazy { getSharedPreferences("HidePrefs", MODE_PRIVATE) }
     override fun onCreate(s: Bundle?) {
         super.onCreate(s); setContentView(R.layout.activity_hide_apps)
-        val tabLayout = findViewById<TabLayout>(R.id.tabLayout); val pageAllApps = findViewById<View>(R.id.pageAllApps); val pageHiddenApps = findViewById<View>(R.id.pageHiddenApps); val search = findViewById<TextView>(R.id.searchInput); val applyBtn = findViewById<MaterialButton>(R.id.applyBtn); val emergencyBtn = findViewById<MaterialButton>(R.id.emergencyBtn); val timerSpinner = findViewById<Spinner>(R.id.timerSpinner)
+        val tabLayout = findViewById<TabLayout>(R.id.tabLayout); val pageAllApps = findViewById<View>(R.id.pageAllApps); val pageHiddenApps = findViewById<View>(R.id.pageHiddenApps); val search = findViewById<EditText>(R.id.searchInput); val applyBtn = findViewById<MaterialButton>(R.id.applyBtn); val emergencyBtn = findViewById<MaterialButton>(R.id.emergencyBtn); val timerSpinner = findViewById<Spinner>(R.id.timerSpinner)
         val timerOptions = arrayOf("Disabled", "5 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "2 Hours"); val timerValues = arrayOf(0, 5, 15, 30, 60, 120)
         timerSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, timerOptions); timerSpinner.setSelection(timerValues.indexOf(prefs.getInt("timer_minutes", 0)).coerceAtLeast(0))
         loadApps()
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener { override fun onTabSelected(tab: TabLayout.Tab?) { pageAllApps.visibility = if (tab?.position == 0) View.VISIBLE else View.GONE; pageHiddenApps.visibility = if (tab?.position == 1) View.VISIBLE else View.GONE; applyBtn.visibility = if (tab?.position == 0) View.VISIBLE else View.GONE }; override fun onTabUnselected(tab: TabLayout.Tab?) {}; override fun onTabReselected(tab: TabLayout.Tab?) {} })
-        (search as EditText).addTextChangedListener(object : android.text.TextWatcher { override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}; override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) { adapterAll?.filter(s) }; override fun afterTextChanged(s: android.text.Editable?) {} })
+        search.addTextChangedListener(object : android.text.TextWatcher { override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}; override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) { adapterAll?.filter(s) }; override fun afterTextChanged(s: android.text.Editable?) {} })
         applyBtn.setOnClickListener { val selectedPkgs = HashSet<String>(); for (item in appList) { if (item.isChecked) selectedPkgs.add(item.pkg) }; val selectedMinutes = timerValues[timerSpinner.selectedItemPosition]; prefs.edit().putStringSet("safe_apps", selectedPkgs).putInt("timer_minutes", selectedMinutes).apply(); Toast.makeText(this, "Saved! Timer: ${timerOptions[timerSpinner.selectedItemPosition]}", Toast.LENGTH_SHORT).show() }
         emergencyBtn.setOnClickListener { Toast.makeText(this, "Emergency Unhiding ALL Apps...", Toast.LENGTH_SHORT).show(); Thread { try { val history = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf(); history.addAll(prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()); if (history.isEmpty()) return@Thread; val cmd = StringBuilder(); for (pkg in history) { cmd.append("pm unhide $pkg; pm enable $pkg; cmd package install-existing --user 0 $pkg; ") }; val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor(); prefs.edit().remove("hidden_history").putBoolean("is_pay_hidden", false).apply(); Handler(Looper.getMainLooper()).post { Toast.makeText(this, "All Apps Restored!", Toast.LENGTH_LONG).show(); loadApps() } } catch (e: Exception) {} }.start() }
     }
@@ -455,7 +456,7 @@ class MainActivity : AppCompatActivity() {
         val m = mapOf("1" to "QX1", "2" to "GT", "3" to "rt-dev", "4" to "rt-proc", "5" to "QX(2)", "6" to "KPM", "7" to "DitPro KPM", "8" to "KMA KPM", "9" to "LDK KPM", "10" to "Paradise")
         bi.addTextChangedListener(object : TextWatcher { override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}; override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) { dn.text = m[s.toString().trim()] ?: "Unknown" }; override fun afterTextChanged(s: Editable?) {} })
         dn.text = m[bi.text.toString()] ?: "Unknown"
-        val openTg = { try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/Gucci8240"))) } catch (e: Exception) { Toast.makeText(this, "Telegram not installed", Toast.LENGTH_SHORT).show() } }
+        val openTg = { try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/Gucci8240"))) } catch (e: Exception) { Toast.makeText(this@MainActivity, "Telegram not installed", Toast.LENGTH_SHORT).show() } }
         title.setOnClickListener { openTg() }; sub.setOnClickListener { openTg() }; ca.setOnClickListener { openTg() }
         
         Shizuku.addRequestPermissionResultListener(shizukuListener)
@@ -470,8 +471,8 @@ class MainActivity : AppCompatActivity() {
     private fun checkAccess() {
         Thread {
             val hasRoot = try { val pr = ProcessBuilder("su", "-c", "id").start(); pr.inputStream.bufferedReader().readText().contains("uid=0") } catch (e: Exception) { false }
-            val isShizukuRunning = Shizuku.pingBinder()
-            val hasShizukuPermission = Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
+            val isShizukuRunning = try { Shizuku.pingBinder() } catch (e: Exception) { false }
+            val hasShizukuPermission = try { Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED } catch (e: Exception) { false }
             
             Handler(Looper.getMainLooper()).post {
                 if (hasRoot) {
@@ -504,7 +505,7 @@ class MainActivity : AppCompatActivity() {
                                 Shizuku.requestPermission(REQUEST_CODE) 
                             } 
                         } else { 
-                            Toast.makeText(this, "Shizuku is NOT running! Please open Shizuku app and start it first.", Toast.LENGTH_LONG).show() 
+                            Toast.makeText(this@MainActivity, "Shizuku is NOT running! Please open Shizuku app and start it first.", Toast.LENGTH_LONG).show() 
                         } 
                     }
                     activeDialog?.show()
