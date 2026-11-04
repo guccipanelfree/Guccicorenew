@@ -224,9 +224,9 @@ class TerminalActivity : AppCompatActivity() {
                 if (isShizukuMode && (!Shizuku.pingBinder() || Shizuku.checkSelfPermission() != android.content.pm.PackageManager.PERMISSION_GRANTED)) {
                     Handler(Looper.getMainLooper()).post { outputView.append("Shizuku Permission Not Granted.\n") }; return@Thread
                 }
-                val process: Process? = if (isRootMode) { Runtime.getRuntime().exec("su") } else if (isShizukuMode) { Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null) } else { return@Thread }
-                if (isRootMode) { val os = DataOutputStream(process!!.outputStream); os.writeBytes("$cmd\n"); os.writeBytes("exit\n"); os.flush(); os.close() }
-                val reader = process!!.inputStream.bufferedReader(); val output = StringBuilder(); var line: String?
+                val process = if (isRootMode) { Runtime.getRuntime().exec("su") } else if (isShizukuMode) { Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null) } else { return@Thread }
+                if (isRootMode) { val os = DataOutputStream(process.outputStream); os.writeBytes("$cmd\n"); os.writeBytes("exit\n"); os.flush(); os.close() }
+                val reader = process.inputStream.bufferedReader(); val output = StringBuilder(); var line: String?
                 while (reader.readLine().also { line = it } != null) { output.append(line).append("\n") }
                 val errorReader = process.errorStream.bufferedReader(); while (errorReader.readLine().also { line = it } != null) { output.append(line).append("\n") }
                 process.waitFor()
