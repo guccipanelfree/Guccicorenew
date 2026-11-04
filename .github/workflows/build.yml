@@ -1,40 +1,35 @@
-name: Android Build
+name: Android CI Build
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ "main", "master" ]
   pull_request:
-    branches: [ main, master ]
-  workflow_dispatch: # 允许在 GitHub 网页端手动点击运行
+    branches: [ "main", "master" ]
+  workflow_dispatch: # Allows you to run it manually from GitHub UI
 
 jobs:
   build:
-    name: Build Debug APK
     runs-on: ubuntu-latest
-    timeout-minutes: 30
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu' # 兼容性较好的 JDK 发行版
-          java-version: '17'   # Android Gradle Plugin 7+ 强制要求 JDK 17
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
 
-      - name: Grant Execute Permission for gradlew
-        run: chmod +x ./gradlew # 解决 exit code 1 最常见的权限问题
+    - name: Build with Gradle
+      run: ./gradlew assembleDebug --stacktrace
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace # 添加 --stacktrace 方便出错时定位
-
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error # 如果没生成 APK 则直接报错，避免静默失败
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug.apk
+        path: app/build/outputs/apk/debug/app-debug.apk
