@@ -21,7 +21,7 @@ plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
 android {
     namespace 'com.example.shtile'
     compileSdk 34
-    defaultConfig { applicationId "com.example.shtile"; minSdk 24; targetSdk 34; versionCode 80; versionName "80.0" }
+    defaultConfig { applicationId "com.example.shtile"; minSdk 24; targetSdk 34; versionCode 82; versionName "82.0" }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = '17' }
 }
@@ -31,7 +31,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.11.0' 
     implementation 'dev.rikka.shizuku:api:13.1.5'
     implementation 'dev.rikka.shizuku:provider:13.1.5'
-    implementation 'com.flyfishxu:kadb:2.1.5'
+    implementation 'com.flyfishxu:kadb:2.1.1'
     implementation 'org.conscrypt:conscrypt-openjdk-uber:2.5.2'
 }
 EOF
