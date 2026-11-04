@@ -337,17 +337,32 @@ class TerminalActivity : AppCompatActivity() {
         Thread {
             try {
                 val isRootMode = modeGroup.checkedRadioButtonId == R.id.radioRoot
-                val process = if (isRootMode) { Runtime.getRuntime().exec("su") } else { Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)!! }
-                if (isRootMode) {
+                val process: Process? = if (isRootMode) {
+                    Runtime.getRuntime().exec("su")
+                } else {
+                    try {
+                        val method = Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
+                        method.isAccessible = true
+                        method.invoke(null, arrayOf("sh", "-c", cmd), null, null) as Process
+                    } catch (e: Exception) {
+                        Handler(Looper.getMainLooper()).post { outputView.append("Shizuku Error: ${e.message}\n") }
+                        return@Thread
+                    }
+                }
+
+                if (isRootMode && process != null) {
                     val os = DataOutputStream(process.outputStream)
                     os.writeBytes("$cmd\n"); os.writeBytes("exit\n"); os.flush(); os.close()
                 }
-                val reader = process.inputStream.bufferedReader(); val output = StringBuilder(); var line: String?
-                while (reader.readLine().also { line = it } != null) { output.append(line).append("\n") }
-                val errorReader = process.errorStream.bufferedReader()
-                while (errorReader.readLine().also { line = it } != null) { output.append(line).append("\n") }
-                process.waitFor()
-                Handler(Looper.getMainLooper()).post { if (output.isEmpty()) outputView.append("Done (No output)\n\n") else outputView.append(output.toString() + "\n"); val scrollView = outputView.parent as ScrollView; scrollView.post { scrollView.fullScroll(ScrollView.FOCUS_DOWN) } }
+                
+                if (process != null) {
+                    val reader = process.inputStream.bufferedReader(); val output = StringBuilder(); var line: String?
+                    while (reader.readLine().also { line = it } != null) { output.append(line).append("\n") }
+                    val errorReader = process.errorStream.bufferedReader()
+                    while (errorReader.readLine().also { line = it } != null) { output.append(line).append("\n") }
+                    process.waitFor()
+                    Handler(Looper.getMainLooper()).post { if (output.isEmpty()) outputView.append("Done (No output)\n\n") else outputView.append(output.toString() + "\n"); val scrollView = outputView.parent as ScrollView; scrollView.post { scrollView.fullScroll(ScrollView.FOCUS_DOWN) } }
+                }
             } catch (e: Exception) { Handler(Looper.getMainLooper()).post { outputView.append("Error: ${e.message}\n\n") } }
         }.start()
     }
