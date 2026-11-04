@@ -343,4 +343,4 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() { Shizuku.removeRequestPermissionResultListener(shizukuListener); super.onDestroy() }
 }
 EOF
-gradle assembleDebug --no-daemon
+gradle assembleDebug --no-daemon --stacktrace
