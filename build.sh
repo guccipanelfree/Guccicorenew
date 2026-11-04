@@ -15,10 +15,9 @@ EOF
 cat > gradle.properties << 'EOF'
 android.useAndroidX=true
 android.nonTransitiveRClass=true
-org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=1024m -Dfile.encoding=UTF-8
+org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8
 org.gradle.parallel=false
 org.gradle.workers.max=1
-kotlin.daemon.jvmargs=-Xmx2048m
 EOF
 cat > app/build.gradle << 'EOF'
 plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
@@ -343,4 +342,4 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() { Shizuku.removeRequestPermissionResultListener(shizukuListener); super.onDestroy() }
 }
 EOF
-gradle assembleDebug --no-daemon --stacktrace
+gradle assembleDebug
