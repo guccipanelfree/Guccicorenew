@@ -19,11 +19,8 @@ jobs:
 
       - name: Add Swap Space (Prevent Memory Crash)
         run: |
-          # Disable and remove the existing swap file that GitHub runs by default
           sudo swapoff /swapfile 2>/dev/null || true
           sudo rm -f /swapfile
-          
-          # Create a new 4GB swap file using dd instead of fallocate
           sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
