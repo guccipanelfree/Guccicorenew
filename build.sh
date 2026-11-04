@@ -21,7 +21,7 @@ plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
 android {
     namespace 'com.example.shtile'
     compileSdk 34
-    defaultConfig { applicationId "com.example.shtile"; minSdk 24; targetSdk 34; versionCode 82; versionName "82.0" }
+    defaultConfig { applicationId "com.example.shtile"; minSdk 24; targetSdk 34; versionCode 85; versionName "85.0" }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = '17' }
 }
@@ -31,8 +31,6 @@ dependencies {
     implementation 'com.google.android.material:material:1.11.0' 
     implementation 'dev.rikka.shizuku:api:13.1.5'
     implementation 'dev.rikka.shizuku:provider:13.1.5'
-    implementation 'com.flyfishxu:kadb:2.1.1'
-    implementation 'org.conscrypt:conscrypt-openjdk-uber:2.5.2'
 }
 EOF
 cat > app/src/main/AndroidManifest.xml << 'EOF'
@@ -69,10 +67,9 @@ cat > app/src/main/res/layout/dialog_root.xml << 'EOF'
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="24dp" app:strokeWidth="1dp" app:strokeColor="@color/card_stroke">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="32dp" android:gravity="center">
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ROOT / ADB REQUIRED" android:textColor="@color/text_primary" android:textSize="22sp" android:textStyle="bold" android:layout_marginBottom="12dp"/>
-<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="INX-LOADER requires Root Permission, Shizuku, or Wireless ADB to function properly." android:textColor="@color/text_secondary" android:textSize="15sp" android:gravity="center" android:layout_marginBottom="32dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="INX-LOADER requires Root Permission or Shizuku (ADB) to function properly." android:textColor="@color/text_secondary" android:textSize="15sp" android:gravity="center" android:layout_marginBottom="32dp"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/btnGrant" android:layout_width="match_parent" android:layout_height="56dp" android:text="GRANT ROOT" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:layout_marginBottom="12dp" android:textStyle="bold"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/btnShizuku" android:layout_width="match_parent" android:layout_height="56dp" android:text="USE SHIZUKU (ADB)" app:backgroundTint="@android:color/transparent" app:strokeColor="@color/accent_green" app:strokeWidth="1dp" app:cornerRadius="16dp" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="12dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnWireless" android:layout_width="match_parent" android:layout_height="56dp" android:text="WIRELESS ADB" app:backgroundTint="@android:color/transparent" app:strokeColor="@color/accent_green" app:strokeWidth="1dp" app:cornerRadius="16dp" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="12dp"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/btnExit" android:layout_width="match_parent" android:layout_height="56dp" android:text="EXIT" app:backgroundTint="@android:color/transparent" app:strokeColor="@color/accent_red" app:strokeWidth="1dp" app:cornerRadius="16dp" android:textColor="@color/accent_red" android:textStyle="bold"/>
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
@@ -108,50 +105,6 @@ cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 </LinearLayout>
 </ScrollView>
 EOF
-cat > app/src/main/res/layout/dialog_wireless_pairing.xml << 'EOF'
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@drawable/bg_dialog" android:padding="24dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Wireless ADB Pairing" android:textColor="@color/text_primary" android:textSize="20sp" android:textStyle="bold" android:layout_marginBottom="16dp"/>
-<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1. Go to Developer Options > Wireless Debugging.\n2. Tap 'Pair device with pairing code'.\n3. Enter the details below." android:textColor="@color/text_secondary" android:textSize="14sp" android:layout_marginBottom="16dp"/>
-<EditText android:id="@+id/wirelessIp" android:layout_width="match_parent" android:layout_height="48dp" android:hint="IP Address" android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginBottom="8dp"/>
-<EditText android:id="@+id/wirelessPort" android:layout_width="match_parent" android:layout_height="48dp" android:hint="Pairing Port" android:inputType="number" android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginBottom="8dp"/>
-<EditText android:id="@+id/pairingCode" android:layout_width="match_parent" android:layout_height="48dp" android:hint="6-Digit Pairing Code" android:inputType="number" android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginBottom="24dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnPair" android:layout_width="match_parent" android:layout_height="56dp" android:text="PAIR & CONNECT" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold" android:layout_marginBottom="12dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnCancel" android:layout_width="match_parent" android:layout_height="56dp" android:text="CANCEL" app:backgroundTint="@android:color/transparent" app:strokeColor="@color/accent_red" app:strokeWidth="1dp" app:cornerRadius="16dp" android:textColor="@color/accent_red" android:textStyle="bold"/>
-</LinearLayout>
-EOF
-cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
-<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" app:strokeWidth="1dp" app:strokeColor="@color/card_stroke" android:layout_marginBottom="16dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Execution Mode" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
-<RadioGroup android:id="@+id/modeGroup" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="16dp">
-<RadioButton android:id="@+id/radioRoot" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Root" android:textColor="@color/text_primary" android:checked="true"/>
-<RadioButton android:id="@+id/radioShizuku" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Shizuku" android:textColor="@color/text_primary" android:layout_marginStart="8dp"/>
-<RadioButton android:id="@+id/radioWireless" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Wireless" android:textColor="@color/text_primary" android:layout_marginStart="8dp"/>
-</RadioGroup>
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="App Hider/Unhider" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
-<EditText android:id="@+id/pkgInput" android:layout_width="match_parent" android:layout_height="48dp" android:hint="Enter Package Name..." android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginBottom="12dp"/>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-<com.google.android.material.button.MaterialButton android:id="@+id/btnHide" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="HIDE APP" app:backgroundTint="@color/accent_red" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginEnd="8dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnUnhide" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="UNHIDE APP" app:backgroundTint="@color/accent_green" android:textColor="#000000" android:textStyle="bold"/>
-</LinearLayout>
-</LinearLayout>
-</com.google.android.material.card.MaterialCardView>
-<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" app:strokeWidth="1dp" app:strokeColor="@color/card_stroke" android:layout_marginBottom="16dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="16dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Raw Terminal" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
-<EditText android:id="@+id/terminalInput" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:hint="Enter command..." android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginEnd="8dp" android:inputType="textNoSuggestions"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnRunCmd" android:layout_width="wrap_content" android:layout_height="48dp" android:text="RUN" app:backgroundTint="@color/accent_green" android:textColor="#000000" android:textStyle="bold"/>
-</LinearLayout>
-<ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:background="@drawable/bg_box_dark" android:padding="12dp">
-<TextView android:id="@+id/terminalOutput" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#00FF00" android:fontFamily="monospace" android:textSize="12sp" android:text="Terminal Ready...\n"/>
-</ScrollView>
-</LinearLayout>
-</com.google.android.material.card.MaterialCardView>
-</LinearLayout>
-EOF
 cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
@@ -175,6 +128,38 @@ cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
 </LinearLayout>
 </FrameLayout>
 <com.google.android.material.button.MaterialButton android:id="@+id/applyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="APPLY FOR TILE" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
+</LinearLayout>
+EOF
+cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" app:strokeWidth="1dp" app:strokeColor="@color/card_stroke" android:layout_marginBottom="16dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Execution Mode" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+<RadioGroup android:id="@+id/modeGroup" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="16dp">
+<RadioButton android:id="@+id/radioRoot" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Root" android:textColor="@color/text_primary" android:checked="true"/>
+<RadioButton android:id="@+id/radioShizuku" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Shizuku" android:textColor="@color/text_primary" android:layout_marginStart="8dp"/>
+</RadioGroup>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="App Hider/Unhider" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+<EditText android:id="@+id/pkgInput" android:layout_width="match_parent" android:layout_height="48dp" android:hint="Enter Package Name..." android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginBottom="12dp"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+<com.google.android.material.button.MaterialButton android:id="@+id/btnHide" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="HIDE APP" app:backgroundTint="@color/accent_red" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginEnd="8dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnUnhide" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="UNHIDE APP" app:backgroundTint="@color/accent_green" android:textColor="#000000" android:textStyle="bold"/>
+</LinearLayout>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" app:strokeWidth="1dp" app:strokeColor="@color/card_stroke" android:layout_marginBottom="16dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="16dp">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Raw Terminal" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+<EditText android:id="@+id/terminalInput" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:hint="Enter command..." android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginEnd="8dp" android:inputType="textNoSuggestions"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnRunCmd" android:layout_width="wrap_content" android:layout_height="48dp" android:text="RUN" app:backgroundTint="@color/accent_green" android:textColor="#000000" android:textStyle="bold"/>
+</LinearLayout>
+<ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:background="@drawable/bg_box_dark" android:padding="12dp">
+<TextView android:id="@+id/terminalOutput" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#00FF00" android:fontFamily="monospace" android:textSize="12sp" android:text="Terminal Ready...\n"/>
+</ScrollView>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
 </LinearLayout>
 EOF
 cat > app/src/main/res/layout/list_item_app.xml << 'EOF'
@@ -332,8 +317,7 @@ class TerminalActivity : AppCompatActivity() {
     private fun executeCommand(cmd: String, modeGroup: RadioGroup, outputView: TextView) {
         Thread {
             try {
-                val selectedId = modeGroup.checkedRadioButtonId; val isRootMode = selectedId == R.id.radioRoot; val isShizukuMode = selectedId == R.id.radioShizuku; val isWirelessMode = selectedId == R.id.radioWireless
-                if (isWirelessMode) { Handler(Looper.getMainLooper()).post { outputView.append("Wireless ADB command execution is simulated in this demo.\n") }; return@Thread }
+                val selectedId = modeGroup.checkedRadioButtonId; val isRootMode = selectedId == R.id.radioRoot; val isShizukuMode = selectedId == R.id.radioShizuku
                 val process = if (isRootMode) { Runtime.getRuntime().exec("su") } else if (isShizukuMode) { if (Shizuku.pingBinder() && Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED) { Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null) } else { Handler(Looper.getMainLooper()).post { outputView.append("Shizuku Permission Not Granted.\n") }; return@Thread } } else { return@Thread }
                 if (isRootMode) { val os = DataOutputStream(process.outputStream); os.writeBytes("$cmd\n"); os.writeBytes("exit\n"); os.flush(); os.close() }
                 val reader = process.inputStream.bufferedReader(); val output = StringBuilder(); var line: String?
@@ -433,12 +417,11 @@ class MainActivity : AppCompatActivity() {
                 Handler(Looper.getMainLooper()).post {
                     if (!r && !isAdbMode) {
                         val isShizukuInstalled = try { packageManager.getPackageInfo("moe.shizuku.privileged.api", 0); true } catch (e: Exception) { false }
-                        val dialogView = this@MainActivity.layoutInflater.inflate(R.layout.dialog_root, null); val btnShizuku = dialogView.findViewById<Button>(R.id.btnShizuku); val btnWireless = dialogView.findViewById<Button>(R.id.btnWireless)
+                        val dialogView = this@MainActivity.layoutInflater.inflate(R.layout.dialog_root, null); val btnShizuku = dialogView.findViewById<Button>(R.id.btnShizuku)
                         if (!isShizukuInstalled) btnShizuku.visibility = android.view.View.GONE
                         val dialog = AlertDialog.Builder(this@MainActivity).setView(dialogView).setCancelable(false).create(); dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
                         dialogView.findViewById<Button>(R.id.btnGrant).setOnClickListener { dialog.dismiss(); chkRoot() }; dialogView.findViewById<Button>(R.id.btnExit).setOnClickListener { dialog.dismiss(); this@MainActivity.finish() }
                         btnShizuku.setOnClickListener { dialog.dismiss(); if (Shizuku.pingBinder()) { if (Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED) { isAdbMode = true; Toast.makeText(this@MainActivity, "Shizuku Mode Active", Toast.LENGTH_SHORT).show() } else { Shizuku.requestPermission(REQUEST_CODE) } } else { Toast.makeText(this@MainActivity, "Shizuku is not running!", Toast.LENGTH_LONG).show() } }
-                        btnWireless.setOnClickListener { dialog.dismiss(); showWirelessPairingDialog() }
                         dialog.show()
                     }
                 }
@@ -450,13 +433,6 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.loadFilesBtn).setOnClickListener { p.edit().putString("license_key", ki.text.toString().trim()).putString("brutal_option", bi.text.toString().trim()).apply(); Installer.installAll(this) { ok -> Toast.makeText(this, if (ok) "✅ Files Loaded" else "❌ Failed. Check root.", Toast.LENGTH_SHORT).show() } }
         findViewById<ImageButton>(R.id.hideAppsIcon).setOnClickListener { startActivity(Intent(this, HideAppsActivity::class.java)) }
         findViewById<ImageButton>(R.id.terminalIcon).setOnClickListener { startActivity(Intent(this, TerminalActivity::class.java)) }
-    }
-    private fun showWirelessPairingDialog() {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_wireless_pairing, null); val dialog = AlertDialog.Builder(this).setView(dialogView).setCancelable(false).create(); dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        val inputIp = dialogView.findViewById<EditText>(R.id.wirelessIp); val inputPort = dialogView.findViewById<EditText>(R.id.wirelessPort); val inputCode = dialogView.findViewById<EditText>(R.id.pairingCode); val btnPair = dialogView.findViewById<Button>(R.id.btnPair); val btnCancel = dialogView.findViewById<Button>(R.id.btnCancel)
-        btnPair.setOnClickListener { val ip = inputIp.text.toString().trim(); val port = inputPort.text.toString().trim(); val code = inputCode.text.toString().trim(); if (ip.isNotEmpty() && port.isNotEmpty() && code.isNotEmpty()) { dialog.dismiss(); Toast.makeText(this, "Pairing... Check your notifications.", Toast.LENGTH_LONG).show(); isAdbMode = true; Toast.makeText(this, "Wireless ADB Mode Activated!", Toast.LENGTH_SHORT).show() } else { Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show() } }
-        btnCancel.setOnClickListener { dialog.cancel(); this.finish() }
-        dialog.show()
     }
     override fun onDestroy() { Shizuku.removeRequestPermissionResultListener { }; super.onDestroy() }
 }
