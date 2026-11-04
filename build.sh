@@ -1,6 +1,6 @@
 wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip; unzip -q gradle-8.2-bin.zip; export PATH="$PWD/gradle-8.2/bin:$PATH"
 rm -rf app *.gradle *.properties; mkdir -p app/src/main/java/com/example/shtile app/src/main/res/drawable app/src/main/res/layout app/src/main/res/values app/src/main/assets
-wget -q "https://cdn.phototourl.com/member/2026-11-02-d4837e53-b8a5-4997-9673-cbf6a3594ec1.png" -O app/src/main/res/drawable/ic_app_icon.png
+wget -q "https://cdn.phototourl.com/member/2026-11-02-d4837e53-b8a5-4997-9673-cbf6a3594ec1.png" -O app/src/main/res/drawable/ic_app_icon.png 2>/dev/null || true
 cp Gucci_core app/src/main/assets/ 2>/dev/null||true; cp Gucci_brutal app/src/main/assets/ 2>/dev/null||true
 cat > settings.gradle << 'EOF'
 pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
@@ -25,7 +25,13 @@ android {
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = '17' }
 }
-dependencies { implementation 'androidx.appcompat:appcompat:1.6.1'; implementation 'androidx.core:core-ktx:1.12.0'; implementation 'com.google.android.material:material:1.11.0' }
+dependencies { 
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'dev.rikka.shizuku:api:13.1.5'
+    implementation 'dev.rikka.shizuku:provider:13.1.5'
+}
 EOF
 cat > app/src/main/AndroidManifest.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
@@ -33,6 +39,7 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
 <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+<uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
 <application android:allowBackup="true" android:label="Settings" android:icon="@drawable/ic_app_icon" android:theme="@style/Theme.Material3.Dark.NoActionBar">
 <activity android:name=".MainActivity" android:exported="true"/>
 <activity android:name=".HideAppsActivity" android:exported="false"/>
@@ -45,6 +52,7 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <service android:name=".FocusTileService" android:exported="true" android:icon="@drawable/ic_tile_focus" android:label="Focus Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
 <service android:name=".PayTileService" android:exported="true" android:icon="@drawable/ic_tile_pay" android:label="Payment Protection" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
 <receiver android:name=".PackageReceiver" android:exported="true"><intent-filter><action android:name="android.intent.action.PACKAGE_ADDED"/><action android:name="android.intent.action.PACKAGE_REPLACED"/><data android:scheme="package"/></intent-filter></receiver>
+<provider android:name="rikka.shizuku.ShizukuProvider" android:authorities="${applicationId}.shizuku" android:enabled="true" android:exported="true" android:multiprocess="false" android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
 </application>
 </manifest>
 EOF
@@ -58,7 +66,7 @@ cat > app/src/main/res/layout/dialog_root.xml << 'EOF'
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="24dp" app:strokeWidth="1dp" app:strokeColor="@color/card_stroke">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="32dp" android:gravity="center">
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ROOT / ADB REQUIRED" android:textColor="@color/text_primary" android:textSize="22sp" android:textStyle="bold" android:layout_marginBottom="12dp"/>
-<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="INX-LOADER requires Root Permission or Shizuku (ADB) to function properly.\nPlease grant access to continue." android:textColor="@color/text_secondary" android:textSize="15sp" android:gravity="center" android:layout_marginBottom="32dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="INX-LOADER requires Root Permission or Shizuku (ADB) to function properly." android:textColor="@color/text_secondary" android:textSize="15sp" android:gravity="center" android:layout_marginBottom="32dp"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/btnGrant" android:layout_width="match_parent" android:layout_height="56dp" android:text="GRANT ROOT" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:layout_marginBottom="12dp" android:textStyle="bold"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/btnShizuku" android:layout_width="match_parent" android:layout_height="56dp" android:text="USE SHIZUKU (ADB)" app:backgroundTint="@android:color/transparent" app:strokeColor="@color/accent_green" app:strokeWidth="1dp" app:cornerRadius="16dp" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="12dp"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/btnExit" android:layout_width="match_parent" android:layout_height="56dp" android:text="EXIT" app:backgroundTint="@android:color/transparent" app:strokeColor="@color/accent_red" app:strokeWidth="1dp" app:cornerRadius="16dp" android:textColor="@color/accent_red" android:textStyle="bold"/>
@@ -66,7 +74,6 @@ cat > app/src/main/res/layout/dialog_root.xml << 'EOF'
 </com.google.android.material.card.MaterialCardView>
 EOF
 cat > app/src/main/res/layout/activity_main.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/bg_main" android:fillViewport="true">
 <LinearLayout android:orientation="vertical" android:padding="24dp" android:layout_width="match_parent" android:layout_height="match_parent">
 <TextView android:id="@+id/titleText" android:text="INX-LOADER" android:textColor="@color/text_primary" android:textSize="36sp" android:fontFamily="sans-serif-black" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
@@ -97,7 +104,6 @@ cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 </ScrollView>
 EOF
 cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
 <com.google.android.material.tabs.TabLayout android:id="@+id/tabLayout" android:layout_width="match_parent" android:layout_height="wrap_content" app:tabIndicatorColor="@color/accent_green" app:tabTextColor="@color/text_secondary" app:tabSelectedTextColor="@color/text_primary" app:tabIndicatorFullWidth="true" android:layout_marginBottom="16dp">
 <com.google.android.material.tabs.TabItem android:text="Manage Apps" /><com.google.android.material.tabs.TabItem android:text="Hidden &amp; Emergency" />
@@ -122,7 +128,6 @@ cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
 </LinearLayout>
 EOF
 cat > app/src/main/res/layout/list_item_app.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" app:strokeWidth="1dp" app:strokeColor="@color/card_stroke">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="12dp" android:gravity="center_vertical">
 <ImageView android:id="@+id/appIcon" android:layout_width="44dp" android:layout_height="44dp"/>
@@ -136,7 +141,6 @@ cat > app/src/main/res/layout/list_item_app.xml << 'EOF'
 </com.google.android.material.card.MaterialCardView>
 EOF
 cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" app:strokeWidth="1dp" app:strokeColor="@color/card_stroke" android:layout_marginBottom="16dp">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
@@ -320,6 +324,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import java.io.DataOutputStream
+import rikka.shizuku.Shizuku
 class TerminalActivity : AppCompatActivity() {
     override fun onCreate(s: Bundle?) {
         super.onCreate(s); setContentView(R.layout.activity_terminal)
@@ -332,8 +337,10 @@ class TerminalActivity : AppCompatActivity() {
         Thread {
             try {
                 val isRootMode = modeGroup.checkedRadioButtonId == R.id.radioRoot
-                val process = if (isRootMode) Runtime.getRuntime().exec("su") else Runtime.getRuntime().exec("sh")
-                val os = DataOutputStream(process.outputStream); os.writeBytes("$cmd\n"); os.writeBytes("exit\n"); os.flush(); os.close()
+                val process = if (isRootMode) { Runtime.getRuntime().exec("su") } else { Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)!! }
+                val os = DataOutputStream(process.outputStream)
+                if (isRootMode) { os.writeBytes("$cmd\n"); os.writeBytes("exit\n") }
+                os.flush(); os.close()
                 val reader = process.inputStream.bufferedReader(); val output = StringBuilder(); var line: String?
                 while (reader.readLine().also { line = it } != null) { output.append(line).append("\n") }
                 val errorReader = process.errorStream.bufferedReader()
@@ -404,6 +411,7 @@ cat > app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
 package com.example.shtile
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -413,7 +421,33 @@ import android.text.TextWatcher
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import rikka.shizuku.Shizuku
 class MainActivity : AppCompatActivity() {
+    private val REQUEST_CODE = 1001
+    private var isAdbMode = false
+    private var activeDialog: AlertDialog? = null
+    
+    private val shizukuListener = object : Shizuku.OnRequestPermissionResultListener {
+        override fun onRequestPermissionResult(requestCode: Int, grantResult: Int) {
+            if (requestCode == REQUEST_CODE) {
+                if (grantResult == PackageManager.PERMISSION_GRANTED) {
+                    isAdbMode = true
+                    activeDialog?.dismiss()
+                    Toast.makeText(this@MainActivity, "Shizuku Permission Granted!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this@MainActivity, "Shizuku Permission Denied.", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        if (activeDialog?.isShowing == true) {
+            checkAccess()
+        }
+    }
+
     override fun onCreate(s: Bundle?) {
         super.onCreate(s); setContentView(R.layout.activity_main)
         val p = getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE); val ki = findViewById<EditText>(R.id.keyInput); val bi = findViewById<EditText>(R.id.brutalInput); val dn = findViewById<TextView>(R.id.driverNameText); val title = findViewById<TextView>(R.id.titleText); val sub = findViewById<TextView>(R.id.subtitleText); val ca = findViewById<TextView>(R.id.contactAdminText)
@@ -423,28 +457,63 @@ class MainActivity : AppCompatActivity() {
         dn.text = m[bi.text.toString()] ?: "Unknown"
         val openTg = { try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/Gucci8240"))) } catch (e: Exception) { Toast.makeText(this, "Telegram not installed", Toast.LENGTH_SHORT).show() } }
         title.setOnClickListener { openTg() }; sub.setOnClickListener { openTg() }; ca.setOnClickListener { openTg() }
-        fun chkRoot() {
-            Thread {
-                val r = try { val pr = ProcessBuilder("su", "-c", "id").start(); pr.inputStream.bufferedReader().readText().contains("uid=0") } catch (e: Exception) { false }
-                Handler(Looper.getMainLooper()).post {
-                    if (!r) {
-                        val isShizukuInstalled = try { packageManager.getPackageInfo("moe.shizuku.privileged.api", 0); true } catch (e: Exception) { false }
-                        val dialogView = this@MainActivity.layoutInflater.inflate(R.layout.dialog_root, null); val btnShizuku = dialogView.findViewById<Button>(R.id.btnShizuku)
-                        if (!isShizukuInstalled) btnShizuku.visibility = android.view.View.GONE
-                        val dialog = AlertDialog.Builder(this@MainActivity).setView(dialogView).setCancelable(false).create(); dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-                        dialogView.findViewById<Button>(R.id.btnGrant).setOnClickListener { dialog.dismiss(); chkRoot() }; dialogView.findViewById<Button>(R.id.btnExit).setOnClickListener { dialog.dismiss(); this@MainActivity.finish() }
-                        btnShizuku.setOnClickListener { dialog.dismiss(); Toast.makeText(this@MainActivity, "Shizuku Mode Activated", Toast.LENGTH_SHORT).show() }
-                        dialog.show()
-                    }
-                }
-            }.start()
-        }
-        chkRoot()
+        
+        Shizuku.addRequestPermissionResultListener(shizukuListener)
+        checkAccess()
+
         findViewById<Button>(R.id.saveKeyBtn).setOnClickListener { p.edit().putString("license_key", ki.text.toString().trim()).putString("brutal_option", bi.text.toString().trim()).apply(); Toast.makeText(this, "✅ Configuration Saved", Toast.LENGTH_SHORT).show() }
         findViewById<Button>(R.id.loadFilesBtn).setOnClickListener { p.edit().putString("license_key", ki.text.toString().trim()).putString("brutal_option", bi.text.toString().trim()).apply(); Installer.installAll(this) { ok -> Toast.makeText(this, if (ok) "✅ Files Loaded" else "❌ Failed. Check root.", Toast.LENGTH_SHORT).show() } }
         findViewById<ImageButton>(R.id.hideAppsIcon).setOnClickListener { startActivity(Intent(this, HideAppsActivity::class.java)) }
         findViewById<ImageButton>(R.id.terminalIcon).setOnClickListener { startActivity(Intent(this, TerminalActivity::class.java)) }
     }
+
+    private fun checkAccess() {
+        Thread {
+            val hasRoot = try { val pr = ProcessBuilder("su", "-c", "id").start(); pr.inputStream.bufferedReader().readText().contains("uid=0") } catch (e: Exception) { false }
+            val isShizukuRunning = Shizuku.pingBinder()
+            val hasShizukuPermission = Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
+            
+            Handler(Looper.getMainLooper()).post {
+                if (hasRoot) {
+                    activeDialog?.dismiss()
+                    Toast.makeText(this, "Root Access Granted", Toast.LENGTH_SHORT).show()
+                } else if (isAdbMode && isShizukuRunning && hasShizukuPermission) {
+                    activeDialog?.dismiss()
+                    Toast.makeText(this, "Shizuku Access Active", Toast.LENGTH_SHORT).show()
+                } else {
+                    if (activeDialog?.isShowing == true) return@post
+                    val isShizukuInstalled = try { packageManager.getPackageInfo("moe.shizuku.privileged.api", 0); true } catch (e: Exception) { false }
+                    val dialogView = this.layoutInflater.inflate(R.layout.dialog_root, null)
+                    val btnShizuku = dialogView.findViewById<Button>(R.id.btnShizuku)
+                    
+                    if (!isShizukuInstalled) btnShizuku.visibility = android.view.View.GONE
+                    
+                    activeDialog = AlertDialog.Builder(this).setView(dialogView).setCancelable(false).create()
+                    activeDialog?.window?.setBackgroundDrawableResource(android.R.color.transparent)
+                    
+                    dialogView.findViewById<Button>(R.id.btnGrant).setOnClickListener { activeDialog?.dismiss(); checkAccess() }
+                    dialogView.findViewById<Button>(R.id.btnExit).setOnClickListener { activeDialog?.dismiss(); finish() }
+                    
+                    btnShizuku.setOnClickListener { 
+                        if (Shizuku.pingBinder()) { 
+                            if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) { 
+                                isAdbMode = true
+                                activeDialog?.dismiss() 
+                                checkAccess() 
+                            } else { 
+                                Shizuku.requestPermission(REQUEST_CODE) 
+                            } 
+                        } else { 
+                            Toast.makeText(this, "Shizuku is NOT running! Please open Shizuku app and start it first.", Toast.LENGTH_LONG).show() 
+                        } 
+                    }
+                    activeDialog?.show()
+                }
+            }
+        }.start()
+    }
+
+    override fun onDestroy() { Shizuku.removeRequestPermissionResultListener(shizukuListener); super.onDestroy() }
 }
 EOF
 gradle assembleDebug
