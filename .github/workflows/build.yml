@@ -1,24 +1,40 @@
-name: Build Android App
-on: [push, workflow_dispatch]
+name: Android Build
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch: # 允许在 GitHub 网页端手动点击运行
+
 jobs:
   build:
+    name: Build Debug APK
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-java@v4
-      with:
-        distribution: 'zulu'
-        java-version: '17'
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
-      with:
-        packages: 'platform-tools'
-    - name: Run Build Script
-      run: |
-        chmod +x build.sh
-        ./build.sh
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: INX-Loader-APK
-        path: app/build/outputs/apk/debug/app-debug.apk
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu' # 兼容性较好的 JDK 发行版
+          java-version: '17'   # Android Gradle Plugin 7+ 强制要求 JDK 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant Execute Permission for gradlew
+        run: chmod +x ./gradlew # 解决 exit code 1 最常见的权限问题
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --stacktrace # 添加 --stacktrace 方便出错时定位
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error # 如果没生成 APK 则直接报错，避免静默失败
