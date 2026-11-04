@@ -1,35 +1,35 @@
-name: Android CI Build
-
+mkdir -p .github/workflows
+cat > .github/workflows/build.yml << 'E'
+name: Build INX-Loader APK
 on:
   push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
-  workflow_dispatch: # Allows you to run it manually from GitHub UI
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      - name: Make build.sh executable
+        run: chmod +x build.sh
 
-    - name: Build with Gradle
-      run: ./gradlew assembleDebug --stacktrace
+      - name: Build APK
+        run: bash build.sh
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-debug.apk
-        path: app/build/outputs/apk/debug/app-debug.apk
+      - name: Upload APK artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inx-loader-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+E
+echo "✅ Workflow written at .github/workflows/build.yml"
