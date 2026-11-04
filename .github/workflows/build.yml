@@ -17,6 +17,13 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Add Swap Space (Prevent Memory Crash)
+        run: |
+          sudo fallocate -l 4G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+
       - name: Make build.sh executable
         run: chmod +x build.sh
 
