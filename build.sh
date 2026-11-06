@@ -524,35 +524,18 @@ class FloaterOverlayService : Service() {
         var initialX = 0; var initialY = 0; var initialTouchX = 0f; var initialTouchY = 0f
         b.setOnTouchListener { view, event ->
             when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    initialX = params.x; initialY = params.y
-                    initialTouchX = event.rawX; initialTouchY = event.rawY
-                    isDragging = false
-                    true
-                }
+                MotionEvent.ACTION_DOWN -> { initialX = params.x; initialY = params.y; initialTouchX = event.rawX; initialTouchY = event.rawY; isDragging = false; true }
                 MotionEvent.ACTION_MOVE -> {
-                    val dx = event.rawX - initialTouchX
-                    val dy = event.rawY - initialTouchY
+                    val dx = event.rawX - initialTouchX; val dy = event.rawY - initialTouchY
                     if (Math.abs(dx) > 10 || Math.abs(dy) > 10) isDragging = true
-                    if (isDragging) {
-                        params.x = initialX + dx.toInt()
-                        params.y = initialY + dy.toInt()
-                        wm.updateViewLayout(b, params)
-                    }
+                    if (isDragging) { params.x = initialX + dx.toInt(); params.y = initialY + dy.toInt(); wm.updateViewLayout(b, params) }
                     true
                 }
-                MotionEvent.ACTION_UP -> {
-                    if (!isDragging) {
-                        runCatching { wm.removeView(b) }; bubble = null; showPanel()
-                    }
-                    true
-                }
+                MotionEvent.ACTION_UP -> { if (!isDragging) { runCatching { wm.removeView(b) }; bubble = null; showPanel() }; true }
                 else -> false
             }
         }
-        
-        bubble = b
-        wm.addView(b, params)
+        bubble = b; wm.addView(b, params)
     }
 
     private fun setupDrag(handle: View, rootView: View, params: WindowManager.LayoutParams) {
@@ -583,7 +566,7 @@ class FloaterOverlayService : Service() {
             val msg = if (on) "✅ Successfully Activated\n🎯 $tag\n📦 Asset: $asset" else "✅ Successfully Deactivated\n🎯 $tag\n📦 Asset: $asset"
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(this, "❌ Paste Failed!\nReason: $error", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "❌ Paste Failed!\nCheck the root_log.txt file in your Android/data folder!", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -592,42 +575,49 @@ class FloaterOverlayService : Service() {
             val tmp = File(cacheDir, name)
             assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
             
-            // YOUR EXACT PATH
             val targetDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/avatar"
-            
-            // NORMAL FILENAME (TESTING)
-            val targetFile = name 
-            
+            val targetFile = name // Normal test
             val fullPath = "$targetDir/$targetFile"
+            
+            val logFile = File(getExternalFilesDir(null), "root_log.txt")
 
             val cmd = """
-                mkdir -p "$targetDir"
-                cat "${tmp.absolutePath}" > "$fullPath"
-                chmod 777 "$fullPath"
-                chown $(stat -c %u:%g /data/user/0/com.dts.freefiremax) "$fullPath" 2>/dev/null
+                echo "=== STARTING PASTE ===" > "${logFile.absolutePath}"
+                echo "Target: $fullPath" >> "${logFile.absolutePath}"
+                
+                mkdir -p "$targetDir" >> "${logFile.absolutePath}" 2>&1
+                echo "Mkdir exit code: $?" >> "${logFile.absolutePath}"
+                
+                cp -f "${tmp.absolutePath}" "$fullPath" >> "${logFile.absolutePath}" 2>&1
+                echo "Copy exit code: $?" >> "${logFile.absolutePath}"
+                
+                chmod 777 "$fullPath" >> "${logFile.absolutePath}" 2>&1
+                echo "Chmod exit code: $?" >> "${logFile.absolutePath}"
+                
+                UID=$(dumpsys package com.dts.freefiremax | grep userId= | head -n 1 | awk -F= '{print $2}' | cut -d' ' -f1)
+                echo "FF UID: $UID" >> "${logFile.absolutePath}"
+                
+                chown $UID:$UID "$fullPath" >> "${logFile.absolutePath}" 2>&1
+                echo "Chown exit code: $?" >> "${logFile.absolutePath}"
                 
                 if [ -f "$fullPath" ]; then
+                    echo "SUCCESS" >> "${logFile.absolutePath}"
                     echo "SUCCESS"
                 else
-                    echo "FAILED_TO_CREATE"
+                    echo "FAILED" >> "${logFile.absolutePath}"
+                    echo "FAILED"
                 fi
             """.trimIndent()
 
-            val p = ProcessBuilder("su").redirectErrorStream(true).start()
-            val os = DataOutputStream(p.outputStream)
-            os.writeBytes(cmd + "\n")
-            os.writeBytes("exit\n")
-            os.flush()
-            os.close()
-            
+            val p = ProcessBuilder("su", "-c", cmd).redirectErrorStream(true).start()
             val output = p.inputStream.bufferedReader().readText().trim()
             val code = p.waitFor()
             tmp.delete()
-            
+
             return if (output.contains("SUCCESS") && code == 0) {
                 null 
             } else {
-                if (output.isEmpty()) "Root denied or permission missing." else output
+                "FAILED"
             }
         } catch (e: Exception) {
             return e.message
