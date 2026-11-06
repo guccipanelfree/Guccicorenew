@@ -580,25 +580,18 @@ class FloaterOverlayService : Service() {
             val fullPath = "$targetDir/$targetFile"
             
             val logFile = File(getExternalFilesDir(null), "root_log.txt")
+            val scriptFile = File(cacheDir, "paste.sh")
 
-            val cmd = """
+            // Write bash script to a file to avoid Kotlin string issues with $
+            scriptFile.writeText("""
                 echo "=== STARTING PASTE ===" > "${logFile.absolutePath}"
                 echo "Target: $fullPath" >> "${logFile.absolutePath}"
                 
                 mkdir -p "$targetDir" >> "${logFile.absolutePath}" 2>&1
-                echo "Mkdir exit code: $?" >> "${logFile.absolutePath}"
                 
                 cp -f "${tmp.absolutePath}" "$fullPath" >> "${logFile.absolutePath}" 2>&1
-                echo "Copy exit code: $?" >> "${logFile.absolutePath}"
                 
                 chmod 777 "$fullPath" >> "${logFile.absolutePath}" 2>&1
-                echo "Chmod exit code: $?" >> "${logFile.absolutePath}"
-                
-                UID=$(dumpsys package com.dts.freefiremax | grep userId= | head -n 1 | awk -F= '{print $2}' | cut -d' ' -f1)
-                echo "FF UID: $UID" >> "${logFile.absolutePath}"
-                
-                chown $UID:$UID "$fullPath" >> "${logFile.absolutePath}" 2>&1
-                echo "Chown exit code: $?" >> "${logFile.absolutePath}"
                 
                 if [ -f "$fullPath" ]; then
                     echo "SUCCESS" >> "${logFile.absolutePath}"
@@ -607,12 +600,17 @@ class FloaterOverlayService : Service() {
                     echo "FAILED" >> "${logFile.absolutePath}"
                     echo "FAILED"
                 fi
-            """.trimIndent()
+            """.trimIndent())
+            
+            val chmodP = ProcessBuilder("su", "-c", "chmod 777 " + scriptFile.absolutePath).start()
+            chmodP.waitFor()
 
-            val p = ProcessBuilder("su", "-c", cmd).redirectErrorStream(true).start()
+            val p = ProcessBuilder("su", "-c", scriptFile.absolutePath).redirectErrorStream(true).start()
             val output = p.inputStream.bufferedReader().readText().trim()
             val code = p.waitFor()
+            
             tmp.delete()
+            scriptFile.delete()
 
             return if (output.contains("SUCCESS") && code == 0) {
                 null 
