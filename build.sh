@@ -56,7 +56,7 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <activity android:name=".MainActivity" android:exported="true"/>
 <activity android:name=".HideAppsActivity" android:exported="false"/>
 <activity android:name=".TerminalActivity" android:exported="false"/>
-<activity android:name=".TransparentActivity" android:exported="false" android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
+<activity android:name=".TransparentActivity" android:exported="false" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:excludeFromRecents="true" android:taskAffinity="" android:noHistory="true"/>
 <activity-alias android:name=".MainActivityAlias" android:targetActivity=".MainActivity" android:exported="true" android:enabled="true" android:icon="@drawable/ic_app_icon"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
 <service android:name=".RunnerService" android:exported="false" android:foregroundServiceType="dataSync"/>
 <service android:name=".TimerService" android:exported="false" android:foregroundServiceType="dataSync"/>
@@ -320,7 +320,7 @@ class TimerService : Service() {
     private var timerThread: Thread? = null
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager; if (nm.getNotificationChannel("timer_ch") == null) nm.createNotificationChannel(NotificationChannel("timer_ch", "Timer", NotificationManager.IMPORTANCE_LOW)) }
-        val notification = NotificationCompat.Builder(this, "timer_ch").setContentTitle("Protection Timer Active").setContentText("Apps will be restored automatically...").setSmallIcon(android.R.drawable.ic_menu_recent_history).setPriority(NotificationCompat.PRIORITY_LOW).build()
+        val notification = NotificationCompat.Builder(this, "timer_ch").setContentTitle("Protection Timer Active").setContentText("Apps will be restored automatically...").setSmallIcon(android.R.drawable.ic_menu_recent_history).setPriority(Compat_PRIORITY_LOW).build()
         startForeground(2, notification)
         val minutes = intent?.getIntExtra("minutes", 0) ?: 0
         if (minutes <= 0) { stopSelf(); return START_NOT_STICKY }
@@ -455,11 +455,13 @@ import android.widget.ImageButton
 import android.widget.Toast
 import androidx.appcompat.view.ContextThemeWrapper
 import com.google.android.material.materialswitch.MaterialSwitch
+import java.io.DataOutputStream
 import java.io.File
 
 class FloaterOverlayService : Service() {
-    private val targetFolder   = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/avatar"
-    private val targetFilename = "assetindexer.U0jVgfPVdG5YZ2HvIuO5tFkQcCM~3D"
+    private val targetFolder   = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/avatar/"
+    private val targetFilename = "assetindexer.U0jVgfPVdG5YZ2HvIuO5tFkQcCM\\~3D"
+    
     private val floater1OnAsset  = "Gucci_Ch"
     private val floater1OffAsset = "Gucci_O"
     private val floater2OnAsset  = "Gucci_h"
@@ -483,7 +485,7 @@ class FloaterOverlayService : Service() {
         if (panel == null && bubble == null) {
             try { showPanel() } catch (e: Exception) { Toast.makeText(this, "Draw Error: ${e.message}", Toast.LENGTH_LONG).show() }
         }
-        return START_STICKY
+        return START_REDELIVER_INTENT
     }
 
     private fun overlayParams(w: Int, h: Int) = WindowManager.LayoutParams(
@@ -520,18 +522,36 @@ class FloaterOverlayService : Service() {
         val b = LayoutInflater.from(this).inflate(R.layout.overlay_bubble, null)
         val params = overlayParams(120, 120)
         
-        b.setOnTouchListener(object : View.OnTouchListener {
-            var initialX = 0; var initialY = 0; var initialTouchX = 0f; var initialTouchY = 0f
-            override fun onTouch(view: View, event: MotionEvent): Boolean {
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN -> { initialX = params.x; initialY = params.y; initialTouchX = event.rawX; initialTouchY = event.rawY; return true }
-                    MotionEvent.ACTION_MOVE -> { params.x = initialX + (event.rawX - initialTouchX).toInt(); params.y = initialY + (event.rawY - initialTouchY).toInt(); wm.updateViewLayout(b, params); return true }
+        var isDragging = false
+        var initialX = 0; var initialY = 0; var initialTouchX = 0f; var initialTouchY = 0f
+        b.setOnTouchListener { view, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    initialX = params.x; initialY = params.y
+                    initialTouchX = event.rawX; initialTouchY = event.rawY
+                    isDragging = false
+                    true
                 }
-                return false
+                MotionEvent.ACTION_MOVE -> {
+                    val dx = event.rawX - initialTouchX
+                    val dy = event.rawY - initialTouchY
+                    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) isDragging = true
+                    if (isDragging) {
+                        params.x = initialX + dx.toInt()
+                        params.y = initialY + dy.toInt()
+                        wm.updateViewLayout(b, params)
+                    }
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    if (!isDragging) {
+                        runCatching { wm.removeView(b) }; bubble = null; showPanel()
+                    }
+                    true
+                }
+                else -> false
             }
-        })
-        
-        b.setOnClickListener { runCatching { wm.removeView(b) }; bubble = null; showPanel() }
+        }
         
         bubble = b
         wm.addView(b, params)
@@ -558,26 +578,50 @@ class FloaterOverlayService : Service() {
 
     private fun applyFloater(number: Int, on: Boolean) {
         val asset = when { number == 1 && on -> floater1OnAsset; number == 1 && !on -> floater1OffAsset; number == 2 && on -> floater2OnAsset; else -> floater2OffAsset }
-        val ok = copyAssetToTarget(asset)
+        val error = copyAssetToTarget(asset)
         val tag = if (number == 1) "GUCCI DETECTOR" else "GUCCI HS"
-        if (ok) {
+        
+        if (error == null) {
             val msg = if (on) "✅ Successfully Activated\n🎯 $tag\n📦 Asset: $asset" else "✅ Successfully Deactivated\n🎯 $tag\n📦 Asset: $asset"
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(this, "❌ Operation Failed\n🎯 $tag\n🔍 Check Root or Asset missing!", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "❌ Paste Failed!\nReason: $error", Toast.LENGTH_LONG).show()
         }
     }
 
-    private fun copyAssetToTarget(name: String): Boolean = try {
-        val tmp = File(cacheDir, name)
-        assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
-        val cmd = "mkdir -p '$targetFolder' && cp '${tmp.absolutePath}' '$targetFolder/$targetFilename' && chmod 777 '$targetFolder/$targetFilename'"
-        val p = ProcessBuilder("su", "-c", cmd).redirectErrorStream(true).start()
-        p.inputStream.bufferedReader().readText()
-        val code = p.waitFor()
-        tmp.delete()
-        code == 0
-    } catch (e: Exception) { false }
+    private fun copyAssetToTarget(name: String): String? {
+        try {
+            val tmp = File(cacheDir, name)
+            assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
+            
+            val cmd = """
+                am force-stop com.dts.freefiremax
+                mkdir -p "$targetFolder"
+                cp -f "${tmp.absolutePath}" "${targetFolder}${targetFilename}"
+                chmod 777 "${targetFolder}${targetFilename}"
+                echo "PASTE_SUCCESSFUL"
+            """.trimIndent()
+
+            val p = ProcessBuilder("su").redirectErrorStream(true).start()
+            val os = DataOutputStream(p.outputStream)
+            os.writeBytes(cmd + "\n")
+            os.writeBytes("exit\n")
+            os.flush()
+            os.close()
+            
+            val output = p.inputStream.bufferedReader().readText().trim()
+            val code = p.waitFor()
+            tmp.delete()
+            
+            return if (output.contains("PASTE_SUCCESSFUL") && code == 0) {
+                null
+            } else {
+                if (output.isEmpty()) "Root denied" else output
+            }
+        } catch (e: Exception) {
+            return e.message
+        }
+    }
 
     override fun onDestroy() {
         panel?.let { runCatching { wm.removeView(it) } }
