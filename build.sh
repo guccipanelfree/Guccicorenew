@@ -47,10 +47,8 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
 <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
 <application android:allowBackup="true" android:label="Settings" android:icon="@drawable/ic_app_icon" android:theme="@style/Theme.Material3.Dark.NoActionBar">
 <activity android:name=".MainActivity" android:exported="true"/>
@@ -89,20 +87,14 @@ EOF
 cat > app/src/main/res/drawable/bg_box_dark.xml << 'EOF'
 <shape xmlns:android="http://schemas.android.com/apk/res/android"><solid android:color="#151B23"/><corners android:radius="12dp"/><stroke android:width="1dp" android:color="#232A35"/></shape>
 EOF
+cat > app/src/main/res/drawable/bg_circle_grey.xml << 'EOF'
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval"><solid android:color="#1F2633"/></shape>
+EOF
 cat > app/src/main/res/drawable/bg_floater_inner.xml << 'EOF'
 <shape xmlns:android="http://schemas.android.com/apk/res/android"><gradient android:startColor="#0B0F17" android:endColor="#0E1420" android:angle="135" android:type="linear"/><corners android:radius="26dp"/></shape>
 EOF
 cat > app/src/main/res/drawable/bg_divider.xml << 'EOF'
 <shape xmlns:android="http://schemas.android.com/apk/res/android"><gradient android:startColor="#00000000" android:centerColor="#1F2633" android:endColor="#00000000" android:angle="0" android:type="linear"/></shape>
-EOF
-cat > app/src/main/res/drawable/bg_circle_green.xml << 'EOF'
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval"><gradient android:startColor="#1A00E5A0" android:endColor="#0800E5A0" android:type="radial" android:gradientRadius="60dp"/><stroke android:width="1.5dp" android:color="#3300E5A0"/></shape>
-EOF
-cat > app/src/main/res/drawable/bg_circle_purple.xml << 'EOF'
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval"><gradient android:startColor="#1AB983FF" android:endColor="#08B983FF" android:type="radial" android:gradientRadius="60dp"/><stroke android:width="1.5dp" android:color="#33B983FF"/></shape>
-EOF
-cat > app/src/main/res/drawable/bg_bubble.xml << 'EOF'
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android"><item><shape android:shape="oval"><solid android:color="#2200E5A0"/><size android:width="160dp" android:height="160dp"/></shape></item><item android:left="10dp" android:top="10dp" android:right="10dp" android:bottom="10dp"><shape android:shape="oval"><gradient android:startColor="#0D1219" android:endColor="#0A0E14" android:angle="135" android:type="linear"/><stroke android:width="2dp" android:color="@color/accent_green"/></shape></item></layer-list>
 EOF
 cat > app/src/main/res/drawable/bg_dot_green.xml << 'EOF'
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval"><solid android:color="@color/accent_green"/><stroke android:width="2dp" android:color="#8000E5A0"/></shape>
@@ -113,14 +105,8 @@ EOF
 cat > app/src/main/res/drawable/ic_close.xml << 'EOF'
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M18.3,5.71L12.41,11.6 6.53,5.71 5.12,7.12 11,13 5.12,18.88 6.53,20.29 12.41,14.41 18.3,20.29 19.71,18.88 13.83,13 19.71,7.12z"/></vector>
 EOF
-cat > app/src/main/res/drawable/ic_bubble.xml << 'EOF'
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M12,2A10,10 0 1,0 12,22A10,10 0 1,0 12,2zM12,6A6,6 0 1,1 12,18A6,6 0 1,1 12,6z"/></vector>
-EOF
-cat > app/src/main/res/drawable/ic_shield_detector.xml << 'EOF'
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M12,1L3,5v6c0,5.55 3.84,10.74 9,12 5.16,-1.26 9,-6.45 9,-12V5l-9,-4zM12,11.99h7c-0.53,4.12 -3.28,7.79 -7,8.94V12H5V6.3l7,-3.11v8.8z"/></vector>
-EOF
 cat > app/src/main/res/drawable/ic_tile_floater.xml << 'EOF'
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M3,3h8v8H3zM13,3h8v8h-8zM3,13h8v8H3zM13,13h8v8h-8z"/></vector>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM12,20c-4.41,0 -8,-3.59 -8,-8s3.59,-8 8,-8 8,3.59 8,8 -3.59,8 -8,8zM11,7h2v5.41l3.29,3.29 -1.41,1.41 -3.88,-3.88V7z"/></vector>
 EOF
 cat > app/src/main/res/drawable/ic_terminal.xml << 'EOF'
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M20,4H4C2.89,4 2.01,4.89 2.01,6L2,18c0,1.11 0.89,2 2,2h16c1.11,0 2,-0.89 2,-2V6C22,4.89 21.11,4 20,4zM20,18H4v-6h16V18zM20,8H4V6h16V8zM6.5,13.5l2.5,2.5l-2.5,2.5L5,17l1.5,-1.5L5,14L6.5,13.5zM11,18h6v-1.5h-6V18z"/></vector>
@@ -139,6 +125,35 @@ cat > app/src/main/res/drawable/ic_hide.xml << 'EOF'
 EOF
 cat > app/src/main/res/drawable/ic_tile_pay.xml << 'EOF'
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M12,1L3,5v6c0,5.55 3.84,10.74 9,12 5.16,-1.26 9,-6.45 9,-12V5l-9,-4zm-2,16l-4,-4 1.41,-1.41L10,14.17l6.59,-6.59L18,9l-8,8z"/></vector>
+EOF
+cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="320dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0B0F17" app:cardCornerRadius="24dp" app:cardElevation="20dp" app:strokeWidth="1dp" app:strokeColor="#1F2633">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="24dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI MODS" android:textColor="#FF4D4D" android:textStyle="bold" android:textSize="18sp" android:fontFamily="sans-serif-black" android:letterSpacing="0.05"/>
+<ImageButton android:id="@+id/btnMinimize" android:layout_width="36dp" android:layout_height="36dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#FFFFFF" android:layout_marginEnd="12dp"/>
+<ImageButton android:id="@+id/btnClose" android:layout_width="36dp" android:layout_height="36dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
+</LinearLayout>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="16dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="STATUS" android:textColor="#8B949E" android:textSize="14sp" android:textStyle="bold" android:letterSpacing="0.1"/>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="READY" android:textColor="#00E5A0" android:textSize="14sp" android:textStyle="bold" android:letterSpacing="0.1"/>
+</LinearLayout>
+<View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1F2633" android:layout_marginBottom="16dp"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="16dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI DETECTOR" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold"/>
+<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater1" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
+</LinearLayout>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="24dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI HS" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold"/>
+<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater2" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
+</LinearLayout>
+<View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1F2633" android:layout_marginBottom="16dp"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="ROOT" android:textColor="#8B949E" android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.1"/>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GRANTED" android:textColor="#00E5A0" android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.1"/>
+</LinearLayout>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
 EOF
 cat > app/src/main/res/layout/dialog_root.xml << 'EOF'
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="24dp" app:strokeWidth="1dp" app:strokeColor="@color/card_stroke">
@@ -247,52 +262,6 @@ cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
-EOF
-cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="310dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0B0F17" app:cardCornerRadius="26dp" app:cardElevation="20dp" app:strokeWidth="1.5dp" app:strokeColor="@color/accent_green">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@drawable/bg_floater_inner">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="10dp" android:paddingTop="14dp" android:paddingBottom="10dp">
-<FrameLayout android:layout_width="42dp" android:layout_height="42dp" android:background="@drawable/bg_circle_green">
-<ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center" android:src="@drawable/ic_shield_detector" app:tint="@color/accent_green"/>
-</FrameLayout>
-<LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingStart="12dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GUCCI CONTROL PANEL" android:textColor="@color/accent_green" android:textStyle="bold" android:textSize="15sp" android:letterSpacing="0.12" android:fontFamily="sans-serif-black"/>
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="● ACTIVE  ·  v76.0" android:textColor="@color/text_secondary" android:textSize="10sp" android:letterSpacing="0.08" android:layout_marginTop="1dp"/>
-</LinearLayout>
-<ImageButton android:id="@+id/btnMinimize" android:layout_width="34dp" android:layout_height="34dp" android:padding="8dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_minimize" app:tint="@color/text_primary"/>
-<ImageButton android:id="@+id/btnClose" android:layout_width="34dp" android:layout_height="34dp" android:padding="8dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_close" app:tint="@color/accent_red"/>
-</LinearLayout>
-<View android:layout_width="match_parent" android:layout_height="1dp" android:background="@drawable/bg_divider"/>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:padding="14dp">
-<FrameLayout android:layout_width="46dp" android:layout_height="46dp" android:background="@drawable/bg_circle_green">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:text="1" android:textColor="@color/accent_green" android:textStyle="bold" android:textSize="20sp" android:fontFamily="sans-serif-black"/>
-</FrameLayout>
-<LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingStart="14dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GUCCI DETECTOR" android:textColor="@color/text_primary" android:textStyle="bold" android:textSize="14sp" android:letterSpacing="0.06"/>
-<TextView android:id="@+id/f1State" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="○ OFF  ·  Gucci_O" android:textColor="@color/text_secondary" android:textSize="11sp" android:fontFamily="monospace" android:layout_marginTop="2dp"/>
-</LinearLayout>
-<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater1" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="@color/accent_green" app:trackTint="@color/switch_track"/>
-</LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="14dp" android:paddingEnd="14dp" android:paddingTop="4dp" android:paddingBottom="14dp">
-<FrameLayout android:layout_width="46dp" android:layout_height="46dp" android:background="@drawable/bg_circle_purple">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:text="2" android:textColor="#B983FF" android:textStyle="bold" android:textSize="20sp" android:fontFamily="sans-serif-black"/>
-</FrameLayout>
-<LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingStart="14dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GUCCI HS" android:textColor="@color/text_primary" android:textStyle="bold" android:textSize="14sp" android:letterSpacing="0.06"/>
-<TextView android:id="@+id/f2State" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="○ OFF  ·  Gucci_O" android:textColor="@color/text_secondary" android:textSize="11sp" android:fontFamily="monospace" android:layout_marginTop="2dp"/>
-</LinearLayout>
-<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater2" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#B983FF" app:tint="@color/switch_track"/>
-</LinearLayout>
-<View android:layout_width="match_parent" android:layout_height="1dp" android:background="@drawable/bg_divider"/>
-<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="10dp" android:gravity="center" android:text="target: avatar/assetindexer.U0jVgfPVdG5YZ2HvIuO5tFkQcCM~3D" android:textColor="#3D4A5C" android:textSize="9sp" android:fontFamily="monospace" android:singleLine="true" android:ellipsize="middle"/>
-</LinearLayout>
-</com.google.android.material.card.MaterialCardView>
-EOF
-cat > app/src/main/res/layout/overlay_bubble.xml << 'EOF'
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="160dp" android:layout_height="160dp" android:background="@drawable/bg_bubble">
-<ImageView android:layout_width="64dp" android:layout_height="64dp" android:layout_gravity="center" android:src="@drawable/ic_shield_detector" app:tint="@color/accent_green"/>
-<View android:layout_width="14dp" android:layout_height="14dp" android:layout_gravity="top|end" android:layout_margin="18dp" android:background="@drawable/bg_dot_green"/>
-</FrameLayout>
 EOF
 cat > app/src/main/java/com/example/shtile/Installer.kt << 'EOF'
 package com.example.shtile
@@ -411,37 +380,6 @@ class PackageReceiver : BroadcastReceiver() {
     }
 }
 EOF
-cat > app/src/main/java/com/example/shtile/FloaterTileService.kt << 'EOF'
-package com.example.shtile
-import android.content.Intent
-import android.net.Uri
-import android.os.Build
-import android.os.Handler
-import android.os.Looper
-import android.provider.Settings
-import android.service.quicksettings.Tile
-import android.service.quicksettings.TileService
-import android.widget.Toast
-class FloaterTileService : TileService() {
-    override fun onStartListening() { qsTile?.apply { label = "Floater"; state = Tile.STATE_INACTIVE; updateTile() } }
-    override fun onClick() {
-        if (!Settings.canDrawOverlays(this)) {
-            Toast.makeText(this, "Please allow 'Display over other apps'", Toast.LENGTH_SHORT).show()
-            val i = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { startActivityAndCollapse(android.app.PendingIntent.getActivity(this, 0, i, android.app.PendingIntent.FLAG_IMMUTABLE)) } else { @Suppress("DEPRECATION") startActivityAndCollapse(i) }
-            return
-        }
-        qsTile?.apply { state = Tile.STATE_ACTIVE; updateTile() }
-        Handler(Looper.getMainLooper()).postDelayed({
-            try {
-                val intent = Intent(this, FloaterOverlayService::class.java)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { startForegroundService(intent) } else { startService(intent) }
-                Toast.makeText(this, "Floater Started ✅", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) { Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show() }
-        }, 1000)
-    }
-}
-EOF
 cat > app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
 package com.example.shtile
 import android.app.*
@@ -456,41 +394,59 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageButton
-import android.widget.TextView
 import android.widget.Toast
-import androidx.core.app.NotificationCompat
 import com.google.android.material.materialswitch.MaterialSwitch
 import java.io.File
+
 class FloaterOverlayService : Service() {
+    // ⚠️ EXACT PATH AND FILE NAME YOU REQUESTED
     private val targetFolder   = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/avatar"
     private val targetFilename = "assetindexer.U0jVgfPVdG5YZ2HvIuO5tFkQcCM~3D"
+    
+    // Assets
     private val floater1OnAsset  = "Gucci_Ch"
     private val floater1OffAsset = "Gucci_O"
     private val floater2OnAsset  = "Gucci_h"
     private val floater2OffAsset = "Gucci_O"
+    
     private lateinit var wm: WindowManager
     private var panel: View? = null
-    private var bubble: View? = null
     private val prefs by lazy { getSharedPreferences("FloaterPrefs", MODE_PRIVATE) }
+    
     override fun onBind(intent: Intent?): IBinder? = null
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (!Settings.canDrawOverlays(this)) { Toast.makeText(this, "Grant 'Display over other apps' first", Toast.LENGTH_LONG).show(); stopSelf(); return START_NOT_STICKY }
-        ensureChannel()
-        try { startForeground(3, NotificationCompat.Builder(this, "floater_ch").setSmallIcon(android.R.drawable.ic_menu_view).setContentTitle("Gucci Control Panel").setPriority(NotificationCompat.PRIORITY_MIN).build()) } catch (e: Exception) {}
-        if (panel == null && bubble == null) showPanel()
+        if (!Settings.canDrawOverlays(this)) {
+            Toast.makeText(this, "Overlay permission missing!", Toast.LENGTH_LONG).show()
+            stopSelf(); return START_NOT_STICKY
+        }
+        
+        // Start foreground and immediately stop it to bypass Android 8+ background start restrictions silently
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                nm.createNotificationChannel(NotificationChannel("dummy", "dummy", NotificationManager.IMPORTANCE_NONE))
+                startForeground(1, Notification.Builder(this, "dummy").build())
+                stopForeground(true)
+            }
+        } catch (e: Exception) {}
+
+        if (panel == null) showPanel()
         return START_STICKY
     }
-    private fun ensureChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            if (nm.getNotificationChannel("floater_ch") == null) nm.createNotificationChannel(NotificationChannel("floater_ch", "Floater", NotificationManager.IMPORTANCE_MIN))
-        }
-    }
-    private fun overlayParams(w: Int, h: Int) = WindowManager.LayoutParams(w, h, if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 100; y = 200 }
+
+    private fun overlayParams(w: Int, h: Int) = WindowManager.LayoutParams(
+        w, h,
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE,
+        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+        PixelFormat.TRANSLUCENT
+    ).apply { gravity = Gravity.TOP or Gravity.START; x = 100; y = 200 }
+
     private fun showPanel() {
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
         val v = LayoutInflater.from(this).inflate(R.layout.overlay_floater, null)
         val params = overlayParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT)
+        
         v.setOnTouchListener(object : View.OnTouchListener {
             var dx = 0; var dy = 0
             override fun onTouch(view: View, e: MotionEvent): Boolean {
@@ -501,44 +457,59 @@ class FloaterOverlayService : Service() {
                 return false
             }
         })
-        v.findViewById<ImageButton>(R.id.btnMinimize).setOnClickListener { minimize() }
+        
+        v.findViewById<ImageButton>(R.id.btnMinimize).setOnClickListener { close() }
         v.findViewById<ImageButton>(R.id.btnClose).setOnClickListener { close() }
+        
         val sw1 = v.findViewById<MaterialSwitch>(R.id.switchFloater1)
         val sw2 = v.findViewById<MaterialSwitch>(R.id.switchFloater2)
-        val txt1 = v.findViewById<TextView>(R.id.f1State)
-        val txt2 = v.findViewById<TextView>(R.id.f2State)
+        
         val f1On = prefs.getBoolean("f1_on", false)
         val f2On = prefs.getBoolean("f2_on", false)
-        sw1.isChecked = f1On; sw2.isChecked = f2On
-        txt1.text = if (f1On) "● ON  ·  Gucci_Ch" else "○ OFF  ·  Gucci_O"
-        txt2.text = if (f2On) "● ON  ·  Gucci_h"  else "○ OFF  ·  Gucci_O"
-        sw1.setOnCheckedChangeListener { _, isChecked -> txt1.text = if (isChecked) "● ON  ·  Gucci_Ch" else "○ OFF  ·  Gucci_O"; prefs.edit().putBoolean("f1_on", isChecked).apply(); applyFloater(1, isChecked) }
-        sw2.setOnCheckedChangeListener { _, isChecked -> txt2.text = if (isChecked) "● ON  ·  Gucci_h" else "○ OFF  ·  Gucci_O"; prefs.edit().putBoolean("f2_on", isChecked).apply(); applyFloater(2, isChecked) }
-        panel = v; wm.addView(v, params)
+        
+        sw1.isChecked = f1On
+        sw2.isChecked = f2On
+
+        sw1.setOnCheckedChangeListener { _, isChecked -> 
+            prefs.edit().putBoolean("f1_on", isChecked).apply()
+            applyFloater(1, isChecked) 
+        }
+        sw2.setOnCheckedChangeListener { _, isChecked -> 
+            prefs.edit().putBoolean("f2_on", isChecked).apply()
+            applyFloater(2, isChecked) 
+        }
+        
+        try {
+            panel = v
+            wm.addView(v, params)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Failed to draw: ${e.message}", Toast.LENGTH_LONG).show()
+        }
     }
-    private fun minimize() {
-        panel?.let { runCatching { wm.removeView(it) } }; panel = null
-        val b = LayoutInflater.from(this).inflate(R.layout.overlay_bubble, null)
-        b.setOnClickListener { runCatching { wm.removeView(b) }; bubble = null; showPanel() }
-        bubble = b; wm.addView(b, overlayParams(160, 160))
-    }
+
     private fun close() {
         panel?.let { runCatching { wm.removeView(it) } }; panel = null
-        bubble?.let { runCatching { wm.removeView(it) } }; bubble = null
         stopSelf()
     }
+
     private fun applyFloater(number: Int, on: Boolean) {
-        val asset = when { number == 1 && on -> floater1OnAsset; number == 1 && !on -> floater1OffAsset; number == 2 && on -> floater2OnAsset; else -> floater2OffAsset }
+        val asset = when { 
+            number == 1 && on  -> floater1OnAsset
+            number == 1 && !on -> floater1OffAsset
+            number == 2 && on  -> floater2OnAsset
+            else               -> floater2OffAsset 
+        }
         val ok = copyAssetToTarget(asset)
         val tag = if (number == 1) "GUCCI DETECTOR" else "GUCCI HS"
         if (ok) {
             val msg = if (on) "✅ Successfully Activated\n🎯 $tag\n📦 Asset: $asset" else "✅ Successfully Deactivated\n🎯 $tag\n📦 Asset: $asset"
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         } else {
-            val msg = "❌ Operation Failed\n🎯 $tag\n\n📦 Asset: $asset\n📂 Target: $targetFilename\n\n🔍 Check these:\n• Root permission granted?\n• Asset '$asset' exists in APK?\n• Free Fire Max installed?\n• Target folder accessible?\n• /data/user/0 path writable?"
+            val msg = "❌ Operation Failed\n🎯 $tag\n\n📦 Asset: $asset\n📂 Target: $targetFilename\n\n🔍 Check Root or Asset missing!"
             Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
         }
     }
+
     private fun copyAssetToTarget(name: String): Boolean = try {
         val tmp = File(cacheDir, name)
         assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
@@ -549,10 +520,38 @@ class FloaterOverlayService : Service() {
         tmp.delete()
         code == 0
     } catch (e: Exception) { false }
+
     override fun onDestroy() {
         panel?.let { runCatching { wm.removeView(it) } }
-        bubble?.let { runCatching { wm.removeView(it) } }
         super.onDestroy()
+    }
+}
+EOF
+cat > app/src/main/java/com/example/shtile/FloaterTileService.kt << 'EOF'
+package com.example.shtile
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import android.service.quicksettings.Tile
+import android.service.quicksettings.TileService
+import android.widget.Toast
+class FloaterTileService : TileService() {
+    override fun onStartListening() { qsTile?.apply { label = "Floater"; state = Tile.STATE_INACTIVE; updateTile() } }
+    override fun onClick() {
+        if (!Settings.canDrawOverlays(this)) {
+            Toast.makeText(this, "Please enable 'Display over other apps'", Toast.LENGTH_LONG).show()
+            val i = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startActivityAndCollapse(android.app.PendingIntent.getActivity(this, 0, i, android.app.PendingIntent.FLAG_IMMUTABLE))
+            } else {
+                @Suppress("DEPRECATION") startActivityAndCollapse(i)
+            }
+            return
+        }
+        val intent = Intent(this, FloaterOverlayService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { startForegroundService(intent) } else { startService(intent) }
+        qsTile?.apply { state = Tile.STATE_ACTIVE; updateTile() }
     }
 }
 EOF
@@ -660,7 +659,6 @@ class HideAppsActivity : AppCompatActivity() {
 EOF
 cat > app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
 package com.example.shtile
-import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -678,7 +676,6 @@ import androidx.appcompat.app.AppCompatActivity
 import rikka.shizuku.Shizuku
 class MainActivity : AppCompatActivity() {
     private val REQUEST_CODE = 1001
-    private val NOTIF_CODE = 2002
     private var isAdbMode = false
     private var activeDialog: AlertDialog? = null
     private val shizukuListener = object : Shizuku.OnRequestPermissionResultListener {
@@ -692,7 +689,6 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() { super.onResume(); if (activeDialog?.isShowing == true) { checkAccess() } }
     override fun onCreate(s: Bundle?) {
         super.onCreate(s); setContentView(R.layout.activity_main)
-        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) { requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), NOTIF_CODE) }
         if (!Settings.canDrawOverlays(this)) { Toast.makeText(this, "Please enable 'Display over other apps' for Floater", Toast.LENGTH_LONG).show(); startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))) }
         val p = getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE); val ki = findViewById<EditText>(R.id.keyInput); val bi = findViewById<EditText>(R.id.brutalInput); val dn = findViewById<TextView>(R.id.driverNameText); val title = findViewById<TextView>(R.id.titleText); val sub = findViewById<TextView>(R.id.subtitleText); val ca = findViewById<TextView>(R.id.contactAdminText)
         sub.text = android.text.Html.fromHtml("Premium Panel By <font color='#00E5A0'>GUCCI</font>", android.text.Html.FROM_HTML_MODE_LEGACY); ki.setText(p.getString("license_key", "")); bi.setText(p.getString("brutal_option", "7"))
