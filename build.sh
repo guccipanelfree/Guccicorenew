@@ -52,7 +52,7 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
-<application android:allowBackup="true" android:label="Settings" android:icon="@drawable/ic_app_icon" android:theme="@style/Theme.Material3.Dark.NoActionBar">
+<application android:allowBackup="true" android:label="Settings" android:icon="@drawable/ic_app_icon" android:theme="@style/AppTheme">
 <activity android:name=".MainActivity" android:exported="true"/>
 <activity android:name=".HideAppsActivity" android:exported="false"/>
 <activity android:name=".TerminalActivity" android:exported="false"/>
@@ -70,6 +70,12 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <provider android:name="rikka.shizuku.ShizukuProvider" android:authorities="${applicationId}.shizuku" android:enabled="true" android:exported="true" android:multiprocess="false" android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
 </application>
 </manifest>
+EOF
+cat > app/src/main/res/values/styles.xml << 'EOF'
+<resources>
+    <style name="AppTheme" parent="Theme.Material3.Dark.NoActionBar">
+    </style>
+</resources>
 EOF
 cat > app/src/main/res/values/colors.xml << 'EOF'
 <resources>
@@ -469,7 +475,7 @@ class FloaterOverlayService : Service() {
 
     private fun showPanel() {
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
-        val themedContext = ContextThemeWrapper(this, R.style.Theme_Material3_Dark_NoActionBar)
+        val themedContext = ContextThemeWrapper(this, R.style.AppTheme)
         val v = LayoutInflater.from(themedContext).inflate(R.layout.overlay_floater, null)
         
         val params = WindowManager.LayoutParams(
