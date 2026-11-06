@@ -579,45 +579,45 @@ class FloaterOverlayService : Service() {
             val targetFile = name // Normal test
             val fullPath = "$targetDir/$targetFile"
             
-            val scriptFile = File(cacheDir, "paste.sh")
+            val logFile = File(getExternalFilesDir(null), "paste_log.txt")
 
-            // Write script that forces SELinux permissive, copies, and verifies
-            scriptFile.writeText("""
-                #!/system/bin/sh
-                setenforce 0
+            // Script: Copy to /data/local/tmp/ first, then use cat to write.
+            val cmd = """
+                echo "=== STARTING PASTE ===" > "${logFile.absolutePath}"
                 
-                mkdir -p "$targetDir"
+                # Step 1: Copy to /data/local/tmp/
+                cp -f "${tmp.absolutePath}" "/data/local/tmp/$name"
+                chmod 777 "/data/local/tmp/$name"
                 
-                cp -f "${tmp.absolutePath}" "$fullPath"
+                # Step 2: Cat the file into the target
+                cat "/data/local/tmp/$name" > "$fullPath"
+                
+                # Step 3: Set permissions
                 chmod 777 "$fullPath"
+                chown $(stat -c %u:%g /data/user/0/com.dts.freefiremax) "$fullPath" 2>/dev/null
                 
-                UID=$(dumpsys package com.dts.freefiremax | grep userId= | head -n 1 | cut -d'=' -f2 | cut -d' ' -f1)
-                chown ${'$'}UID:${'$'}UID "$fullPath" 2>/dev/null
-                
-                restorecon -R "$targetDir" 2>/dev/null
-                setenforce 1
+                # Step 4: Log output
+                echo "--- DIRECTORY LISTING ---" >> "${logFile.absolutePath}"
+                ls -la "$targetDir" >> "${logFile.absolutePath}" 2>&1
                 
                 if [ -s "$fullPath" ]; then
+                    echo "PASTE_SUCCESSFUL" >> "${logFile.absolutePath}"
                     echo "PASTE_SUCCESSFUL"
                 else
+                    echo "PASTE_FAILED" >> "${logFile.absolutePath}"
                     echo "PASTE_FAILED"
                 fi
-            """.trimIndent())
-            
-            val chmodP = ProcessBuilder("su", "-c", "chmod 777 " + scriptFile.absolutePath).start()
-            chmodP.waitFor()
+            """.trimIndent()
 
-            val p = ProcessBuilder("su", "-c", "sh " + scriptFile.absolutePath).redirectErrorStream(true).start()
-            val output = p.inputStream.bufferedReader().readText()
+            val p = ProcessBuilder("su", "-c", cmd).redirectErrorStream(true).start()
+            val output = p.inputStream.bufferedReader().readText().trim()
             val code = p.waitFor()
-            
             tmp.delete()
-            scriptFile.delete()
 
             return if (output.contains("PASTE_SUCCESSFUL") && code == 0) {
                 null 
             } else {
-                if (output.contains("Text file busy")) "Free Fire is running! You MUST close it first." else "Check Root / Folder."
+                if (output.isEmpty()) "Root denied or folder missing." else output
             }
         } catch (e: Exception) {
             return e.message
