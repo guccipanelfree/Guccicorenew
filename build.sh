@@ -566,7 +566,7 @@ class FloaterOverlayService : Service() {
             val msg = if (on) "✅ Successfully Activated\n🎯 $tag\n📦 Asset: $asset" else "✅ Successfully Deactivated\n🎯 $tag\n📦 Asset: $asset"
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(this, "❌ Paste Failed!\nCheck the root_log.txt file in your Android/data folder!", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "❌ Paste Failed!\nReason: $error", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -578,47 +578,23 @@ class FloaterOverlayService : Service() {
             val targetDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/avatar"
             val targetFile = name // Normal test
             val fullPath = "$targetDir/$targetFile"
-            
-            val logFile = File(getExternalFilesDir(null), "root_log.txt")
-            val scriptFile = File(cacheDir, "paste.sh")
 
-            // Write bash script to a file to avoid Kotlin string issues with $
-            scriptFile.writeText("""
-                echo "=== STARTING PASTE ===" > "${logFile.absolutePath}"
-                echo "Target: $fullPath" >> "${logFile.absolutePath}"
-                
-                mkdir -p "$targetDir" >> "${logFile.absolutePath}" 2>&1
-                
-                cp -f "${tmp.absolutePath}" "$fullPath" >> "${logFile.absolutePath}" 2>&1
-                
-                chmod 777 "$fullPath" >> "${logFile.absolutePath}" 2>&1
-                
-                if [ -f "$fullPath" ]; then
-                    echo "SUCCESS" >> "${logFile.absolutePath}"
-                    echo "SUCCESS"
-                else
-                    echo "FAILED" >> "${logFile.absolutePath}"
-                    echo "FAILED"
-                fi
-            """.trimIndent())
+            val command = "mkdir -p '$targetDir' && cp -f '${tmp.absolutePath}' '$fullPath' && chmod 777 '$fullPath' && echo SUCCESS"
+            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
             
-            val chmodP = ProcessBuilder("su", "-c", "chmod 777 " + scriptFile.absolutePath).start()
-            chmodP.waitFor()
-
-            val p = ProcessBuilder("su", "-c", scriptFile.absolutePath).redirectErrorStream(true).start()
-            val output = p.inputStream.bufferedReader().readText().trim()
-            val code = p.waitFor()
+            val errorStream = process.errorStream.bufferedReader().readText().trim()
+            val inputStream = process.inputStream.bufferedReader().readText().trim()
+            val exitCode = process.waitFor()
             
             tmp.delete()
-            scriptFile.delete()
 
-            return if (output.contains("SUCCESS") && code == 0) {
+            return if (inputStream.contains("SUCCESS") && exitCode == 0) {
                 null 
             } else {
-                "FAILED"
+                if (errorStream.isNotEmpty()) errorStream else "Exit Code: $exitCode. (Root denied?)"
             }
         } catch (e: Exception) {
-            return e.message
+            return "Exception: ${e.message}"
         }
     }
 
