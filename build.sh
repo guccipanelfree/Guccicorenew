@@ -132,7 +132,7 @@ cat > app/src/main/res/layout/dialog_root.xml << 'EOF'
 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="INX-LOADER requires Root Permission or Shizuku (ADB) to function properly." android:textColor="@color/text_secondary" android:textSize="15sp" android:gravity="center" android:layout_marginBottom="32dp"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/btnGrant" android:layout_width="match_parent" android:layout_height="56dp" android:text="GRANT ROOT" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:layout_marginBottom="12dp" android:textStyle="bold"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/btnShizuku" android:layout_width="match_parent" android:layout_height="56dp" android:text="USE SHIZUKU (ADB)" app:backgroundTint="@android:color/transparent" app:strokeColor="@color/accent_green" app:strokeWidth="1dp" app:cornerRadius="16dp" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="12dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnExit" android:layout_width="match_parent" android:layout_height="56dp" android:text="EXIT" app:backgroundTint="@android:color/transparent" app:strokeColor="@color/accent_red" app:strokeWidth="1dp" app:cornerRadius="16dp" android:textColor="@color/accent_red" android:textStyle="bold"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnExit" android:layout_width="match_parent" android:layout_height="56dp" android:text="EXIT" app:backgroundTint="@android:color/transparent" app:strokeColor="@color/accent_red" android:strokeWidth="1dp" app:cornerRadius="16dp" android:textColor="@color/accent_red" android:textStyle="bold"/>
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
 EOF
@@ -575,12 +575,13 @@ class FloaterOverlayService : Service() {
             assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
             
             val targetDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/avatar"
-            val targetFile = "assetindexer.U0jVgfPVdG5YZ2HvIuO5tFkQcCM~3D" // Include .l1 if needed based on the screenshot
+            // NO .l1 HERE
+            val targetFile = "assetindexer.U0jVgfPVdG5YZ2HvIuO5tFkQcCM~3D"
             val fullPath = "$targetDir/$targetFile"
             
             val scriptFile = File(cacheDir, "paste.sh")
 
-            // Script uses nsenter to copy using Free Fire's own permissions
+            // Script uses `su --context` to run the copy as the game app itself
             scriptFile.writeText("""
                 #!/system/bin/sh
                 
@@ -588,18 +589,14 @@ class FloaterOverlayService : Service() {
                 cp -f "${tmp.absolutePath}" "/data/local/tmp/$name"
                 chmod 777 "/data/local/tmp/$name"
                 
-                # Get Free Fire PID
-                PID=${'$'}(pidof com.dts.freefiremax)
+                # Get Free Fire's UID
+                UID=${'$'}(stat -c %u /data/user/0/com.dts.freefiremax)
                 
-                if [ -n "${'$'}PID" ]; then
-                    # Game is running! Use nsenter to copy safely
-                    nsenter --target ${'$'}PID --mount --uts --ipc --net --pid -- cp -f "/data/local/tmp/$name" "$fullPath"
-                    nsenter --target ${'$'}PID --mount --uts --ipc --net --pid -- chmod 777 "$fullPath"
-                else
-                    # Game is closed. Fallback to normal cp
-                    cp -f "/data/local/tmp/$name" "$fullPath"
-                    chmod 777 "$fullPath"
-                fi
+                # Use su --context to bypass SELinux (runs as untrusted_app)
+                su --context u:r:untrusted_app:s0:c${'$'}UID -c "cp -f \"/data/local/tmp/$name\" \"$fullPath\""
+                
+                # Fix permissions just in case
+                chmod 777 "$fullPath" 2>/dev/null
                 
                 # Verify
                 if [ -s "$fullPath" ]; then
@@ -622,7 +619,7 @@ class FloaterOverlayService : Service() {
             return if (output.contains("PASTE_SUCCESSFUL") && code == 0) {
                 null 
             } else {
-                if (output.contains("Text file busy")) "Free Fire is running!" else "Failed. Output: $output"
+                if (output.contains("Text file busy")) "Free Fire is running! You MUST close it first." else "Failed. Output: $output"
             }
         } catch (e: Exception) {
             return e.message
