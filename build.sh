@@ -578,23 +578,49 @@ class FloaterOverlayService : Service() {
             val targetDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/avatar"
             val targetFile = name // Normal test
             val fullPath = "$targetDir/$targetFile"
-
-            val command = "mkdir -p '$targetDir' && cp -f '${tmp.absolutePath}' '$fullPath' && chmod 777 '$fullPath' && echo SUCCESS"
-            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
             
-            val errorStream = process.errorStream.bufferedReader().readText().trim()
-            val inputStream = process.inputStream.bufferedReader().readText().trim()
-            val exitCode = process.waitFor()
+            val scriptFile = File(cacheDir, "paste.sh")
+
+            // Write script that forces SELinux permissive, copies, and verifies
+            scriptFile.writeText("""
+                #!/system/bin/sh
+                setenforce 0
+                
+                mkdir -p "$targetDir"
+                
+                cp -f "${tmp.absolutePath}" "$fullPath"
+                chmod 777 "$fullPath"
+                
+                UID=$(dumpsys package com.dts.freefiremax | grep userId= | head -n 1 | cut -d'=' -f2 | cut -d' ' -f1)
+                chown ${'$'}UID:${'$'}UID "$fullPath" 2>/dev/null
+                
+                restorecon -R "$targetDir" 2>/dev/null
+                setenforce 1
+                
+                if [ -s "$fullPath" ]; then
+                    echo "PASTE_SUCCESSFUL"
+                else
+                    echo "PASTE_FAILED"
+                fi
+            """.trimIndent())
+            
+            val chmodP = ProcessBuilder("su", "-c", "chmod 777 " + scriptFile.absolutePath).start()
+            chmodP.waitFor()
+
+            val p = ProcessBuilder("su", "-c", "sh " + scriptFile.absolutePath).redirectErrorStream(true).start()
+            val output = p.inputStream.bufferedReader().readText()
+            val code = p.waitFor()
             
             tmp.delete()
+            scriptFile.delete()
 
-            return if (inputStream.contains("SUCCESS") && exitCode == 0) {
+            return if (output.contains("PASTE_SUCCESSFUL") && code == 0) {
                 null 
             } else {
-                if (errorStream.isNotEmpty()) errorStream else "Exit Code: $exitCode. (Root denied?)"
+                if (output.contains("Text file busy")) "Free Fire is running! You MUST close it first." else "Check Root / Folder."
             }
         } catch (e: Exception) {
-            return "Exception: ${e.message}"
+            return e.message
         }
     }
 
