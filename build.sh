@@ -47,6 +47,7 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -55,10 +56,11 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <activity android:name=".MainActivity" android:exported="true"/>
 <activity android:name=".HideAppsActivity" android:exported="false"/>
 <activity android:name=".TerminalActivity" android:exported="false"/>
+<activity android:name=".TransparentActivity" android:exported="false" android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
 <activity-alias android:name=".MainActivityAlias" android:targetActivity=".MainActivity" android:exported="true" android:enabled="true" android:icon="@drawable/ic_app_icon"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
 <service android:name=".RunnerService" android:exported="false" android:foregroundServiceType="dataSync"/>
 <service android:name=".TimerService" android:exported="false" android:foregroundServiceType="dataSync"/>
-<service android:name=".FloaterOverlayService" android:exported="false" android:foregroundServiceType="dataSync"/>
+<service android:name=".FloaterOverlayService" android:exported="false" android:foregroundServiceType="specialUse"><property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Overlay for Game Mods" /></service>
 <service android:name=".SafeTileService" android:exported="true" android:icon="@drawable/ic_tile_normal" android:label="Boost" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
 <service android:name=".BrutalTileService" android:exported="true" android:icon="@drawable/ic_tile_brutal" android:label="Turbo Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
 <service android:name=".FocusTileService" android:exported="true" android:icon="@drawable/ic_tile_focus" android:label="Focus Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
@@ -147,7 +149,8 @@ cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
 <com.google.android.material.button.MaterialButton android:id="@+id/saveKeyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:text="SAVE CONFIGURATION" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:layout_marginBottom="16dp" android:textStyle="bold" android:fontFamily="sans-serif-medium"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/loadFilesBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="wrap_content" android:layout_height="50dp" android:layout_marginTop="8dp" android:layout_gravity="center_horizontal" android:paddingStart="48dp" android:paddingEnd="48dp" android:text="LOAD INX" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="25dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/loadFilesBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="wrap_content" android:layout_height="50dp" android:layout_marginTop="8dp" android:layout_gravity="center_horizontal" android:paddingStart="48dp" android:paddingEnd="48dp" android:text="LOAD INX" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="25dp" android:layout_marginBottom="16dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/launchFloaterBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="60dp" android:text="🚀 LAUNCH FLOATER" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
 <TextView android:paddingTop="40dp" android:gravity="center" android:text="Use Quick Setting tiles to load INX-Payload" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
 <TextView android:id="@+id/contactAdminText" android:paddingTop="16dp" android:gravity="center" android:text="Contact Admin for Help" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold" android:layout_width="match_parent" android:layout_height="wrap_content"/>
 <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="32dp" android:paddingBottom="24dp" android:gravity="center">
@@ -228,7 +231,7 @@ EOF
 cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="320dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0B0F17" app:cardCornerRadius="24dp" app:cardElevation="20dp" app:strokeWidth="1dp" app:strokeColor="#1F2633">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="24dp">
+<LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="24dp">
 <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI MODS" android:textColor="#FF4D4D" android:textStyle="bold" android:textSize="18sp" android:fontFamily="sans-serif-black" android:letterSpacing="0.05"/>
 <ImageButton android:id="@+id/btnMinimize" android:layout_width="36dp" android:layout_height="36dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#FFFFFF" android:layout_marginEnd="12dp"/>
 <ImageButton android:id="@+id/btnClose" android:layout_width="36dp" android:layout_height="36dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
@@ -247,7 +250,7 @@ cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
 <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater2" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
 </LinearLayout>
 <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1F2633" android:layout_marginBottom="16dp"/>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+<LinearLayout android:id="@+id/dragHandleBottom" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
 <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="ROOT" android:textColor="#8B949E" android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.1"/>
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GRANTED" android:textColor="#00E5A0" android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.1"/>
 </LinearLayout>
@@ -371,13 +374,26 @@ class PackageReceiver : BroadcastReceiver() {
     }
 }
 EOF
+cat > app/src/main/java/com/example/shtile/TransparentActivity.kt << 'EOF'
+package com.example.shtile
+import android.content.Intent
+import android.os.Build
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+class TransparentActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val i = Intent(this, FloaterOverlayService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { startForegroundService(i) } else { startService(i) }
+        finish()
+    }
+}
+EOF
 cat > app/src/main/java/com/example/shtile/FloaterTileService.kt << 'EOF'
 package com.example.shtile
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
@@ -395,11 +411,9 @@ class FloaterTileService : TileService() {
             }
             return
         }
-        Handler(Looper.getMainLooper()).postDelayed({
-            val intent = Intent(this, FloaterOverlayService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { startForegroundService(intent) } else { startService(intent) }
-            qsTile?.apply { state = Tile.STATE_ACTIVE; updateTile() }
-        }, 1000)
+        val i = Intent(this, TransparentActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivityAndCollapse(i)
+        qsTile?.apply { state = Tile.STATE_ACTIVE; updateTile() }
     }
 }
 EOF
@@ -418,6 +432,7 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.ImageButton
 import android.widget.Toast
+import androidx.appcompat.view.ContextThemeWrapper
 import com.google.android.material.materialswitch.MaterialSwitch
 import java.io.File
 
@@ -434,44 +449,76 @@ class FloaterOverlayService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (!Settings.canDrawOverlays(this)) { Toast.makeText(this, "Overlay permission missing!", Toast.LENGTH_LONG).show(); stopSelf(); return START_NOT_STICKY }
+        if (!Settings.canDrawOverlays(this)) { stopSelf(); return START_NOT_STICKY }
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             val channel = NotificationChannel("floater_ch", "Floater", NotificationManager.IMPORTANCE_MIN)
+            channel.setShowBadge(false)
+            channel.setSound(null, null)
             nm.createNotificationChannel(channel)
-            val notification = Notification.Builder(this, "floater_ch").setContentTitle("Gucci Mods").setContentText("Floater is running").setSmallIcon(android.R.drawable.ic_menu_view).build()
+            val notification = Notification.Builder(this, "floater_ch").setContentTitle("Gucci Mods").setSmallIcon(android.R.drawable.ic_menu_view).build()
             startForeground(1, notification)
         }
-        if (panel == null) { try { showPanel() } catch (e: Exception) { Toast.makeText(this, "Draw Error: ${e.message}", Toast.LENGTH_LONG).show() } }
+
+        if (panel == null) {
+            try { showPanel() } catch (e: Exception) { Toast.makeText(this, "Draw Error: ${e.message}", Toast.LENGTH_LONG).show() }
+        }
         return START_STICKY
     }
 
-    private fun overlayParams(w: Int, h: Int) = WindowManager.LayoutParams(w, h, if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 100; y = 200 }
-
     private fun showPanel() {
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
-        val v = LayoutInflater.from(this).inflate(R.layout.overlay_floater, null)
-        val params = overlayParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT)
-        v.setOnTouchListener(object : View.OnTouchListener {
-            var dx = 0; var dy = 0
-            override fun onTouch(view: View, e: MotionEvent): Boolean {
-                when (e.action) {
-                    MotionEvent.ACTION_DOWN -> { dx = e.rawX.toInt() - params.x; dy = e.rawY.toInt() - params.y }
-                    MotionEvent.ACTION_MOVE -> { params.x = e.rawX.toInt() - dx; params.y = e.rawY.toInt() - dy; wm.updateViewLayout(v, params) }
-                }
-                return false
-            }
-        })
+        val themedContext = ContextThemeWrapper(this, R.style.Theme_Material3_Dark_NoActionBar)
+        val v = LayoutInflater.from(themedContext).inflate(R.layout.overlay_floater, null)
+        
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT
+        ).apply { gravity = Gravity.TOP or Gravity.START; x = 100; y = 200 }
+
+        val topHandle = v.findViewById<View>(R.id.dragHandleTop)
+        setupDrag(topHandle, v, params)
+        val bottomHandle = v.findViewById<View>(R.id.dragHandleBottom)
+        setupDrag(bottomHandle, v, params)
+        
         v.findViewById<ImageButton>(R.id.btnMinimize).setOnClickListener { close() }
         v.findViewById<ImageButton>(R.id.btnClose).setOnClickListener { close() }
+        
         val sw1 = v.findViewById<MaterialSwitch>(R.id.switchFloater1)
         val sw2 = v.findViewById<MaterialSwitch>(R.id.switchFloater2)
+        
         sw1.isChecked = prefs.getBoolean("f1_on", false)
         sw2.isChecked = prefs.getBoolean("f2_on", false)
         sw1.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f1_on", isChecked).apply(); applyFloater(1, isChecked) }
         sw2.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f2_on", isChecked).apply(); applyFloater(2, isChecked) }
+        
         panel = v
         wm.addView(v, params)
+    }
+
+    private fun setupDrag(handle: View, rootView: View, params: WindowManager.LayoutParams) {
+        handle.setOnTouchListener(object : View.OnTouchListener {
+            var initialX = 0; var initialY = 0
+            var initialTouchX = 0f; var initialTouchY = 0f
+            override fun onTouch(view: View, event: MotionEvent): Boolean {
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        initialX = params.x; initialY = params.y
+                        initialTouchX = event.rawX; initialTouchY = event.rawY
+                        return true
+                    }
+                    MotionEvent.ACTION_MOVE -> {
+                        params.x = initialX + (event.rawX - initialTouchX).toInt()
+                        params.y = initialY + (event.rawY - initialTouchY).toInt()
+                        wm.updateViewLayout(rootView, params)
+                        return true
+                    }
+                }
+                return false
+            }
+        })
     }
 
     private fun close() { panel?.let { runCatching { wm.removeView(it) } }; panel = null; stopSelf() }
@@ -484,7 +531,7 @@ class FloaterOverlayService : Service() {
             val msg = if (on) "✅ Successfully Activated\n🎯 $tag\n📦 Asset: $asset" else "✅ Successfully Deactivated\n🎯 $tag\n📦 Asset: $asset"
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(this, "❌ Operation Failed\n🎯 $tag\nCheck Root or Asset missing!", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "❌ Operation Failed\n🎯 $tag\n🔍 Check Root or Asset missing!", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -652,6 +699,12 @@ class MainActivity : AppCompatActivity() {
         checkAccess()
         findViewById<Button>(R.id.saveKeyBtn).setOnClickListener { p.edit().putString("license_key", ki.text.toString().trim()).putString("brutal_option", bi.text.toString().trim()).apply(); Toast.makeText(this@MainActivity, "Configuration Saved", Toast.LENGTH_SHORT).show() }
         findViewById<Button>(R.id.loadFilesBtn).setOnClickListener { p.edit().putString("license_key", ki.text.toString().trim()).putString("brutal_option", bi.text.toString().trim()).apply(); Installer.installAll(this) { ok -> Toast.makeText(this@MainActivity, if (ok) "Files Loaded" else "Failed. Check root.", Toast.LENGTH_SHORT).show() } }
+        
+        findViewById<Button>(R.id.launchFloaterBtn).setOnClickListener { 
+            val i = Intent(this, FloaterOverlayService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i)
+        }
+        
         findViewById<ImageButton>(R.id.hideAppsIcon).setOnClickListener { startActivity(Intent(this, HideAppsActivity::class.java)) }
         findViewById<ImageButton>(R.id.terminalIcon).setOnClickListener { startActivity(Intent(this, TerminalActivity::class.java)) }
     }
