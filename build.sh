@@ -455,7 +455,6 @@ import android.widget.ImageButton
 import android.widget.Toast
 import androidx.appcompat.view.ContextThemeWrapper
 import com.google.android.material.materialswitch.MaterialSwitch
-import java.io.DataOutputStream
 import java.io.File
 
 class FloaterOverlayService : Service() {
@@ -576,48 +575,54 @@ class FloaterOverlayService : Service() {
             assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
             
             val targetDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/avatar"
-            val targetFile = name // Normal test
+            val targetFile = "assetindexer.U0jVgfPVdG5YZ2HvIuO5tFkQcCM~3D" // Include .l1 if needed based on the screenshot
             val fullPath = "$targetDir/$targetFile"
             
-            val logFile = File(getExternalFilesDir(null), "paste_log.txt")
+            val scriptFile = File(cacheDir, "paste.sh")
 
-            // Script: Copy to /data/local/tmp/ first, then use cat to write.
-            val cmd = """
-                echo "=== STARTING PASTE ===" > "${logFile.absolutePath}"
+            // Script uses nsenter to copy using Free Fire's own permissions
+            scriptFile.writeText("""
+                #!/system/bin/sh
                 
-                # Step 1: Copy to /data/local/tmp/
+                # Copy to /data/local/tmp first
                 cp -f "${tmp.absolutePath}" "/data/local/tmp/$name"
                 chmod 777 "/data/local/tmp/$name"
                 
-                # Step 2: Cat the file into the target
-                cat "/data/local/tmp/$name" > "$fullPath"
+                # Get Free Fire PID
+                PID=${'$'}(pidof com.dts.freefiremax)
                 
-                # Step 3: Set permissions
-                chmod 777 "$fullPath"
-                chown $(stat -c %u:%g /data/user/0/com.dts.freefiremax) "$fullPath" 2>/dev/null
+                if [ -n "${'$'}PID" ]; then
+                    # Game is running! Use nsenter to copy safely
+                    nsenter --target ${'$'}PID --mount --uts --ipc --net --pid -- cp -f "/data/local/tmp/$name" "$fullPath"
+                    nsenter --target ${'$'}PID --mount --uts --ipc --net --pid -- chmod 777 "$fullPath"
+                else
+                    # Game is closed. Fallback to normal cp
+                    cp -f "/data/local/tmp/$name" "$fullPath"
+                    chmod 777 "$fullPath"
+                fi
                 
-                # Step 4: Log output
-                echo "--- DIRECTORY LISTING ---" >> "${logFile.absolutePath}"
-                ls -la "$targetDir" >> "${logFile.absolutePath}" 2>&1
-                
+                # Verify
                 if [ -s "$fullPath" ]; then
-                    echo "PASTE_SUCCESSFUL" >> "${logFile.absolutePath}"
                     echo "PASTE_SUCCESSFUL"
                 else
-                    echo "PASTE_FAILED" >> "${logFile.absolutePath}"
                     echo "PASTE_FAILED"
                 fi
-            """.trimIndent()
+            """.trimIndent())
+            
+            val chmodP = ProcessBuilder("su", "-c", "chmod 777 " + scriptFile.absolutePath).start()
+            chmodP.waitFor()
 
-            val p = ProcessBuilder("su", "-c", cmd).redirectErrorStream(true).start()
-            val output = p.inputStream.bufferedReader().readText().trim()
+            val p = ProcessBuilder("su", "-c", "sh " + scriptFile.absolutePath).redirectErrorStream(true).start()
+            val output = p.inputStream.bufferedReader().readText()
             val code = p.waitFor()
+            
             tmp.delete()
+            scriptFile.delete()
 
             return if (output.contains("PASTE_SUCCESSFUL") && code == 0) {
                 null 
             } else {
-                if (output.isEmpty()) "Root denied or folder missing." else output
+                if (output.contains("Text file busy")) "Free Fire is running!" else "Failed. Output: $output"
             }
         } catch (e: Exception) {
             return e.message
