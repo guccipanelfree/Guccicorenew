@@ -459,13 +459,11 @@ import java.io.DataOutputStream
 import java.io.File
 
 class FloaterOverlayService : Service() {
-    private val targetFolder   = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/avatar/"
-    private val targetFilename = "assetindexer.U0jVgfPVdG5YZ2HvIuO5tFkQcCM\\~3D"
-    
     private val floater1OnAsset  = "Gucci_Ch"
     private val floater1OffAsset = "Gucci_O"
     private val floater2OnAsset  = "Gucci_h"
     private val floater2OffAsset = "Gucci_O"
+    
     private lateinit var wm: WindowManager
     private var panel: View? = null
     private var bubble: View? = null
@@ -594,12 +592,25 @@ class FloaterOverlayService : Service() {
             val tmp = File(cacheDir, name)
             assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
             
+            // YOUR EXACT PATH
+            val targetDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/avatar"
+            
+            // NORMAL FILENAME (TESTING)
+            val targetFile = name 
+            
+            val fullPath = "$targetDir/$targetFile"
+
             val cmd = """
-                am force-stop com.dts.freefiremax
-                mkdir -p "$targetFolder"
-                cp -f "${tmp.absolutePath}" "${targetFolder}${targetFilename}"
-                chmod 777 "${targetFolder}${targetFilename}"
-                echo "PASTE_SUCCESSFUL"
+                mkdir -p "$targetDir"
+                cat "${tmp.absolutePath}" > "$fullPath"
+                chmod 777 "$fullPath"
+                chown $(stat -c %u:%g /data/user/0/com.dts.freefiremax) "$fullPath" 2>/dev/null
+                
+                if [ -f "$fullPath" ]; then
+                    echo "SUCCESS"
+                else
+                    echo "FAILED_TO_CREATE"
+                fi
             """.trimIndent()
 
             val p = ProcessBuilder("su").redirectErrorStream(true).start()
@@ -613,10 +624,10 @@ class FloaterOverlayService : Service() {
             val code = p.waitFor()
             tmp.delete()
             
-            return if (output.contains("PASTE_SUCCESSFUL") && code == 0) {
-                null
+            return if (output.contains("SUCCESS") && code == 0) {
+                null 
             } else {
-                if (output.isEmpty()) "Root denied" else output
+                if (output.isEmpty()) "Root denied or permission missing." else output
             }
         } catch (e: Exception) {
             return e.message
