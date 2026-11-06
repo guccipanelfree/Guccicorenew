@@ -320,7 +320,7 @@ class TimerService : Service() {
     private var timerThread: Thread? = null
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager; if (nm.getNotificationChannel("timer_ch") == null) nm.createNotificationChannel(NotificationChannel("timer_ch", "Timer", NotificationManager.IMPORTANCE_LOW)) }
-        val notification = NotificationCompat.Builder(this, "timer_ch").setContentTitle("Protection Timer Active").setContentText("Apps will be restored automatically...").setSmallIcon(android.R.drawable.ic_menu_recent_history).setPriority(Compat_PRIORITY_LOW).build()
+        val notification = NotificationCompat.Builder(this, "timer_ch").setContentTitle("Protection Timer Active").setContentText("Apps will be restored automatically...").setSmallIcon(android.R.drawable.ic_menu_recent_history).setPriority(NotificationCompat.PRIORITY_LOW).build()
         startForeground(2, notification)
         val minutes = intent?.getIntExtra("minutes", 0) ?: 0
         if (minutes <= 0) { stopSelf(); return START_NOT_STICKY }
