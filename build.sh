@@ -2,6 +2,8 @@ wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip; unzip -q g
 rm -rf app *.gradle *.properties; mkdir -p app/src/main/java/com/example/shtile app/src/main/res/drawable app/src/main/res/layout app/src/main/res/values app/src/main/assets
 wget -q "https://cdn.phototourl.com/member/2026-11-02-d4837e53-b8a5-4997-9673-cbf6a3594ec1.png" -O app/src/main/res/drawable/ic_app_icon.png 2>/dev/null || true
 cp Gucci_core app/src/main/assets/ 2>/dev/null||true; cp Gucci_brutal app/src/main/assets/ 2>/dev/null||true
+# Create your custom assets for the toggles if they don't exist
+touch app/src/main/assets/Gucci_Ch app/src/main/assets/Gucci_h app/src/main/assets/Gucci_O
 cat > settings.gradle << 'EOF'
 pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
 dependencyResolutionManagement { repositories { google(); mavenCentral() } }
@@ -39,6 +41,7 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
 <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
 <application android:allowBackup="true" android:label="Settings" android:icon="@drawable/ic_app_icon" android:theme="@style/Theme.Material3.Dark.NoActionBar">
 <activity android:name=".MainActivity" android:exported="true"/>
@@ -51,6 +54,8 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <service android:name=".BrutalTileService" android:exported="true" android:icon="@drawable/ic_tile_brutal" android:label="Turbo Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
 <service android:name=".FocusTileService" android:exported="true" android:icon="@drawable/ic_tile_focus" android:label="Focus Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
 <service android:name=".PayTileService" android:exported="true" android:icon="@drawable/ic_tile_pay" android:label="Payment Protection" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
+<service android:name=".FloaterTileService" android:exported="true" android:icon="@drawable/ic_app_icon" android:label="Floater" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
+<service android:name=".FloaterOverlayService" android:exported="false" />
 <receiver android:name=".PackageReceiver" android:exported="true"><intent-filter><action android:name="android.intent.action.PACKAGE_ADDED"/><action android:name="android.intent.action.PACKAGE_REPLACED"/><data android:scheme="package"/></intent-filter></receiver>
 <provider android:name="rikka.shizuku.ShizukuProvider" android:authorities="${applicationId}.shizuku" android:enabled="true" android:exported="true" android:multiprocess="false" android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
 </application>
@@ -102,6 +107,36 @@ cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 </LinearLayout>
 </LinearLayout>
 </ScrollView>
+EOF
+
+cat > app/src/main/res/layout/floater_layout.xml << 'EOF'
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="260dp" android:layout_height="wrap_content" app:cardBackgroundColor="#12161F" app:cardCornerRadius="16dp" app:cardElevation="8dp" app:strokeColor="#00E5A0" app:strokeWidth="1dp">
+<LinearLayout android:id="@+id/dragHandle" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:layout_marginBottom="16dp">
+<TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="FLOATER PANEL" android:textColor="#00E5A0" android:textSize="14sp" android:textStyle="bold" android:letterSpacing="0.05" />
+<ImageView android:id="@+id/btnMinimizeFloater" android:layout_width="28dp" android:layout_height="28dp" android:padding="4dp" android:layout_marginEnd="8dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@android:drawable/ic_menu_zoom" app:tint="#FFFFFF" />
+<ImageView android:id="@+id/btnCloseFloater" android:layout_width="28dp" android:layout_height="28dp" android:padding="4dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@android:drawable/ic_menu_close_clear_cancel" app:tint="#FF4D4D" />
+</LinearLayout>
+
+<!-- 👇 CHANGE FLOATER 1 NAME HERE 👇 -->
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp" android:background="@drawable/bg_box_dark" android:padding="12dp">
+<TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="CHEATER DETECTOR" android:textColor="#FFFFFF" android:textSize="14sp" />
+<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/toggleOne" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+</LinearLayout>
+
+<!-- 👇 CHANGE FLOATER 2 NAME HERE 👇 -->
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/bg_box_dark" android:padding="12dp">
+<TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="DRAG HEADSHOT" android:textColor="#FFFFFF" android:textSize="14sp" />
+<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/toggleTwo" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+</LinearLayout>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+EOF
+
+cat > app/src/main/res/layout/floater_minimized.xml << 'EOF'
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="50dp" android:layout_height="50dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="25dp" app:cardElevation="8dp" app:strokeColor="#00E5A0" app:strokeWidth="2dp">
+<ImageView android:id="@+id/ivMinimizedIcon" android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp" android:src="@drawable/ic_app_icon" app:tint="#00E5A0" />
+</com.google.android.material.card.MaterialCardView>
 EOF
 cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
@@ -423,6 +458,215 @@ class HideAppsActivity : AppCompatActivity() {
     }
 }
 EOF
+cat > app/src/main/java/com/example/shtile/FloaterTileService.kt << 'EOF'
+package com.example.shtile
+import android.content.Intent
+import android.os.Build
+import android.service.quicksettings.Tile
+import android.service.quicksettings.TileService
+class FloaterTileService : TileService() {
+    override fun onStartListening() { qsTile?.apply { label = "Floater"; state = Tile.STATE_INACTIVE; updateTile() } }
+    override fun onClick() {
+        val intent = Intent(this, FloaterOverlayService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent) else startService(intent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { } else { @Suppress("DEPRECATION") collapsePanels() }
+    }
+}
+EOF
+cat > app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
+package com.example.shtile
+import android.app.Service
+import android.content.Intent
+import android.graphics.PixelFormat
+import android.os.Build
+import android.os.Handler
+import android.os.IBinder
+import android.os.Looper
+import android.view.GestureDetector
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.WindowManager
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.Toast
+import com.google.android.material.materialswitch.MaterialSwitch
+
+class FloaterOverlayService : Service() {
+    private lateinit var windowManager: WindowManager
+    private lateinit var params: WindowManager.LayoutParams
+    private lateinit var expandedView: View
+    private lateinit var minimizedView: View
+    private var isMinimized = false
+
+    // =====================================================================
+    // 👇 CHANGE YOUR PATH AND TARGET FILENAME HERE 👇
+    // =====================================================================
+    private val targetFolder = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/avatar/" // <--- CHANGE THIS FOLDER
+    private val targetFilename = "assetindexer.U0jVgfPVdG5YZ2HvIuO5tFkQcCM~3D" // <--- CHANGE THIS FILENAME
+    // =====================================================================
+
+    override fun onCreate() {
+        super.onCreate()
+        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        val layoutType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE
+        
+        params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT, 
+            WindowManager.LayoutParams.WRAP_CONTENT, 
+            layoutType, 
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, 
+            PixelFormat.TRANSLUCENT
+        ).apply { 
+            gravity = Gravity.TOP or Gravity.START
+            x = 200
+            y = 300 
+        }
+        
+        expandedView = LayoutInflater.from(this).inflate(R.layout.floater_layout, null)
+        minimizedView = LayoutInflater.from(this).inflate(R.layout.floater_minimized, null)
+        windowManager.addView(expandedView, params)
+        
+        setupExpandedLogic()
+        setupMinimizedLogic()
+    }
+
+    private fun setupExpandedLogic() {
+        // Minimize Button
+        expandedView.findViewById<ImageView>(R.id.btnMinimizeFloater).setOnClickListener { minimize() }
+        
+        // Close Button
+        expandedView.findViewById<ImageView>(R.id.btnCloseFloater).setOnClickListener { stopSelf() }
+        
+        // Toggles
+        val toggleOne = expandedView.findViewById<MaterialSwitch>(R.id.toggleOne)
+        val toggleTwo = expandedView.findViewById<MaterialSwitch>(R.id.toggleTwo)
+        
+        // --- TOGGLE 1 LOGIC ---
+        toggleOne.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                Toast.makeText(this, "✅ Successfully Activated", Toast.LENGTH_SHORT).show()
+                executeFileCopy("Gucci_Ch", targetFolder, targetFilename)
+            } else {
+                Toast.makeText(this, "✅ Successfully Deactivated", Toast.LENGTH_SHORT).show()
+                executeFileCopy("Gucci_O", targetFolder, targetFilename)
+            }
+        }
+        
+        // --- TOGGLE 2 LOGIC ---
+        toggleTwo.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                Toast.makeText(this, "✅ Successfully Activated", Toast.LENGTH_SHORT).show()
+                executeFileCopy("Gucci_h", targetFolder, targetFilename)
+            } else {
+                Toast.makeText(this, "✅ Successfully Deactivated", Toast.LENGTH_SHORT).show()
+                executeFileCopy("Gucci_O", targetFolder, targetFilename)
+            }
+        }
+        
+        val dragHandle = expandedView.findViewById<LinearLayout>(R.id.dragHandle)
+        dragHandle.setOnTouchListener(createDragListener(expandedView))
+    }
+
+    private fun setupMinimizedLogic() {
+        val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onSingleTapConfirmed(e: MotionEvent): Boolean { 
+                expand()
+                return true 
+            }
+        })
+        minimizedView.setOnTouchListener { _, event -> 
+            gestureDetector.onTouchEvent(event)
+            val dragListener = createDragListener(minimizedView)
+            dragListener.onTouch(minimizedView, event) 
+        }
+    }
+
+    private fun minimize() { 
+        if (!isMinimized) { 
+            windowManager.removeView(expandedView)
+            windowManager.addView(minimizedView, params)
+            isMinimized = true 
+        } 
+    }
+    
+    private fun expand() { 
+        if (isMinimized) { 
+            windowManager.removeView(minimizedView)
+            windowManager.addView(expandedView, params)
+            isMinimized = false 
+        } 
+    }
+
+    private fun executeFileCopy(assetName: String, folder: String, fileName: String) {
+        Thread {
+            try {
+                val bytes = assets.open(assetName).readBytes()
+                val finalPath = "$folder$fileName"
+                
+                val isShizuku = rikka.shizuku.Shizuku.pingBinder()
+                var exitCode = -1
+                
+                if (isShizuku) {
+                    val method = rikka.shizuku.Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
+                    method.isAccessible = true
+                    val process = method.invoke(null, arrayOf("sh", "-c", "cat > $finalPath; chmod 666 $finalPath"), null, null) as Process
+                    val os = process.outputStream
+                    os.write(bytes)
+                    os.flush()
+                    os.close()
+                    exitCode = process.waitFor()
+                } else {
+                    val tempFile = java.io.File(cacheDir, assetName)
+                    tempFile.writeBytes(bytes)
+                    val process = Runtime.getRuntime().exec("su -c \"cp ${tempFile.absolutePath} $finalPath && chmod 666 $finalPath\"")
+                    exitCode = process.waitFor()
+                    tempFile.delete()
+                }
+                
+                // If the command failed (e.g., permission denied, path invalid)
+                if (exitCode != 0) {
+                    Handler(Looper.getMainLooper()).post { 
+                        Toast.makeText(this, "❌ Error: Failed (Permission Denied)", Toast.LENGTH_LONG).show() 
+                    }
+                }
+                
+            } catch (e: Exception) {
+                // Ignore general exceptions silently
+            }
+        }.start()
+    }
+
+    private fun createDragListener(viewToUpdate: View): View.OnTouchListener {
+        return object : View.OnTouchListener {
+            private var initialX = 0
+            private var initialY = 0
+            private var initialTouchX = 0f
+            private var initialTouchY = 0f
+            override fun onTouch(v: View?, event: MotionEvent): Boolean {
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> { 
+                        initialX = params.x; initialY = params.y; initialTouchX = event.rawX; initialTouchY = event.rawY; return false 
+                    }
+                    MotionEvent.ACTION_MOVE -> { 
+                        params.x = initialX + (event.rawX - initialTouchX).toInt(); params.y = initialY + (event.rawY - initialTouchY).toInt(); windowManager.updateViewLayout(viewToUpdate, params); return true 
+                    }
+                }
+                return false
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (::expandedView.isInitialized) { try { windowManager.removeView(expandedView) } catch (e: Exception) {} }
+        if (::minimizedView.isInitialized) { try { windowManager.removeView(minimizedView) } catch (e: Exception) {} }
+    }
+    
+    override fun onBind(intent: Intent?): IBinder? = null
+}
+EOF
 cat > app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
 package com.example.shtile
 import android.content.Context
@@ -442,30 +686,25 @@ class MainActivity : AppCompatActivity() {
     private val REQUEST_CODE = 1001
     private var isAdbMode = false
     private var activeDialog: AlertDialog? = null
-    
     private val shizukuListener = object : Shizuku.OnRequestPermissionResultListener {
         override fun onRequestPermissionResult(requestCode: Int, grantResult: Int) {
             if (requestCode == REQUEST_CODE) {
                 if (grantResult == PackageManager.PERMISSION_GRANTED) {
-                    isAdbMode = true
-                    activeDialog?.dismiss()
-                    Toast.makeText(this@MainActivity, "Shizuku Permission Granted!", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this@MainActivity, "Shizuku Permission Denied.", Toast.LENGTH_SHORT).show()
-                }
+                    isAdbMode = true; activeDialog?.dismiss(); Toast.makeText(this@MainActivity, "Shizuku Permission Granted!", Toast.LENGTH_SHORT).show()
+                } else { Toast.makeText(this@MainActivity, "Shizuku Permission Denied.", Toast.LENGTH_SHORT).show() }
             }
         }
     }
-    
     override fun onResume() {
         super.onResume()
-        if (activeDialog?.isShowing == true) {
-            checkAccess()
-        }
+        if (activeDialog?.isShowing == true) { checkAccess() }
     }
-
     override fun onCreate(s: Bundle?) {
         super.onCreate(s); setContentView(R.layout.activity_main)
+        if (!android.provider.Settings.canDrawOverlays(this)) {
+            val intent = Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
+            startActivity(intent)
+        }
         val p = getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE); val ki = findViewById<EditText>(R.id.keyInput); val bi = findViewById<EditText>(R.id.brutalInput); val dn = findViewById<TextView>(R.id.driverNameText); val title = findViewById<TextView>(R.id.titleText); val sub = findViewById<TextView>(R.id.subtitleText); val ca = findViewById<TextView>(R.id.contactAdminText)
         sub.text = android.text.Html.fromHtml("Premium Panel By <font color='#00E5A0'>GUCCI</font>", android.text.Html.FROM_HTML_MODE_LEGACY); ki.setText(p.getString("license_key", "")); bi.setText(p.getString("brutal_option", "7"))
         val m = mapOf("1" to "QX1", "2" to "GT", "3" to "rt-dev", "4" to "rt-proc", "5" to "QX(2)", "6" to "KPM", "7" to "DitPro KPM", "8" to "KMA KPM", "9" to "LDK KPM", "10" to "Paradise")
@@ -473,62 +712,43 @@ class MainActivity : AppCompatActivity() {
         dn.text = m[bi.text.toString()] ?: "Unknown"
         val openTg = { try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/Gucci8240"))) } catch (e: Exception) { Toast.makeText(this@MainActivity, "Telegram not installed", Toast.LENGTH_SHORT).show() } }
         title.setOnClickListener { openTg() }; sub.setOnClickListener { openTg() }; ca.setOnClickListener { openTg() }
-        
         Shizuku.addRequestPermissionResultListener(shizukuListener)
         checkAccess()
-
         findViewById<Button>(R.id.saveKeyBtn).setOnClickListener { p.edit().putString("license_key", ki.text.toString().trim()).putString("brutal_option", bi.text.toString().trim()).apply(); Toast.makeText(this@MainActivity, "✅ Configuration Saved", Toast.LENGTH_SHORT).show() }
         findViewById<Button>(R.id.loadFilesBtn).setOnClickListener { p.edit().putString("license_key", ki.text.toString().trim()).putString("brutal_option", bi.text.toString().trim()).apply(); Installer.installAll(this) { ok -> Toast.makeText(this@MainActivity, if (ok) "✅ Files Loaded" else "❌ Failed. Check root.", Toast.LENGTH_SHORT).show() } }
         findViewById<ImageButton>(R.id.hideAppsIcon).setOnClickListener { startActivity(Intent(this, HideAppsActivity::class.java)) }
         findViewById<ImageButton>(R.id.terminalIcon).setOnClickListener { startActivity(Intent(this, TerminalActivity::class.java)) }
     }
-
     private fun checkAccess() {
         Thread {
             val hasRoot = try { val pr = ProcessBuilder("su", "-c", "id").start(); pr.inputStream.bufferedReader().readText().contains("uid=0") } catch (e: Exception) { false }
             val isShizukuRunning = try { Shizuku.pingBinder() } catch (e: Exception) { false }
             val hasShizukuPermission = try { Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED } catch (e: Exception) { false }
-            
             Handler(Looper.getMainLooper()).post {
                 if (hasRoot) {
-                    activeDialog?.dismiss()
-                    Toast.makeText(this@MainActivity, "Root Access Granted", Toast.LENGTH_SHORT).show()
+                    activeDialog?.dismiss(); Toast.makeText(this@MainActivity, "Root Access Granted", Toast.LENGTH_SHORT).show()
                 } else if (isAdbMode && isShizukuRunning && hasShizukuPermission) {
-                    activeDialog?.dismiss()
-                    Toast.makeText(this@MainActivity, "Shizuku Access Active", Toast.LENGTH_SHORT).show()
+                    activeDialog?.dismiss(); Toast.makeText(this@MainActivity, "Shizuku Access Active", Toast.LENGTH_SHORT).show()
                 } else {
                     if (activeDialog?.isShowing == true) return@post
                     val isShizukuInstalled = try { packageManager.getPackageInfo("moe.shizuku.privileged.api", 0); true } catch (e: Exception) { false }
                     val dialogView = this@MainActivity.layoutInflater.inflate(R.layout.dialog_root, null)
                     val btnShizuku = dialogView.findViewById<Button>(R.id.btnShizuku)
-                    
                     if (!isShizukuInstalled) btnShizuku.visibility = android.view.View.GONE
-                    
                     activeDialog = AlertDialog.Builder(this@MainActivity).setView(dialogView).setCancelable(false).create()
                     activeDialog?.window?.setBackgroundDrawableResource(android.R.color.transparent)
-                    
                     dialogView.findViewById<Button>(R.id.btnGrant).setOnClickListener { activeDialog?.dismiss(); checkAccess() }
                     dialogView.findViewById<Button>(R.id.btnExit).setOnClickListener { activeDialog?.dismiss(); finish() }
-                    
-                    btnShizuku.setOnClickListener { 
-                        if (Shizuku.pingBinder()) { 
-                            if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) { 
-                                isAdbMode = true
-                                activeDialog?.dismiss() 
-                                checkAccess() 
-                            } else { 
-                                Shizuku.requestPermission(REQUEST_CODE) 
-                            } 
-                        } else { 
-                            Toast.makeText(this@MainActivity, "Shizuku is NOT running! Please open Shizuku app and start it first.", Toast.LENGTH_LONG).show() 
-                        } 
+                    btnShizuku.setOnClickListener {
+                        if (Shizuku.pingBinder()) {
+                            if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) { isAdbMode = true; activeDialog?.dismiss(); checkAccess() } else { Shizuku.requestPermission(REQUEST_CODE) }
+                        } else { Toast.makeText(this@MainActivity, "Shizuku is NOT running! Please open Shizuku app and start it first.", Toast.LENGTH_LONG).show() }
                     }
                     activeDialog?.show()
                 }
             }
         }.start()
     }
-
     override fun onDestroy() { Shizuku.removeRequestPermissionResultListener(shizukuListener); super.onDestroy() }
 }
 EOF
