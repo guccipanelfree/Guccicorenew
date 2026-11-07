@@ -1,14 +1,7 @@
 {
   "keys": {
     "KEY-7JP5K": {
-      "deviceIds": [],
-      "maxDevices": 2,
-      "revoked": false,
-      "expiresAt": 0
-    },
-    "THE-NEW-KEY-RESELLER-GAVE-ME": {
-      "deviceIds": [],
-      "maxDevices": 2,
+      "deviceId": "",
       "revoked": false,
       "expiresAt": 0
     }
