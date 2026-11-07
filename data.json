@@ -45,14 +45,6 @@
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 0
-    },
-    "GUCCI-I8OWY5": {
-      "deviceIds": [
-        "bd7d60d5a231f9ea"
-      ],
-      "maxDevices": 1,
-      "revoked": false,
-      "expiresAt": 0
     }
   }
 }
