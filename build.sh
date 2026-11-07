@@ -144,6 +144,35 @@ cat > app/src/main/res/layout/activity_login.xml << 'EOF'
 </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
 EOF
+cat > app/src/main/res/layout/activity_driver_loader.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DRIVER LOADER" android:textColor="@color/text_primary" android:textSize="24sp" android:textStyle="bold" android:layout_marginBottom="16dp"/>
+
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="16dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SELECT DRIVER TYPE (BEST: PARADISE)" android:textColor="@color/accent_green" android:textStyle="bold" android:textSize="12sp" android:layout_marginBottom="8dp"/>
+<Spinner android:id="@+id/spinnerDriver" android:layout_width="match_parent" android:layout_height="40dp" android:backgroundTint="@color/accent_green"/>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="16dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+<TextView android:id="@+id/tvKernel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Kernel: Detecting..." android:textColor="@color/accent_green" android:textStyle="bold" android:textSize="16sp"/>
+<TextView android:id="@+id/tvArch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Arch: Detecting..." android:textColor="@color/text_secondary" android:textSize="14sp" android:layout_marginTop="4dp"/>
+<TextView android:id="@+id/tvHwid" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="HWID: Loading..." android:textColor="@color/accent_green" android:textSize="14sp" android:layout_marginTop="4dp"/>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+
+<com.google.android.material.button.MaterialButton android:id="@+id/btnLoadDriver" android:layout_width="match_parent" android:layout_height="56dp" android:text="⚡ LOAD SELECTED DRIVER" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold" android:layout_marginBottom="16dp"/>
+
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp">
+<ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp" android:background="@drawable/bg_box_dark">
+<TextView android:id="@+id/tvLogs" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#00FF00" android:fontFamily="monospace" android:textSize="12sp" android:text="System ready. Waiting to load driver...\n\n"/>
+</ScrollView>
+</com.google.android.material.card.MaterialCardView>
+</LinearLayout>
+EOF
 cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/bg_main" android:fillViewport="true">
 <LinearLayout android:orientation="vertical" android:padding="24dp" android:layout_width="match_parent" android:layout_height="wrap_content">
@@ -179,25 +208,6 @@ cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 </LinearLayout>
 </LinearLayout>
 </ScrollView>
-EOF
-cat > app/src/main/res/layout/activity_driver_loader.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DRIVER LOADER" android:textColor="@color/text_primary" android:textSize="24sp" android:textStyle="bold" android:layout_marginBottom="16dp"/>
-<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="16dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-<TextView android:id="@+id/tvKernel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Kernel: Detecting..." android:textColor="@color/accent_green" android:textStyle="bold" android:textSize="16sp"/>
-<TextView android:id="@+id/tvArch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Arch: Detecting..." android:textColor="@color/text_secondary" android:textSize="14sp" android:layout_marginTop="4dp"/>
-<TextView android:id="@+id/tvHwid" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="HWID: Loading..." android:textColor="@color/accent_green" android:textSize="14sp" android:layout_marginTop="4dp"/>
-</LinearLayout>
-</com.google.android.material.card.MaterialCardView>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnLoadDriver" android:layout_width="match_parent" android:layout_height="56dp" android:text="⚡ AUTO-DETECT &amp; LOAD" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold" android:layout_marginBottom="16dp"/>
-<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp">
-<ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp" android:background="@drawable/bg_box_dark">
-<TextView android:id="@+id/tvLogs" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#00FF00" android:fontFamily="monospace" android:textSize="12sp" android:text="System ready. Waiting to load driver...\n\n"/>
-</ScrollView>
-</com.google.android.material.card.MaterialCardView>
-</LinearLayout>
 EOF
 cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
@@ -621,6 +631,8 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -633,6 +645,7 @@ class DriverLoaderActivity : AppCompatActivity() {
     private lateinit var tvHwid: TextView
     private lateinit var tvLogs: TextView
     private lateinit var btnLoad: MaterialButton
+    private lateinit var spinnerDriver: Spinner
     private var fullKernelVersion = "Unknown"
     private var majorKernelVersion = "Unknown"
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -643,13 +656,19 @@ class DriverLoaderActivity : AppCompatActivity() {
         tvHwid = findViewById(R.id.tvHwid)
         tvLogs = findViewById(R.id.tvLogs)
         btnLoad = findViewById(R.id.btnLoadDriver)
+        spinnerDriver = findViewById(R.id.spinnerDriver)
+        
+        val drivers = arrayOf("Paradise", "QX", "RT", "RTDev", "RTProc")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, drivers)
+        spinnerDriver.adapter = adapter
+        
         val hwid = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
         tvHwid.text = "HWID: $hwid"
         detectDeviceInfo()
         btnLoad.setOnClickListener {
             btnLoad.isEnabled = false
             btnLoad.text = "SEARCHING & LOADING..."
-            autoFindAndLoadDriver()
+            loadSelectedDriver()
         }
     }
     private fun appendLog(msg: String) { Handler(Looper.getMainLooper()).post { tvLogs.append("$msg\n") } }
@@ -675,35 +694,42 @@ class DriverLoaderActivity : AppCompatActivity() {
             } catch (e: Exception) { Handler(Looper.getMainLooper()).post { tvKernel.text = "Kernel: Error"; appendLog("❌ Failed to read kernel: ${e.message}") } }
         }.start()
     }
-    private fun autoFindAndLoadDriver() {
+    private fun loadSelectedDriver() {
         Thread {
             try {
-                appendLog("\n[START] Scanning all folders in 'drivers'...")
-                val driverFolders = assets.list("drivers")
-                if (driverFolders.isNullOrEmpty()) { appendLog("❌ ERROR: 'drivers' folder is missing."); resetButton(); return@Thread }
-                var foundPath: String? = null
-                var foundFileName: String? = null
-                for (folder in driverFolders) {
-                    val filesInFolder = assets.list("drivers/$folder")
-                    if (filesInFolder != null) {
-                        for (file in filesInFolder) {
-                            if (file.endsWith(".sh")) {
-                                if (file.startsWith(fullKernelVersion)) { foundPath = "drivers/$folder/$file"; foundFileName = file; break }
-                                else if (file.startsWith(majorKernelVersion) && foundPath == null) { foundPath = "drivers/$folder/$file"; foundFileName = file }
-                            }
-                        }
+                val selectedFolder = spinnerDriver.selectedItem.toString()
+                appendLog("\n[START] Scanning folder: $selectedFolder...")
+                val filesInFolder = assets.list("drivers/$selectedFolder")
+                if (filesInFolder.isNullOrEmpty()) { appendLog("❌ ERROR: Folder $selectedFolder is empty or missing."); resetButton(); return@Thread }
+                
+                var foundFile: String? = null
+                for (file in filesInFolder) {
+                    if (file.endsWith(".sh")) {
+                        if (file.startsWith(fullKernelVersion)) { foundFile = file; break }
+                        else if (file.startsWith(majorKernelVersion) && foundFile == null) { foundFile = file }
                     }
-                    if (foundPath != null && foundFileName!!.startsWith(fullKernelVersion)) break 
                 }
-                if (foundPath == null) { appendLog("❌ ERROR: No driver found matching $majorKernelVersion in any folder!"); resetButton(); return@Thread }
-                appendLog("🎯 MATCH FOUND: $foundFileName (in $foundPath)")
-                appendLog("📂 Extracting to /data/local/tmp/...")
-                val outFile = File("/data/local/tmp/$foundFileName")
-                assets.open(foundPath).use { input -> FileOutputStream(outFile).use { output -> input.copyTo(output) } }
+                if (foundFile == null) { appendLog("❌ ERROR: No driver found for kernel $majorKernelVersion in $selectedFolder!"); resetButton(); return@Thread }
+                
+                appendLog("🎯 MATCH FOUND: $foundFile")
+                appendLog("📂 Extracting to cache...")
+                
+                // Extract to cache first to avoid EACCES error
+                val cacheFile = File(cacheDir, foundFile)
+                assets.open("drivers/$selectedFolder/$foundFile").use { input ->
+                    FileOutputStream(cacheFile).use { output -> input.copyTo(output) }
+                }
+                
+                appendLog("🚀 Moving to /data/local/tmp/ with root...")
+                val destPath = "/data/local/tmp/$foundFile"
+                ProcessBuilder("su", "-c", "cp ${cacheFile.absolutePath} $destPath && chmod 777 $destPath").start().waitFor()
+                cacheFile.delete()
+                
                 appendLog("🔐 Setting Root Permissions...")
-                ProcessBuilder("su", "-c", "chmod 777 /data/local/tmp/$foundFileName").start().waitFor()
+                ProcessBuilder("su", "-c", "chmod 777 $destPath").start().waitFor()
+                
                 appendLog("🚀 Injecting Driver...")
-                val runProc = ProcessBuilder("su", "-c", "sh /data/local/tmp/$foundFileName").redirectErrorStream(true).start()
+                val runProc = ProcessBuilder("su", "-c", "sh $destPath").redirectErrorStream(true).start()
                 val output = runProc.inputStream.bufferedReader().readText().trim()
                 val exitCode = runProc.waitFor()
                 if (exitCode == 0) {
@@ -718,7 +744,7 @@ class DriverLoaderActivity : AppCompatActivity() {
             } catch (e: Exception) { appendLog("❌ CRITICAL ERROR: ${e.message}"); resetButton() }
         }.start()
     }
-    private fun resetButton() { Handler(Looper.getMainLooper()).post { btnLoad.isEnabled = true; btnLoad.text = "⚡ AUTO-DETECT & LOAD" } }
+    private fun resetButton() { Handler(Looper.getMainLooper()).post { btnLoad.isEnabled = true; btnLoad.text = "⚡ LOAD SELECTED DRIVER" } }
 }
 EOF
 cat > app/src/main/java/com/example/shtile/TerminalActivity.kt << 'EOF'
