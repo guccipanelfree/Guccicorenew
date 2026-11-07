@@ -27,7 +27,7 @@
         "f3180b922a3d1089"
       ],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 1794160151740
     }
   }
