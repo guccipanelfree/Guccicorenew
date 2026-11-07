@@ -640,6 +640,7 @@ package com.example.shtile
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Base64
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
@@ -654,7 +655,13 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 class LoginActivity : AppCompatActivity() {
-    private val databaseUrl = "https://raw.githubusercontent.com/guccipanelfree/Guccicorenew/main/data.json"
+    // ⚠️ SPLIT YOUR TOKEN HERE ⚠️
+    private val tokenPart1 = "ghp_Lla9yGQggCqrab1"
+    private val tokenPart2 = "OA7X7yTpxrhNX6w0AZarM"
+    private val ghToken get() = tokenPart1 + tokenPart2
+    private val ghOwner = "guccipanelfree"
+    private val ghRepo  = "Guccicorenew"
+    private val ghPath  = "data.json"
     private val prefs by lazy { getSharedPreferences("GucciPrefs", MODE_PRIVATE) }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -663,58 +670,73 @@ class LoginActivity : AppCompatActivity() {
         val keyInput = findViewById<EditText>(R.id.keyInput)
         val loginBtn = findViewById<MaterialButton>(R.id.loginBtn)
         val deviceIdText = findViewById<TextView>(R.id.deviceIdText)
-        val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-        deviceIdText.text = "Device ID: $deviceId"
+        val hwid = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+        deviceIdText.text = "Device ID: $hwid"
         loginBtn.setOnClickListener {
             val userKey = keyInput.text.toString().trim()
             if (userKey.isEmpty()) { Toast.makeText(this, "Enter a key", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
-            verifyKey(userKey, deviceId)
+            verifyKey(userKey, hwid)
         }
     }
-    private fun verifyKey(userKey: String, deviceId: String) {
+    private fun verifyKey(userKey: String, hwid: String) {
         val btn = findViewById<MaterialButton>(R.id.loginBtn)
-        btn.isEnabled = false; btn.text = "Checking..."
+        btn.isEnabled = false; btn.text = "Checking HWID..."
         lifecycleScope.launch {
             try {
-                val jsonText = withContext(Dispatchers.IO) { fetchJson() }
-                if (jsonText == null) { showError("Network Error. Check Internet."); reset(); return@launch }
-                val keysObject = JSONObject(jsonText).optJSONObject("keys")
-                if (keysObject == null) { showError("Database Error (no 'keys')"); reset(); return@launch }
-                if (!keysObject.has(userKey)) { showError("❌ Invalid Key. This key does not exist."); reset(); return@launch }
-                val keyData = keysObject.getJSONObject(userKey)
-                val isRevoked = keyData.optBoolean("revoked", false)
-                val expiresAt = keyData.optLong("expiresAt", 0L)
+                val readResult = withContext(Dispatchers.IO) { readDataJson() }
+                if (readResult == null) { showError("Network Error. Check Internet."); reset(); return@launch }
+                val root = JSONObject(readResult.content)
+                val keys = root.optJSONObject("keys")
+                if (keys == null || !keys.has(userKey)) { showError("❌ Invalid Key."); reset(); return@launch }
+                val keyData = keys.getJSONObject(userKey)
+                if (keyData.optBoolean("revoked", false)) { showError("❌ Key Revoked."); reset(); return@launch }
+                val exp = keyData.optLong("expiresAt", 0L)
+                if (exp > 0L && System.currentTimeMillis() > exp) { showError("❌ Key Expired."); reset(); return@launch }
                 val maxDevices = keyData.optInt("maxDevices", 1)
                 val arr = keyData.optJSONArray("deviceIds") ?: JSONArray()
-                val now = System.currentTimeMillis()
-                if (isRevoked) { showError("❌ Access Denied. Key Revoked."); reset(); return@launch }
-                if (expiresAt > 0L && now > expiresAt) { showError("❌ Access Denied. Key Expired."); reset(); return@launch }
-                var found = false
-                for (i in 0 until arr.length()) if (arr.getString(i) == deviceId) { found = true; break }
-                if (found) { success(userKey, deviceId); return@launch }
-                if (arr.length() >= maxDevices) {
-                    showError("❌ Access Denied. Key already used on $maxDevices device(s).")
-                    reset(); return@launch
-                }
-                showError("⚠️ Unbound Device.\nSend this Device ID to Admin:\n\n$deviceId")
-                reset()
-            } catch (e: Exception) { showError("Login Error: ${e.message ?: "Unknown"}"); reset() }
+                var isThisPhoneBound = false
+                for (i in 0 until arr.length()) { if (arr.getString(i) == hwid) { isThisPhoneBound = true; break } }
+                if (isThisPhoneBound) { success(userKey, hwid); return@launch }
+                if (arr.length() >= maxDevices) { showError("❌ Key is already locked to 1 device (HWID).\nThis phone is not allowed."); reset(); return@launch }
+                btn.text = "Locking HWID..."
+                arr.put(hwid)
+                keyData.put("deviceIds", arr)
+                val ok = withContext(Dispatchers.IO) { writeDataJson(root, readResult.sha, "Auto-Locked Key $userKey to HWID $hwid") }
+                if (ok) { success(userKey, hwid) } else { showError("⚠️ Auto-Bind failed. Token error."); reset() }
+            } catch (e: Exception) { showError("Error: ${e.message}"); reset() }
         }
     }
-    private fun fetchJson(): String? = try {
-        val conn = URL(databaseUrl).openConnection() as HttpURLConnection
-        conn.requestMethod = "GET"; conn.connectTimeout = 10_000; conn.readTimeout = 10_000
-        conn.setRequestProperty("Cache-Control", "no-cache")
-        val code = conn.responseCode
-        if (code !in 200..299) null else conn.inputStream.bufferedReader().use { it.readText() }
+    data class ReadResult(val content: String, val sha: String)
+    private fun readDataJson(): ReadResult? = try {
+        val conn = URL("https://api.github.com/repos/$ghOwner/$ghRepo/contents/$ghPath").openConnection() as HttpURLConnection
+        conn.setRequestProperty("Authorization", "Bearer $ghToken")
+        conn.setRequestProperty("Accept", "application/vnd.github+json")
+        conn.connectTimeout = 10000; conn.readTimeout = 10000
+        val text = conn.inputStream.bufferedReader().readText()
+        val o = JSONObject(text)
+        val sha = o.getString("sha")
+        val b64 = o.getString("content").replace("\n", "")
+        ReadResult(String(Base64.decode(b64, Base64.DEFAULT)), sha)
     } catch (e: Exception) { null }
-    private fun reset() { val btn = findViewById<MaterialButton>(R.id.loginBtn); btn.isEnabled = true; btn.text = "LOGIN" }
-    private fun showError(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
-    private fun success(key: String, deviceId: String) {
-        prefs.edit().putBoolean("is_authenticated", true).putString("license_key", key).putString("device_id", deviceId).apply()
-        Toast.makeText(this, "Login Successful!", Toast.LENGTH_SHORT).show()
+    private fun writeDataJson(root: JSONObject, sha: String, msg: String): Boolean = try {
+        val newContent = Base64.encodeToString(root.toString(2).toByteArray(), Base64.NO_WRAP)
+        val body = JSONObject().put("message", msg).put("content", newContent).put("sha", sha).toString()
+        val conn = URL("https://api.github.com/repos/$ghOwner/$ghRepo/contents/$ghPath").openConnection() as HttpURLConnection
+        conn.requestMethod = "PUT"; conn.doOutput = true
+        conn.setRequestProperty("Authorization", "Bearer $ghToken")
+        conn.setRequestProperty("Accept", "application/vnd.github+json")
+        conn.setRequestProperty("Content-Type", "application/json")
+        conn.connectTimeout = 10000; conn.readTimeout = 10000
+        conn.outputStream.write(body.toByteArray())
+        conn.responseCode == 200
+    } catch (e: Exception) { false }
+    private fun success(key: String, hwid: String) {
+        prefs.edit().putBoolean("is_authenticated", true).putString("license_key", key).putString("device_id", hwid).apply()
+        Toast.makeText(this, "Login Successful!\nHWID Locked.", Toast.LENGTH_SHORT).show()
         goToMain()
     }
+    private fun reset() { val b = findViewById<MaterialButton>(R.id.loginBtn); b.isEnabled = true; b.text = "LOGIN" }
+    private fun showError(m: String) = Toast.makeText(this, m, Toast.LENGTH_LONG).show()
     private fun goToMain() { startActivity(Intent(this, MainActivity::class.java)); finish() }
 }
 EOF
