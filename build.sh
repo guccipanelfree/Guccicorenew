@@ -7,11 +7,12 @@ if [ ! -s app/src/main/res/drawable/ic_app_icon.png ]; then
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#00E5A0" android:pathData="M12,2l3,6h6l-5,4 2,7 -6,-4 -6,4 2,-7 -5,-4h6z"/></vector>
 EOF
 fi
-cp Gucci_core   app/src/main/assets/ 2>/dev/null || true
-cp Gucci_brutal app/src/main/assets/ 2>/dev/null || true
-cp Gucci_Ch     app/src/main/assets/ 2>/dev/null || true
-cp Gucci_h      app/src/main/assets/ 2>/dev/null || true
-cp Gucci_O      app/src/main/assets/ 2>/dev/null || true
+
+for file in Gucci_core Gucci_brutal Gucci_Ch Gucci_h Gucci_O; do
+    if [ ! -f "$file" ]; then echo "ERROR: $file NOT FOUND IN REPO!"; exit 1; fi
+    cp "$file" app/src/main/assets/
+done
+
 cat > settings.gradle << 'EOF'
 pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
 dependencyResolutionManagement { repositories { google(); mavenCentral() } }
@@ -132,7 +133,7 @@ cat > app/src/main/res/layout/dialog_root.xml << 'EOF'
 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="INX-LOADER requires Root Permission or Shizuku (ADB) to function properly." android:textColor="@color/text_secondary" android:textSize="15sp" android:gravity="center" android:layout_marginBottom="32dp"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/btnGrant" android:layout_width="match_parent" android:layout_height="56dp" android:text="GRANT ROOT" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:layout_marginBottom="12dp" android:textStyle="bold"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/btnShizuku" android:layout_width="match_parent" android:layout_height="56dp" android:text="USE SHIZUKU (ADB)" app:backgroundTint="@android:color/transparent" app:strokeColor="@color/accent_green" app:strokeWidth="1dp" app:cornerRadius="16dp" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="12dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnExit" android:layout_width="match_parent" android:layout_height="56dp" android:text="EXIT" app:backgroundTint="@android:color/transparent" app:strokeColor="@color/accent_red" app:strokeWidth="1dp" app:cornerRadius="16dp" android:textColor="@color/accent_red" android:textStyle="bold"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnExit" android:layout_width="match_parent" android:layout_height="56dp" android:text="EXIT" app:backgroundTint="@android:color/transparent" app:strokeColor="@color/accent_red" android:strokeWidth="1dp" app:cornerRadius="16dp" android:textColor="@color/accent_red" android:textStyle="bold"/>
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
 EOF
@@ -253,7 +254,7 @@ cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
 </LinearLayout>
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
 <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI HS" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
-<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater2" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
+<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater2" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:tint="#1F2633"/>
 </LinearLayout>
 <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1F2633" android:layout_marginBottom="8dp"/>
 <LinearLayout android:id="@+id/dragHandleBottom" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
@@ -574,26 +575,41 @@ class FloaterOverlayService : Service() {
             val tmp = File(cacheDir, name)
             assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
             
-            val targetDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/avatar"
-            val targetFile = "assetindexer.U0jVgfPVdG5YZ2HvIuO5tFkQcCM~3D" // NO .l1
-            val fullPath = "$targetDir/$targetFile"
-            
+            val targetFile = "assetindexer.U0jVgfPVdG5YZ2HvIuO5tFkQcCM~3D" 
             val scriptFile = File(cacheDir, "paste.sh")
 
-            // Use su --context to run the copy as the target app
+            // The Ultimate SELinux Fix
             scriptFile.writeText("""
                 #!/system/bin/sh
                 
+                # 1. Find the exact avatar folder
+                TARGET_DIR=${'$'}(find /data/data/com.dts.freefiremax -type d -name "avatar" 2>/dev/null | head -n 1)
+                
+                if [ -z "${'$'}TARGET_DIR" ]; then
+                    echo "FAILED_NO_FOLDER"
+                    exit 1
+                fi
+
+                FULL_PATH="${'$'}TARGET_DIR/$targetFile"
+                
+                # 2. Get UID (u0_a327 = 10327)
+                UID=${'$'}(dumpsys package com.dts.freefiremax | grep userId= | awk -F= '{print ${'$'}2}' | awk '{print ${'$'}1}')
+                
+                # 3. Copy to /data/local/tmp first
                 cp -f "${tmp.absolutePath}" "/data/local/tmp/$name"
                 chmod 777 "/data/local/tmp/$name"
                 
-                UID=${'$'}(stat -c %u /data/user/0/com.dts.freefiremax)
+                # 4. Copy to target using cat
+                cat "/data/local/tmp/$name" > "${'$'}FULL_PATH"
                 
-                su --context u:r:untrusted_app:s0:c${'$'}UID -c "cp -f \"/data/local/tmp/$name\" \"$fullPath\""
+                # 5. Apply UID and SELinux context
+                chown ${'$'}UID:${'$'}UID "${'$'}FULL_PATH"
                 
-                chmod 777 "$fullPath" 2>/dev/null
+                # THIS IS THE MAGIC LINE: Copy the exact security tag from the folder
+                chcon --reference="${'$'}TARGET_DIR" "${'$'}FULL_PATH"
                 
-                if [ -s "$fullPath" ]; then
+                # 6. Verify
+                if [ -s "${'$'}FULL_PATH" ]; then
                     echo "PASTE_SUCCESSFUL"
                 else
                     echo "PASTE_FAILED"
@@ -603,7 +619,8 @@ class FloaterOverlayService : Service() {
             val chmodP = ProcessBuilder("su", "-c", "chmod 777 " + scriptFile.absolutePath).start()
             chmodP.waitFor()
 
-            val p = ProcessBuilder("su", "-c", "sh " + scriptFile.absolutePath).redirectErrorStream(true).start()
+            // Run using -mm to bypass mount namespace
+            val p = ProcessBuilder("su", "-mm", "-c", "sh " + scriptFile.absolutePath).redirectErrorStream(true).start()
             val output = p.inputStream.bufferedReader().readText()
             val code = p.waitFor()
             
@@ -613,7 +630,7 @@ class FloaterOverlayService : Service() {
             return if (output.contains("PASTE_SUCCESSFUL") && code == 0) {
                 null 
             } else {
-                if (output.contains("Text file busy")) "Free Fire is running!" else "Failed. Output: $output"
+                if (output.contains("FAILED_NO_FOLDER")) "Avatar folder missing." else "Check Root. Output: $output"
             }
         } catch (e: Exception) {
             return e.message
