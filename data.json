@@ -17,7 +17,7 @@
         "647405543486fb34"
       ],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 0
     }
   }
