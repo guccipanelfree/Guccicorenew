@@ -8,7 +8,7 @@
     "KEY-XYZ123": {
       "tier": "30 DAYS",
       "expiresAt": 1770000000000,
-      "revoked": true,
+      "revoked": false,
       "createdBy": "Gucci",
       "deviceId": "8f3a9b2c1d4e5f6"
     }
