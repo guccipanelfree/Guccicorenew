@@ -31,7 +31,9 @@
       "expiresAt": 1794160151740
     },
     "GUCCI-8ROVH3": {
-      "deviceIds": [],
+      "deviceIds": [
+        "f3180b922a3d1089"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 0
