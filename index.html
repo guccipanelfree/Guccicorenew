@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>License Admin</title>
+<title>Reseller Dashboard</title>
 <style>
   :root{--bg:#0a0e14;--panel:#11161f;--border:#232b38;--text:#e6edf3;--muted:#8b949e;--accent:#2dd4a7;--red:#f85149;}
   body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 sans-serif;padding:20px;}
@@ -27,11 +27,12 @@
 
 <!-- LOGIN -->
 <div id="loginScreen" class="card">
-  <h2>Connect to GitHub</h2>
+  <h2>Reseller Login</h2>
+  <p style="color:var(--muted);font-size:12px;">Link: ?user=YourName</p>
   <label>GitHub Username</label>
-  <input id="ghUser" placeholder="Your username">
+  <input id="ghUser" placeholder="guccipanelfree">
   <label>Repo Name</label>
-  <input id="ghRepo" placeholder="gucci-license">
+  <input id="ghRepo" placeholder="Guccicorenew">
   <label>Token (ghp_...)</label>
   <input id="ghToken" type="password" placeholder="Your GitHub Token">
   <button class="btn-primary" onclick="login()">Connect</button>
@@ -41,7 +42,7 @@
 <!-- DASHBOARD -->
 <div id="dashScreen" class="card hidden">
   <div class="flex" style="margin-bottom:20px;">
-    <h2 style="margin:0;">Reseller Panel</h2>
+    <h2 style="margin:0;">Reseller: <span id="myName" style="color:var(--accent);"></span></h2>
     <button class="btn-danger" style="padding:10px;" onclick="location.reload()">Logout</button>
   </div>
   
@@ -67,7 +68,11 @@
 </div>
 
 <script>
-let S = { user:"", repo:"", token:"", sha:"", data:{resellers:{}, keys:{}} };
+let S = { user:"", repo:"", token:"", sha:"", data:{resellers:{}, keys:{}}, myName:"" };
+
+// This gets the ?user=Name from the URL
+const urlParams = new URLSearchParams(window.location.search);
+S.myName = urlParams.get('user') || "John";
 
 async function login() {
   S.user = document.getElementById('ghUser').value.trim();
@@ -79,6 +84,7 @@ async function login() {
     await loadData();
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('dashScreen').classList.remove('hidden');
+    document.getElementById('myName').innerText = S.myName;
   } catch(e) {
     document.getElementById('loginErr').innerText = "Error: Check your Token or Repo name.";
   }
@@ -97,7 +103,7 @@ async function loadData() {
 async function saveData() {
   const url = `https://api.github.com/repos/${S.user}/${S.repo}/contents/data.json`;
   const body = {
-    message: "Update data",
+    message: "Reseller Update",
     content: btoa(JSON.stringify(S.data, null, 2)),
     sha: S.sha
   };
@@ -112,21 +118,20 @@ async function saveData() {
 }
 
 function render() {
-  // For this demo, we will use a test reseller called "John" with 5000 credits.
-  // In a real setup, you would log in as a specific reseller.
-  if(!S.data.resellers["John"]) {
-    S.data.resellers["John"] = { credits: 5000 }; 
+  if(!S.data.resellers[S.myName]) {
+     document.getElementById('creditDisplay').innerText = "Not Found";
+     return;
   }
   
-  const myCredits = S.data.resellers["John"].credits;
-  document.getElementById('creditDisplay').innerText = myCredits;
+  const myCredits = S.data.resellers[S.myName].credits;
+  document.getElementById('creditDisplay').innerText = myCredits === "Unlimited" ? "∞ Unlimited" : myCredits;
 
   const tbody = document.getElementById('keyTable');
   tbody.innerHTML = "";
   
   Object.keys(S.data.keys).forEach(key => {
     const k = S.data.keys[key];
-    if(k.createdBy !== "John") return; // Only show this reseller's keys
+    if(k.createdBy !== S.myName) return; // Only show their keys
 
     const isExpired = k.expiresAt !== 0 && Date.now() > k.expiresAt;
     const status = k.revoked ? "REVOKED" : (isExpired ? "EXPIRED" : "ACTIVE");
@@ -145,16 +150,19 @@ function render() {
 async function generateKey() {
   const durationStr = document.getElementById('keyDuration').value;
   const cost = parseInt(durationStr);
+  const myCredits = S.data.resellers[S.myName].credits;
   
-  if(S.data.resellers["John"].credits < cost) {
+  // Check credits (If Unlimited, skip the check)
+  if(myCredits !== "Unlimited" && myCredits < cost) {
     alert("Not enough credits!");
     return;
   }
 
-  // Deduct credits
-  S.data.resellers["John"].credits -= cost;
+  // Deduct credits (If Unlimited, skip the deduction)
+  if(myCredits !== "Unlimited") {
+    S.data.resellers[S.myName].credits -= cost;
+  }
 
-  // Generate key
   const newKey = "KEY-" + Math.random().toString(36).substring(2, 7).toUpperCase();
   
   let days = 0;
@@ -168,7 +176,7 @@ async function generateKey() {
     tier: cost === 2000 ? "LIFETIME" : days + " DAYS",
     expiresAt: cost === 2000 ? 0 : Date.now() + (days * 86400000),
     revoked: false,
-    createdBy: "John"
+    createdBy: S.myName
   };
 
   await saveData();
