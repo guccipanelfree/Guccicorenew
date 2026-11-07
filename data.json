@@ -7,5 +7,12 @@
       "credits": "Unlimited"
     }
   },
-  "keys": {}
+  "keys": {
+    "KEY-7JP5K": {
+      "tier": "LIFETIME",
+      "expiresAt": 0,
+      "revoked": false,
+      "createdBy": "Gucci"
+    }
+  }
 }
