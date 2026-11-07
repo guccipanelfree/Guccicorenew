@@ -11,13 +11,15 @@
     "GUCCI-LIFETIME-001": {
       "deviceIds": [],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 0,
       "tier": "LIFETIME",
       "createdBy": "GUCCI"
     },
     "GUCCI-TRIAL-002": {
-      "deviceIds": ["a1b2c3d4e5f6a7b8"],
+      "deviceIds": [
+        "a1b2c3d4e5f6a7b8"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1770000000000,
