@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>License Admin</title>
+<style>
+  :root{--bg:#0a0e14;--panel:#11161f;--border:#232b38;--text:#e6edf3;--muted:#8b949e;--accent:#2dd4a7;--red:#f85149;}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 sans-serif;padding:20px;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px;max-width:800px;margin:0 auto;}
+  input,select{width:100%;padding:10px;margin:6px 0 16px;background:#161c27;border:1px solid var(--border);color:white;border-radius:6px;box-sizing:border-box;}
+  button{padding:10px 16px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;}
+  .btn-primary{background:var(--accent);color:#000;width:100%;}
+  .btn-danger{background:var(--red);color:white;padding:6px 12px;font-size:12px;}
+  table{width:100%;border-collapse:collapse;margin-top:20px;}
+  th,td{text-align:left;padding:12px;border-bottom:1px solid var(--border);}
+  th{color:var(--muted);font-size:12px;}
+  .pill{padding:4px 8px;border-radius:99px;font-size:11px;font-weight:bold;}
+  .active{background:#123c30;color:var(--accent);}
+  .revoked{background:#3d1714;color:var(--red);}
+  .mono{font-family:monospace;}
+  .hidden{display:none;}
+  .flex{display:flex;gap:10px;justify-content:space-between;align-items:center;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="card">
+  <h2>Connect to GitHub</h2>
+  <label>GitHub Username</label>
+  <input id="ghUser" placeholder="Your username">
+  <label>Repo Name</label>
+  <input id="ghRepo" placeholder="gucci-license">
+  <label>Token (ghp_...)</label>
+  <input id="ghToken" type="password" placeholder="Your GitHub Token">
+  <button class="btn-primary" onclick="login()">Connect</button>
+  <p id="loginErr" style="color:var(--red);text-align:center;"></p>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashScreen" class="card hidden">
+  <div class="flex" style="margin-bottom:20px;">
+    <h2 style="margin:0;">Reseller Panel</h2>
+    <button class="btn-danger" style="padding:10px;" onclick="location.reload()">Logout</button>
+  </div>
+  
+  <div style="background:#161c27;padding:15px;border-radius:8px;margin-bottom:20px;">
+    <h3 style="margin:0 0 10px;">Your Credits: <span id="creditDisplay" style="color:var(--accent);">0</span></h3>
+    <label>Select Duration</label>
+    <select id="keyDuration">
+      <option value="100">1 Day (Cost: 100)</option>
+      <option value="300">3 Days (Cost: 300)</option>
+      <option value="600">7 Days (Cost: 600)</option>
+      <option value="900">14 Days (Cost: 900)</option>
+      <option value="1200">30 Days (Cost: 1,200)</option>
+      <option value="2000">Lifetime (Cost: 2,000)</option>
+    </select>
+    <button class="btn-primary" onclick="generateKey()">Generate Key</button>
+  </div>
+
+  <h3>Your Keys</h3>
+  <table>
+    <thead><tr><th>Key</th><th>Status</th><th>Action</th></tr></thead>
+    <tbody id="keyTable"></tbody>
+  </table>
+</div>
+
+<script>
+let S = { user:"", repo:"", token:"", sha:"", data:{resellers:{}, keys:{}} };
+
+async function login() {
+  S.user = document.getElementById('ghUser').value.trim();
+  S.repo = document.getElementById('ghRepo').value.trim();
+  S.token = document.getElementById('ghToken').value.trim();
+  if(!S.user || !S.repo || !S.token) return document.getElementById('loginErr').innerText = "Fill all fields.";
+  
+  try {
+    await loadData();
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('dashScreen').classList.remove('hidden');
+  } catch(e) {
+    document.getElementById('loginErr').innerText = "Error: Check your Token or Repo name.";
+  }
+}
+
+async function loadData() {
+  const url = `https://api.github.com/repos/${S.user}/${S.repo}/contents/data.json`;
+  const res = await fetch(url, { headers: { "Authorization": `token ${S.token}` } });
+  if(!res.ok) throw new Error("Auth Failed");
+  const json = await res.json();
+  S.sha = json.sha;
+  S.data = JSON.parse(atob(json.content));
+  render();
+}
+
+async function saveData() {
+  const url = `https://api.github.com/repos/${S.user}/${S.repo}/contents/data.json`;
+  const body = {
+    message: "Update data",
+    content: btoa(JSON.stringify(S.data, null, 2)),
+    sha: S.sha
+  };
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: { "Authorization": `token ${S.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  const json = await res.json();
+  S.sha = json.content.sha;
+  render();
+}
+
+function render() {
+  // For this demo, we will use a test reseller called "John" with 5000 credits.
+  // In a real setup, you would log in as a specific reseller.
+  if(!S.data.resellers["John"]) {
+    S.data.resellers["John"] = { credits: 5000 }; 
+  }
+  
+  const myCredits = S.data.resellers["John"].credits;
+  document.getElementById('creditDisplay').innerText = myCredits;
+
+  const tbody = document.getElementById('keyTable');
+  tbody.innerHTML = "";
+  
+  Object.keys(S.data.keys).forEach(key => {
+    const k = S.data.keys[key];
+    if(k.createdBy !== "John") return; // Only show this reseller's keys
+
+    const isExpired = k.expiresAt !== 0 && Date.now() > k.expiresAt;
+    const status = k.revoked ? "REVOKED" : (isExpired ? "EXPIRED" : "ACTIVE");
+    const pillClass = status === "ACTIVE" ? "active" : "revoked";
+
+    tbody.innerHTML += `
+      <tr>
+        <td class="mono">${key}</td>
+        <td><span class="pill ${pillClass}">${status}</span><br><small>${k.tier}</small></td>
+        <td><button class="btn-danger" onclick="toggleKey('${key}')">${k.revoked ? 'Restore' : 'Revoke'}</button></td>
+      </tr>
+    `;
+  });
+}
+
+async function generateKey() {
+  const durationStr = document.getElementById('keyDuration').value;
+  const cost = parseInt(durationStr);
+  
+  if(S.data.resellers["John"].credits < cost) {
+    alert("Not enough credits!");
+    return;
+  }
+
+  // Deduct credits
+  S.data.resellers["John"].credits -= cost;
+
+  // Generate key
+  const newKey = "KEY-" + Math.random().toString(36).substring(2, 7).toUpperCase();
+  
+  let days = 0;
+  if(cost === 100) days = 1;
+  else if(cost === 300) days = 3;
+  else if(cost === 600) days = 7;
+  else if(cost === 900) days = 14;
+  else if(cost === 1200) days = 30;
+  
+  S.data.keys[newKey] = {
+    tier: cost === 2000 ? "LIFETIME" : days + " DAYS",
+    expiresAt: cost === 2000 ? 0 : Date.now() + (days * 86400000),
+    revoked: false,
+    createdBy: "John"
+  };
+
+  await saveData();
+  alert("Key Generated: " + newKey);
+}
+
+async function toggleKey(key) {
+  S.data.keys[key].revoked = !S.data.keys[key].revoked;
+  await saveData();
+}
+</script>
+</body>
+</html>
