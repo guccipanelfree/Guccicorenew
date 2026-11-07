@@ -1,9 +1,16 @@
 {
+  "resellers": {
+    "Gucci": {
+      "credits": "Unlimited"
+    }
+  },
   "keys": {
-    "KEY-7JP5K": {
-      "deviceId": "PUT_USER_DEVICE_ID_HERE",
+    "KEY-XYZ123": {
+      "tier": "30 DAYS",
+      "expiresAt": 1770000000000,
       "revoked": false,
-      "expiresAt": 0
+      "createdBy": "Gucci",
+      "deviceId": "8f3a9b2c1d4e5f6"
     }
   }
 }
