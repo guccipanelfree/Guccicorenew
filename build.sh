@@ -145,7 +145,8 @@ cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/bg_main" android:fillViewport="true">
 <LinearLayout android:orientation="vertical" android:padding="24dp" android:layout_width="match_parent" android:layout_height="wrap_content">
 <TextView android:id="@+id/titleText" android:text="INX-LOADER" android:textColor="@color/text_primary" android:textSize="36sp" android:fontFamily="sans-serif-black" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-<TextView android:id="@+id/subtitleText" android:text="Premium Panel By GUCCI" android:textColor="@color/accent_green" android:textSize="14sp" android:fontFamily="sans-serif-medium" android:layout_marginTop="-4dp" android:layout_marginBottom="32dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<TextView android:id="@+id/subtitleText" android:text="Premium Panel By GUCCI" android:textColor="@color/accent_green" android:textSize="14sp" android:fontFamily="sans-serif-medium" android:layout_marginTop="-4dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<TextView android:id="@+id/licenseTimerText" android:text="Expires in: Loading..." android:textColor="@color/accent_red" android:textSize="14sp" android:textStyle="bold" android:layout_marginTop="4dp" android:layout_marginBottom="24dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="20dp" android:layout_marginBottom="24dp">
 <LinearLayout android:orientation="vertical" android:padding="20dp" android:layout_width="match_parent" android:layout_height="wrap_content">
 <TextView android:text="SELECT DRIVER (1-10)" android:textColor="@color/accent_green" android:textSize="12sp" android:fontFamily="sans-serif-medium" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
@@ -655,7 +656,6 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 class LoginActivity : AppCompatActivity() {
-    // ⚠️ SPLIT YOUR TOKEN HERE ⚠️
     private val tokenPart1 = "ghp_Lla9yGQggCqrab1"
     private val tokenPart2 = "OA7X7yTpxrhNX6w0AZarM"
     private val ghToken get() = tokenPart1 + tokenPart2
@@ -665,13 +665,15 @@ class LoginActivity : AppCompatActivity() {
     private val prefs by lazy { getSharedPreferences("GucciPrefs", MODE_PRIVATE) }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (prefs.getBoolean("is_authenticated", false)) { goToMain(); return }
+        prefs.edit().putBoolean("is_authenticated", false).apply()
         setContentView(R.layout.activity_login)
         val keyInput = findViewById<EditText>(R.id.keyInput)
         val loginBtn = findViewById<MaterialButton>(R.id.loginBtn)
         val deviceIdText = findViewById<TextView>(R.id.deviceIdText)
         val hwid = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
         deviceIdText.text = "Device ID: $hwid"
+        val savedKey = prefs.getString("license_key", "")
+        if (!savedKey.isNullOrEmpty()) { keyInput.setText(savedKey) }
         loginBtn.setOnClickListener {
             val userKey = keyInput.text.toString().trim()
             if (userKey.isEmpty()) { Toast.makeText(this, "Enter a key", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
@@ -696,13 +698,13 @@ class LoginActivity : AppCompatActivity() {
                 val arr = keyData.optJSONArray("deviceIds") ?: JSONArray()
                 var isThisPhoneBound = false
                 for (i in 0 until arr.length()) { if (arr.getString(i) == hwid) { isThisPhoneBound = true; break } }
-                if (isThisPhoneBound) { success(userKey, hwid); return@launch }
+                if (isThisPhoneBound) { success(userKey, hwid, exp); return@launch }
                 if (arr.length() >= maxDevices) { showError("❌ Key is already locked to 1 device (HWID).\nThis phone is not allowed."); reset(); return@launch }
                 btn.text = "Locking HWID..."
                 arr.put(hwid)
                 keyData.put("deviceIds", arr)
                 val ok = withContext(Dispatchers.IO) { writeDataJson(root, readResult.sha, "Auto-Locked Key $userKey to HWID $hwid") }
-                if (ok) { success(userKey, hwid) } else { showError("⚠️ Auto-Bind failed. Token error."); reset() }
+                if (ok) { success(userKey, hwid, exp) } else { showError("⚠️ Auto-Bind failed. Token error."); reset() }
             } catch (e: Exception) { showError("Error: ${e.message}"); reset() }
         }
     }
@@ -730,8 +732,8 @@ class LoginActivity : AppCompatActivity() {
         conn.outputStream.write(body.toByteArray())
         conn.responseCode == 200
     } catch (e: Exception) { false }
-    private fun success(key: String, hwid: String) {
-        prefs.edit().putBoolean("is_authenticated", true).putString("license_key", key).putString("device_id", hwid).apply()
+    private fun success(key: String, hwid: String, exp: Long) {
+        prefs.edit().putBoolean("is_authenticated", true).putString("license_key", key).putString("device_id", hwid).putLong("license_expires", exp).apply()
         Toast.makeText(this, "Login Successful!\nHWID Locked.", Toast.LENGTH_SHORT).show()
         goToMain()
     }
@@ -746,6 +748,7 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -770,26 +773,66 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-    override fun onResume() { super.onResume(); if (activeDialog?.isShowing == true) { checkAccess() } }
-    override fun onCreate(s: Bundle?) {
-        super.onCreate(s)
+    override fun onResume() { 
+        super.onResume(); 
         if (!getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE).getBoolean("is_authenticated", false)) {
             startActivity(Intent(this, LoginActivity::class.java)); finish(); return
         }
+        if (activeDialog?.isShowing == true) { checkAccess() } 
+    }
+    override fun onCreate(s: Bundle?) {
+        super.onCreate(s)
+        val p = getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE)
+        if (!p.getBoolean("is_authenticated", false)) {
+            startActivity(Intent(this, LoginActivity::class.java)); finish(); return
+        }
         setContentView(R.layout.activity_main)
+        
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) { requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 2002) }
         if (!Settings.canDrawOverlays(this)) { Toast.makeText(this, "Please enable 'Display over other apps' for Floater", Toast.LENGTH_LONG).show(); startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))) }
-        val p = getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE)
+        
         val bi = findViewById<EditText>(R.id.brutalInput)
         val dn = findViewById<TextView>(R.id.driverNameText)
         val title = findViewById<TextView>(R.id.titleText)
         val sub = findViewById<TextView>(R.id.subtitleText)
         val ca = findViewById<TextView>(R.id.contactAdminText)
+        val timerText = findViewById<TextView>(R.id.licenseTimerText)
+        
         sub.text = android.text.Html.fromHtml("Premium Panel By <font color='#00E5A0'>GUCCI</font>", android.text.Html.FROM_HTML_MODE_LEGACY)
         bi.setText(p.getString("brutal_option", "7"))
         val m = mapOf("1" to "QX1", "2" to "GT", "3" to "rt-dev", "4" to "rt-proc", "5" to "QX(2)", "6" to "KPM", "7" to "DitPro KPM", "8" to "KMA KPM", "9" to "LDK KPM", "10" to "Paradise")
         bi.addTextChangedListener(object : TextWatcher { override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}; override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) { dn.text = m[s.toString().trim()] ?: "Unknown" }; override fun afterTextChanged(s: Editable?) {} })
         dn.text = m[bi.text.toString()] ?: "Unknown"
+        
+        val exp = p.getLong("license_expires", 0L)
+        if (exp == 0L) {
+            timerText.text = "License: Lifetime"
+            timerText.setTextColor(Color.parseColor("#00E5A0"))
+        } else {
+            val diff = exp - System.currentTimeMillis()
+            if (diff > 0) {
+                val days = diff / (1000 * 60 * 60 * 24)
+                val hours = (diff / (1000 * 60 * 60)) % 24
+                timerText.text = "Expires in: ${days}D ${hours}H"
+                timerText.setTextColor(Color.parseColor("#FF4D4D"))
+                
+                val handler = Handler(Looper.getMainLooper())
+                val runnable = object : Runnable {
+                    override fun run() {
+                        if (System.currentTimeMillis() > exp) {
+                            Toast.makeText(this@MainActivity, "❌ License Expired! Please Login again.", Toast.LENGTH_LONG).show()
+                            p.edit().putBoolean("is_authenticated", false).apply()
+                            startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+                            finish()
+                        } else {
+                            handler.postDelayed(this, 60000)
+                        }
+                    }
+                }
+                handler.post(runnable)
+            }
+        }
+        
         val openTg = { try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/Gucci8240"))) } catch (e: Exception) { Toast.makeText(this@MainActivity, "Telegram not installed", Toast.LENGTH_SHORT).show() } }
         title.setOnClickListener { openTg() }; sub.setOnClickListener { openTg() }; ca.setOnClickListener { openTg() }
         Shizuku.addRequestPermissionResultListener(shizukuListener)
