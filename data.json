@@ -1,4 +1,8 @@
 {
-  "resellers": {},
+  "resellers": {
+    "GUCCI": {
+      "credits": 100000000000000000
+    }
+  },
   "keys": {}
 }
