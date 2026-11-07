@@ -11,6 +11,12 @@
       "revoked": false,
       "createdBy": "Gucci",
       "deviceId": "8f3a9b2c1d4e5f6"
+    },
+    "KEY-5NNMR": {
+      "tier": "LIFETIME",
+      "expiresAt": 0,
+      "revoked": false,
+      "createdBy": "Gucci"
     }
   }
 }
