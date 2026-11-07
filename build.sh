@@ -8,10 +8,9 @@ if [ ! -s app/src/main/res/drawable/ic_app_icon.png ]; then
 EOF
 fi
 for file in Gucci_core Gucci_brutal Gucci_Ch Gucci_h Gucci_O; do
-    if [ ! -f "$file" ]; then echo "WARNING: $file NOT FOUND IN REPO ROOT!"; fi
     if [ -f "$file" ]; then cp "$file" app/src/main/assets/; fi
 done
-if [ -d "drivers" ]; then cp -r drivers app/src/main/assets/; else echo "WARNING: drivers folder not found in root!"; fi
+if [ -d "drivers" ]; then cp -r drivers app/src/main/assets/; fi
 
 cat > settings.gradle << 'EOF'
 pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
@@ -233,19 +232,6 @@ cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
 <com.google.android.material.button.MaterialButton android:id="@+id/applyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="APPLY FOR TILE" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
 </LinearLayout>
 EOF
-cat > app/src/main/res/layout/list_item_app.xml << 'EOF'
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="12dp" android:gravity="center_vertical">
-<ImageView android:id="@+id/appIcon" android:layout_width="44dp" android:layout_height="44dp"/>
-<LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingStart="12dp">
-<TextView android:id="@+id/appName" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/text_primary" android:textSize="15sp" android:textStyle="bold"/>
-<TextView android:id="@+id/appPkg" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/text_secondary" android:textSize="11sp"/>
-</LinearLayout>
-<com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/appCheck" android:layout_width="wrap_content" android:layout_height="wrap_content" app:buttonTint="@color/accent_green" android:layout_marginEnd="8dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnOptions" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⚙️" android:textSize="20sp" android:minWidth="0dp" android:padding="8dp"/>
-</LinearLayout>
-</com.google.android.material.card.MaterialCardView>
-EOF
 cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="16dp">
@@ -257,14 +243,22 @@ cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
 </RadioGroup>
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="App Control" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
 <EditText android:id="@+id/pkgInput" android:layout_width="match_parent" android:layout_height="48dp" android:hint="Enter Package Name..." android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginBottom="12dp"/>
+
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
 <com.google.android.material.button.MaterialButton android:id="@+id/btnHide" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="HIDE" app:backgroundTint="@color/accent_red" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginEnd="8dp"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/btnUnhide" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="UNHIDE" app:backgroundTint="@color/accent_green" android:textColor="#000000" android:textStyle="bold"/>
 </LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
 <com.google.android.material.button.MaterialButton android:id="@+id/btnFreeze" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="FREEZE" app:backgroundTint="#F39C12" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginEnd="8dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnDeepFreeze" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="DEEP FREEZE" app:backgroundTint="#8E44AD" android:textColor="#FFFFFF" android:textStyle="bold"/>
+</LinearLayout>
+
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+<com.google.android.material.button.MaterialButton android:id="@+id/btnUnfreeze" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="UNFREEZE" app:backgroundTint="#2ECC71" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginEnd="8dp"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/btnDelete" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="DELETE" app:backgroundTint="#E74C3C" android:textColor="#FFFFFF" android:textStyle="bold"/>
 </LinearLayout>
+
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="16dp">
@@ -280,6 +274,19 @@ cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
+EOF
+cat > app/src/main/res/layout/list_item_app.xml << 'EOF'
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="12dp" android:gravity="center_vertical">
+<ImageView android:id="@+id/appIcon" android:layout_width="44dp" android:layout_height="44dp"/>
+<LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingStart="12dp">
+<TextView android:id="@+id/appName" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/text_primary" android:textSize="15sp" android:textStyle="bold"/>
+<TextView android:id="@+id/appPkg" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/text_secondary" android:textSize="11sp"/>
+</LinearLayout>
+<com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/appCheck" android:layout_width="wrap_content" android:layout_height="wrap_content" app:buttonTint="@color/accent_green" android:layout_marginEnd="8dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnOptions" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⚙️" android:textSize="20sp" android:minWidth="0dp" android:padding="8dp"/>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
 EOF
 cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="260dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0B0F17" app:cardCornerRadius="16dp" app:cardElevation="12dp">
@@ -772,22 +779,46 @@ class TerminalActivity : AppCompatActivity() {
         val btnHide = findViewById<MaterialButton>(R.id.btnHide)
         val btnUnhide = findViewById<MaterialButton>(R.id.btnUnhide)
         val btnFreeze = findViewById<MaterialButton>(R.id.btnFreeze)
+        val btnDeepFreeze = findViewById<MaterialButton>(R.id.btnDeepFreeze)
+        val btnUnfreeze = findViewById<MaterialButton>(R.id.btnUnfreeze)
         val btnDelete = findViewById<MaterialButton>(R.id.btnDelete)
         val terminalInput = findViewById<EditText>(R.id.terminalInput)
         val btnRunCmd = findViewById<MaterialButton>(R.id.btnRunCmd)
         val terminalOutput = findViewById<TextView>(R.id.terminalOutput)
         
-        btnHide.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Hiding $pkg...\n"; executeCommand("pm hide $pkg; pm disable-user --user 0 $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } }
+        btnHide.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Hiding $pkg...\n"; executeCommand("am force-stop $pkg; pm hide $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } }
         btnUnhide.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Unhiding $pkg...\n"; executeCommand("pm unhide $pkg; pm enable $pkg; cmd package install-existing --user 0 $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } }
         
         btnFreeze.setOnClickListener { 
             val pkg = pkgInput.text.toString().trim()
-            if (pkg.isNotEmpty()) { terminalOutput.text = "Freezing $pkg...\n"; executeCommand("pm disable-user --user 0 $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
+            if (pkg.isNotEmpty()) { 
+                terminalOutput.text = "Freezing $pkg...\n"
+                executeCommand("am force-stop $pkg; pm suspend $pkg", modeGroup, terminalOutput) 
+            } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
+        }
+
+        btnDeepFreeze.setOnClickListener { 
+            val pkg = pkgInput.text.toString().trim()
+            if (pkg.isNotEmpty()) { 
+                terminalOutput.text = "Deep Freezing $pkg...\n"
+                executeCommand("am force-stop $pkg; pm suspend $pkg; pm disable-user --user 0 $pkg", modeGroup, terminalOutput) 
+            } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
+        }
+
+        btnUnfreeze.setOnClickListener { 
+            val pkg = pkgInput.text.toString().trim()
+            if (pkg.isNotEmpty()) { 
+                terminalOutput.text = "Unfreezing $pkg...\n"
+                executeCommand("pm unsuspend $pkg; pm enable $pkg", modeGroup, terminalOutput) 
+            } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
         }
         
         btnDelete.setOnClickListener { 
             val pkg = pkgInput.text.toString().trim()
-            if (pkg.isNotEmpty()) { terminalOutput.text = "Deleting $pkg...\n"; executeCommand("pm uninstall --user 0 $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
+            if (pkg.isNotEmpty()) { 
+                terminalOutput.text = "Deleting $pkg...\n"
+                executeCommand("pm uninstall --user 0 $pkg", modeGroup, terminalOutput) 
+            } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
         }
 
         btnRunCmd.setOnClickListener { val cmd = terminalInput.text.toString().trim(); if (cmd.isNotEmpty()) { terminalOutput.append("Running: $cmd\n\n"); executeCommand(cmd, modeGroup, terminalOutput); terminalInput.text.clear() } }
@@ -864,7 +895,7 @@ class HideAppsActivity : AppCompatActivity() {
         search.addTextChangedListener(object : android.text.TextWatcher { override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}; override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) { adapterAll?.filter(s) }; override fun afterTextChanged(s: android.text.Editable?) {} })
         
         applyBtn.setOnClickListener { val selectedPkgs = HashSet<String>(); for (item in appList) { if (item.isChecked) selectedPkgs.add(item.pkg) }; val selectedMinutes = timerValues[timerSpinner.selectedItemPosition]; prefs.edit().putStringSet("safe_apps", selectedPkgs).putInt("timer_minutes", selectedMinutes).apply(); Toast.makeText(this@HideAppsActivity, "Saved! Timer: ${timerOptions[timerSpinner.selectedItemPosition]}", Toast.LENGTH_SHORT).show() }
-        emergencyBtn.setOnClickListener { Toast.makeText(this@HideAppsActivity, "Emergency Unhiding ALL Apps...", Toast.LENGTH_SHORT).show(); Thread { try { val history = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf(); history.addAll(prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()); if (history.isEmpty()) return@Thread; val cmd = StringBuilder(); for (pkg in history) { cmd.append("pm unhide $pkg; pm enable $pkg; cmd package install-existing --user 0 $pkg; ") }; val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor(); prefs.edit().remove("hidden_history").putBoolean("is_pay_hidden", false).apply(); Handler(Looper.getMainLooper()).post { Toast.makeText(this@HideAppsActivity, "All Apps Restored!", Toast.LENGTH_LONG).show(); loadApps() } } catch (e: Exception) {} }.start() }
+        emergencyBtn.setOnClickListener { Toast.makeText(this@HideAppsActivity, "Emergency Unhiding ALL Apps...", Toast.LENGTH_SHORT).show(); Thread { try { val history = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf(); history.addAll(prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()); if (history.isEmpty()) return@Thread; val cmd = StringBuilder(); for (pkg in history) { cmd.append("pm unhide $pkg; pm enable $pkg; cmd package install-existing --user 0 $pkg; pm unsuspend $pkg; ") }; val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor(); prefs.edit().remove("hidden_history").putBoolean("is_pay_hidden", false).apply(); Handler(Looper.getMainLooper()).post { Toast.makeText(this@HideAppsActivity, "All Apps Restored!", Toast.LENGTH_LONG).show(); loadApps() } } catch (e: Exception) {} }.start() }
     }
 
     private fun loadApps() {
@@ -903,16 +934,17 @@ class HideAppsActivity : AppCompatActivity() {
     }
 
     private fun showAppOptions(item: AppItem) {
-        val options = arrayOf("Freeze (Permanent Disable)", "Unfreeze (Enable)", "Delete (Uninstall)", "Hide", "Unhide")
+        val options = arrayOf("Freeze (Kill + Suspend)", "Deep Freeze (+ Disable)", "Unfreeze (Wake Up)", "Delete (Uninstall)", "Hide", "Unhide")
         AlertDialog.Builder(this)
             .setTitle(item.name)
             .setItems(options) { _, which ->
                 val cmd = when (which) {
-                    0 -> "pm disable-user --user 0 ${item.pkg}"
-                    1 -> "pm enable ${item.pkg}"
-                    2 -> "pm uninstall --user 0 ${item.pkg}"
-                    3 -> "pm hide ${item.pkg}; pm disable-user --user 0 ${item.pkg}"
-                    4 -> "pm unhide ${item.pkg}; pm enable ${item.pkg}; cmd package install-existing --user 0 ${item.pkg}"
+                    0 -> "am force-stop ${item.pkg}; pm suspend ${item.pkg}"
+                    1 -> "am force-stop ${item.pkg}; pm suspend ${item.pkg}; pm disable-user --user 0 ${item.pkg}"
+                    2 -> "pm unsuspend ${item.pkg}; pm enable ${item.pkg}"
+                    3 -> "pm uninstall --user 0 ${item.pkg}"
+                    4 -> "am force-stop ${item.pkg}; pm hide ${item.pkg}"
+                    5 -> "pm unhide ${item.pkg}; pm enable ${item.pkg}; cmd package install-existing --user 0 ${item.pkg}"
                     else -> ""
                 }
                 executeAction(cmd)
@@ -996,7 +1028,7 @@ class TimerService : Service() {
                 val hiddenApps = prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()
                 if (hiddenApps.isNotEmpty()) {
                     val cmd = StringBuilder(); val history = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf()
-                    for (pkg in hiddenApps) { history.remove(pkg); cmd.append("pm unhide $pkg; pm enable $pkg; cmd package install-existing --user 0 $pkg; ") }
+                    for (pkg in hiddenApps) { history.remove(pkg); cmd.append("pm unhide $pkg; pm enable $pkg; cmd package install-existing --user 0 $pkg; pm unsuspend $pkg; ") }
                     val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream)
                     os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor()
                     prefs.edit().putBoolean("is_pay_hidden", false).putStringSet("hidden_history", history).apply()
