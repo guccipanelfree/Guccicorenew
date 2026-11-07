@@ -13,7 +13,9 @@
       "expiresAt": 0
     },
     "GUCCI-B3GLU5": {
-      "deviceIds": [],
+      "deviceIds": [
+        "647405543486fb34"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 0
