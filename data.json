@@ -9,7 +9,7 @@
     "GUCCI-6JTWO1": {
       "deviceIds": [],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 0
     }
   }
