@@ -37,14 +37,6 @@
       "maxDevices": 1,
       "revoked": true,
       "expiresAt": 0
-    },
-    "GUCCI-68I5MS": {
-      "deviceIds": [
-        "d78c1fb8aba10f4a"
-      ],
-      "maxDevices": 1,
-      "revoked": false,
-      "expiresAt": 0
     }
   }
 }
