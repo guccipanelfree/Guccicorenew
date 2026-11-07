@@ -291,7 +291,31 @@ import android.content.Intent
 import android.os.*
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
-class RunnerService : Service() { override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager; if (nm.getNotificationChannel("c") == null) nm.createNotificationChannel(NotificationChannel("c", "c", NotificationManager.IMPORTANCE_MIN)) }; try { startForeground(1, NotificationCompat.Builder(this, "c").setSmallIcon(android.R.drawable.stat_notify_sync_noanim).build()) } catch (e: Exception) {}; val a = intent?.action; Thread { try { val p = getSharedPreferences("GucciPrefs", MODE_PRIVATE); val c = if (a == "BRUTAL") "cd /data/local/tmp && (echo 2; sleep 5; echo ${p.getString("brutal_option", "7")}; sleep 2) | ./Gucci_brutal" else { val k = p.getString("license_key", "")?.trim(); if (k.isNullOrEmpty()) { Handler(Looper.getMainLooper()).post { Toast.makeText(applicationContext, "Save License Key first!", Toast.LENGTH_LONG).show() }; stopSelf(); return@Thread }; "cd /data/local/tmp && (sleep 4; echo '$k'; sleep 2) | ./Gucci_core" }; val pr = ProcessBuilder("su", "-c", c).redirectErrorStream(true).start(); pr.inputStream.bufferedReader().readText(); pr.waitFor() } catch (e: Exception) {}; stopForeground(true); stopSelf() }.start(); return START_NOT_STICKY }; override fun onBind(intent: Intent?): IBinder? = null }
+class RunnerService : Service() { 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int { 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager; if (nm.getNotificationChannel("c") == null) nm.createNotificationChannel(NotificationChannel("c", "c", NotificationManager.IMPORTANCE_MIN)) }; 
+        try { startForeground(1, NotificationCompat.Builder(this, "c").setSmallIcon(android.R.drawable.stat_notify_sync_noanim).build()) } catch (e: Exception) {}; 
+        val a = intent?.action; 
+        Thread { 
+            try { 
+                val p = getSharedPreferences("GucciPrefs", MODE_PRIVATE); 
+                val c = if (a == "BRUTAL") {
+                    "cd /data/local/tmp && (echo 2; sleep 5; echo ${p.getString("brutal_option", "7")}; sleep 2) | ./Gucci_brutal" 
+                } else { 
+                    val k = p.getString("game_key", "")?.trim(); 
+                    if (k.isNullOrEmpty()) { Handler(Looper.getMainLooper()).post { Toast.makeText(applicationContext, "Save Game Key first!", Toast.LENGTH_LONG).show() }; stopSelf(); return@Thread }; 
+                    "cd /data/local/tmp && (sleep 4; echo '$k'; sleep 2) | ./Gucci_core" 
+                }; 
+                val pr = ProcessBuilder("su", "-c", c).redirectErrorStream(true).start(); 
+                pr.inputStream.bufferedReader().readText(); 
+                pr.waitFor() 
+            } catch (e: Exception) {}; 
+            stopForeground(true); stopSelf() 
+        }.start(); 
+        return START_NOT_STICKY 
+    }; 
+    override fun onBind(intent: Intent?): IBinder? = null 
+}
 EOF
 cat > app/src/main/java/com/example/shtile/SafeTileService.kt << 'EOF'
 package com.example.shtile
@@ -807,7 +831,7 @@ class MainActivity : AppCompatActivity() {
         val timerText = findViewById<TextView>(R.id.licenseTimerText)
         val keyInput = findViewById<EditText>(R.id.keyInput)
         
-        keyInput.setText(p.getString("license_key", ""))
+        keyInput.setText(p.getString("game_key", ""))
         sub.text = android.text.Html.fromHtml("Premium Panel By <font color='#00E5A0'>GUCCI</font>", android.text.Html.FROM_HTML_MODE_LEGACY)
         bi.setText(p.getString("brutal_option", "7"))
         val m = mapOf("1" to "QX1", "2" to "GT", "3" to "rt-dev", "4" to "rt-proc", "5" to "QX(2)", "6" to "KPM", "7" to "DitPro KPM", "8" to "KMA KPM", "9" to "LDK KPM", "10" to "Paradise")
@@ -849,11 +873,11 @@ class MainActivity : AppCompatActivity() {
         checkAccess()
         
         findViewById<Button>(R.id.saveKeyBtn).setOnClickListener {
-            p.edit().putString("license_key", keyInput.text.toString().trim()).putString("brutal_option", bi.text.toString().trim()).apply()
+            p.edit().putString("game_key", keyInput.text.toString().trim()).putString("brutal_option", bi.text.toString().trim()).apply()
             Toast.makeText(this@MainActivity, "Configuration Saved", Toast.LENGTH_SHORT).show()
         }
         findViewById<Button>(R.id.loadFilesBtn).setOnClickListener {
-            p.edit().putString("license_key", keyInput.text.toString().trim()).putString("brutal_option", bi.text.toString().trim()).apply()
+            p.edit().putString("game_key", keyInput.text.toString().trim()).putString("brutal_option", bi.text.toString().trim()).apply()
             Installer.installAll(this) { ok -> Toast.makeText(this@MainActivity, if (ok) "Files Loaded" else "Failed. Check root.", Toast.LENGTH_SHORT).show() }
         }
         findViewById<Button>(R.id.launchFloaterBtn).setOnClickListener {
