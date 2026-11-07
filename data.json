@@ -1,41 +1,10 @@
 {
-  "resellers": {
-    "GUCCI": {
-      "credits": 50
-    },
-    "Admin": {
-      "credits": 999
-    },
-    "ROHIT": {
-      "credits": "Unlimited"
-    }
-  },
   "keys": {
-    "GUCCI-LIFETIME-001": {
+    "GUCCI-TEST1": {
       "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
-      "expiresAt": 0,
-      "tier": "LIFETIME",
-      "createdBy": "GUCCI"
-    },
-    "GUCCI-TRIAL-002": {
-      "deviceIds": [
-        "a1b2c3d4e5f6a7b8"
-      ],
-      "maxDevices": 1,
-      "revoked": true,
-      "expiresAt": 1770000000000,
-      "tier": "30 DAYS",
-      "createdBy": "GUCCI"
-    },
-    "KEY-7JP5K": {
-      "deviceIds": [],
-      "maxDevices": 1,
-      "revoked": false,
-      "expiresAt": 0,
-      "tier": "LIFETIME",
-      "createdBy": "Admin"
+      "expiresAt": 0
     }
   }
 }
