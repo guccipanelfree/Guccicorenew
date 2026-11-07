@@ -21,6 +21,12 @@
       "maxDevices": 1,
       "revoked": true,
       "expiresAt": 0
+    },
+    "GUCCI-ZFIVQ7": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1794160151740
     }
   }
 }
