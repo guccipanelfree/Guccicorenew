@@ -665,7 +665,7 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 class LoginActivity : AppCompatActivity() {
-    private val ghToken = "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"
+    private val ghToken = "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"
     private val ghOwner = "guccipanelfree"
     private val ghRepo  = "Guccicorenew"
     private val ghPath  = "data.json"
