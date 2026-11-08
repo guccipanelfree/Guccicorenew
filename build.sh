@@ -638,6 +638,7 @@ class MainActivity : AppCompatActivity() {
 EOF
 cat > app/src/main/java/com/example/shtile/DriverLoaderActivity.kt << 'EOF'
 package com.example.shtile
+import android.app.AlertDialog
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -676,10 +677,11 @@ class DriverLoaderActivity : AppCompatActivity() {
         val hwid = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
         tvHwid.text = "HWID: $hwid"
         detectDeviceInfo()
+        
         btnLoad.setOnClickListener {
             btnLoad.isEnabled = false
-            btnLoad.text = "SEARCHING & LOADING..."
-            loadSelectedDriver()
+            btnLoad.text = "SEARCHING..."
+            findAndSelectDriver()
         }
     }
     private fun appendLog(msg: String) { Handler(Looper.getMainLooper()).post { tvLogs.append("$msg\n") } }
@@ -705,28 +707,59 @@ class DriverLoaderActivity : AppCompatActivity() {
             } catch (e: Exception) { Handler(Looper.getMainLooper()).post { tvKernel.text = "Kernel: Error"; appendLog("❌ Failed to read kernel: ${e.message}") } }
         }.start()
     }
-    private fun loadSelectedDriver() {
+    private fun findAndSelectDriver() {
         Thread {
             try {
                 val selectedFolder = spinnerDriver.selectedItem.toString()
                 appendLog("\n[START] Scanning folder: $selectedFolder...")
                 val filesInFolder = assets.list("drivers/$selectedFolder")
-                if (filesInFolder.isNullOrEmpty()) { appendLog("❌ ERROR: Folder $selectedFolder is empty or missing."); resetButton(); return@Thread }
                 
-                var foundFile: String? = null
+                if (filesInFolder.isNullOrEmpty()) { 
+                    appendLog("❌ ERROR: Folder $selectedFolder is empty or missing."); 
+                    resetButton(); 
+                    return@Thread 
+                }
+                
+                val matchingFiles = ArrayList<String>()
                 for (file in filesInFolder) {
-                    if (file.endsWith(".sh")) {
-                        if (file.startsWith(fullKernelVersion)) { foundFile = file; break }
-                        else if (file.startsWith(majorKernelVersion) && foundFile == null) { foundFile = file }
+                    if (file.endsWith(".sh") && (file.startsWith(fullKernelVersion) || file.startsWith(majorKernelVersion))) {
+                        matchingFiles.add(file)
                     }
                 }
-                if (foundFile == null) { appendLog("❌ ERROR: No driver found for kernel $majorKernelVersion in $selectedFolder!"); resetButton(); return@Thread }
                 
-                appendLog("🎯 MATCH FOUND: $foundFile")
+                if (matchingFiles.isEmpty()) { 
+                    appendLog("❌ ERROR: No driver found for kernel $majorKernelVersion in $selectedFolder!"); 
+                    resetButton(); 
+                    return@Thread 
+                }
+                
+                if (matchingFiles.size == 1) {
+                    loadDriverFile(matchingFiles[0], selectedFolder)
+                } else {
+                    Handler(Looper.getMainLooper()).post {
+                        AlertDialog.Builder(this)
+                            .setTitle("Select Driver Variant")
+                            .setMessage("Multiple drivers found for $majorKernelVersion. Please choose one:")
+                            .setItems(matchingFiles.toTypedArray()) { _, which ->
+                                val chosenFile = matchingFiles[which]
+                                btnLoad.text = "LOADING $chosenFile..."
+                                loadDriverFile(chosenFile, selectedFolder)
+                            }
+                            .setCancelable(false)
+                            .show()
+                    }
+                }
+            } catch (e: Exception) { appendLog("❌ CRITICAL ERROR: ${e.message}"); resetButton() }
+        }.start()
+    }
+    private fun loadDriverFile(foundFile: String, folder: String) {
+        Thread {
+            try {
+                appendLog("🎯 SELECTED: $foundFile")
                 appendLog("📂 Extracting to cache...")
                 
                 val cacheFile = File(cacheDir, foundFile)
-                assets.open("drivers/$selectedFolder/$foundFile").use { input ->
+                assets.open("drivers/$folder/$foundFile").use { input ->
                     FileOutputStream(cacheFile).use { output -> input.copyTo(output) }
                 }
                 
@@ -742,6 +775,7 @@ class DriverLoaderActivity : AppCompatActivity() {
                 val runProc = ProcessBuilder("su", "-c", "sh $destPath").redirectErrorStream(true).start()
                 val output = runProc.inputStream.bufferedReader().readText().trim()
                 val exitCode = runProc.waitFor()
+                
                 if (exitCode == 0) {
                     appendLog("✅ SUCCESS: Driver loaded successfully!")
                     if (output.isNotEmpty()) appendLog("Output:\n$output")
@@ -791,34 +825,22 @@ class TerminalActivity : AppCompatActivity() {
         
         btnFreeze.setOnClickListener { 
             val pkg = pkgInput.text.toString().trim()
-            if (pkg.isNotEmpty()) { 
-                terminalOutput.text = "Freezing $pkg...\n"
-                executeCommand("am force-stop $pkg; pm suspend $pkg", modeGroup, terminalOutput) 
-            } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
+            if (pkg.isNotEmpty()) { terminalOutput.text = "Freezing $pkg...\n"; executeCommand("am force-stop $pkg; pm suspend $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
         }
 
         btnDeepFreeze.setOnClickListener { 
             val pkg = pkgInput.text.toString().trim()
-            if (pkg.isNotEmpty()) { 
-                terminalOutput.text = "Deep Freezing $pkg...\n"
-                executeCommand("am force-stop $pkg; pm suspend $pkg; pm disable-user --user 0 $pkg", modeGroup, terminalOutput) 
-            } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
+            if (pkg.isNotEmpty()) { terminalOutput.text = "Deep Freezing $pkg...\n"; executeCommand("am force-stop $pkg; pm suspend $pkg; pm disable-user --user 0 $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
         }
 
         btnUnfreeze.setOnClickListener { 
             val pkg = pkgInput.text.toString().trim()
-            if (pkg.isNotEmpty()) { 
-                terminalOutput.text = "Unfreezing $pkg...\n"
-                executeCommand("pm unsuspend $pkg; pm enable $pkg", modeGroup, terminalOutput) 
-            } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
+            if (pkg.isNotEmpty()) { terminalOutput.text = "Unfreezing $pkg...\n"; executeCommand("pm unsuspend $pkg; pm enable $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
         }
         
         btnDelete.setOnClickListener { 
             val pkg = pkgInput.text.toString().trim()
-            if (pkg.isNotEmpty()) { 
-                terminalOutput.text = "Deleting $pkg...\n"
-                executeCommand("pm uninstall --user 0 $pkg", modeGroup, terminalOutput) 
-            } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
+            if (pkg.isNotEmpty()) { terminalOutput.text = "Deleting $pkg...\n"; executeCommand("pm uninstall --user 0 $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
         }
 
         btnRunCmd.setOnClickListener { val cmd = terminalInput.text.toString().trim(); if (cmd.isNotEmpty()) { terminalOutput.append("Running: $cmd\n\n"); executeCommand(cmd, modeGroup, terminalOutput); terminalInput.text.clear() } }
@@ -884,11 +906,7 @@ class HideAppsActivity : AppCompatActivity() {
         timerSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, timerOptions)
         timerSpinner.setSelection(timerValues.indexOf(prefs.getInt("timer_minutes", 0)).coerceAtLeast(0))
         
-        showSystemSwitch.setOnCheckedChangeListener { _, isChecked ->
-            showSystemApps = isChecked
-            loadApps()
-        }
-
+        showSystemSwitch.setOnCheckedChangeListener { _, isChecked -> showSystemApps = isChecked; loadApps() }
         loadApps()
         
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener { override fun onTabSelected(tab: TabLayout.Tab?) { pageAllApps.visibility = if (tab?.position == 0) View.VISIBLE else View.GONE; pageHiddenApps.visibility = if (tab?.position == 1) View.VISIBLE else View.GONE; applyBtn.visibility = if (tab?.position == 0) View.VISIBLE else View.GONE }; override fun onTabUnselected(tab: TabLayout.Tab?) {}; override fun onTabReselected(tab: TabLayout.Tab?) {} })
