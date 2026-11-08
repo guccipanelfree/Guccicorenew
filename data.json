@@ -9,9 +9,7 @@
       "expiresAt": 8641793993537508
     },
     "GUCCI-KDRUT9": {
-      "deviceIds": [
-        "88731dedcabac8f2"
-      ],
+      "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 0
