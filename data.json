@@ -13,6 +13,12 @@
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 0
+    },
+    "GUCCI-9WR9FL": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796706956468
     }
   }
 }
