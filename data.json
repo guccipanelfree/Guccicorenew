@@ -1,7 +1,9 @@
 {
   "keys": {
     "GUCCI-TEST1": {
-      "deviceIds": [],
+      "deviceIds": [
+        "d4fcabdf02ce136a"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 8641793993537508
