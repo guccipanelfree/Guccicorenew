@@ -53,7 +53,9 @@
       "expiresAt": 1796706966338
     },
     "GUCCI-UFY31G": {
-      "deviceIds": [],
+      "deviceIds": [
+        "2357b7de90d76763"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796707059630
