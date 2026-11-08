@@ -43,6 +43,12 @@
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796706964832
+    },
+    "GUCCI-EK6MOB": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796706966338
     }
   }
 }
