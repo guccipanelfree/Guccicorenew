@@ -97,7 +97,9 @@
       "expiresAt": 1796724800741
     },
     "GUCCI-VKKYOH": {
-      "deviceIds": [],
+      "deviceIds": [
+        "71daced2b5e2395e"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796738922604
