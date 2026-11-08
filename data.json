@@ -103,6 +103,12 @@
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796738922604
+    },
+    "GUCCI-M3MOLG": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796747463004
     }
   }
 }
