@@ -81,7 +81,9 @@
       "expiresAt": 1796719963983
     },
     "GUCCI-QQNRED": {
-      "deviceIds": [],
+      "deviceIds": [
+        "dd0dd5c3ffe18d3c"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 0
