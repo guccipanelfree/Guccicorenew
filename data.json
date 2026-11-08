@@ -19,6 +19,12 @@
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796706956468
+    },
+    "GUCCI-K60B65": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796706959630
     }
   }
 }
