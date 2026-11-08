@@ -37,6 +37,12 @@
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796706963007
+    },
+    "GUCCI-QZ2HRZ": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796706964832
     }
   }
 }
