@@ -31,6 +31,12 @@
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796706961277
+    },
+    "GUCCI-9FH7FT": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796706963007
     }
   }
 }
