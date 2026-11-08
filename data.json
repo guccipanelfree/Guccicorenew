@@ -85,6 +85,12 @@
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 0
+    },
+    "GUCCI-LXHA3R": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796724800741
     }
   }
 }
