@@ -204,6 +204,17 @@ cat > app/src/main/res/layout/activity_driver_loader.xml << 'EOF'
 </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
 EOF
+cat > app/src/main/res/layout/dialog_select_driver.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@color/card_bg" android:padding="20dp">
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Select Driver Variant" android:textColor="@color/accent_green" android:textSize="20sp" android:textStyle="bold" android:layout_marginBottom="8dp" />
+<TextView android:id="@+id/tvDialogMessage" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Multiple drivers found. Please choose one:" android:textColor="@color/text_primary" android:textSize="14sp" android:layout_marginBottom="16dp" />
+<ScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:maxHeight="300dp">
+<LinearLayout android:id="@+id/driverListContainer" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+</ScrollView>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnCancelDialog" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="50dp" android:layout_marginTop="16dp" android:text="CANCEL" app:strokeColor="@color/accent_red" android:textColor="@color/accent_red" />
+</LinearLayout>
+EOF
 cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="16dp">
@@ -270,16 +281,6 @@ cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
 </FrameLayout>
 <com.google.android.material.button.MaterialButton android:id="@+id/applyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="APPLY FOR TILE" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
 </LinearLayout>
-EOF
-cat > app/src/main/res/layout/dialog_item_text.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@android:id/text1"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:padding="16dp"
-    android:textColor="#FFFFFF"
-    android:textSize="16sp" />
 EOF
 cat > app/src/main/res/layout/list_item_app.xml << 'EOF'
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp">
@@ -634,15 +635,18 @@ class MainActivity : AppCompatActivity() {
 EOF
 cat > app/src/main/java/com/example/shtile/DriverLoaderActivity.kt << 'EOF'
 package com.example.shtile
-import android.app.AlertDialog
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.view.Gravity
 import android.widget.ArrayAdapter
+import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import java.io.File
@@ -710,30 +714,62 @@ class DriverLoaderActivity : AppCompatActivity() {
                 appendLog("\n[START] Scanning folder: $selectedFolder...")
                 val filesInFolder = assets.list("drivers/$selectedFolder")
                 
-                if (filesInFolder.isNullOrEmpty()) { appendLog("❌ ERROR: Folder $selectedFolder is empty or missing."); resetButton(); return@Thread }
+                if (filesInFolder.isNullOrEmpty()) { 
+                    appendLog("❌ ERROR: Folder $selectedFolder is empty or missing."); 
+                    resetButton(); return@Thread 
+                }
                 
                 val matchingFiles = ArrayList<String>()
                 for (file in filesInFolder) {
-                    if (file.endsWith(".sh") && (file.startsWith(fullKernelVersion) || file.startsWith(majorKernelVersion))) { matchingFiles.add(file) }
+                    if (file.endsWith(".sh") && (file.startsWith(fullKernelVersion) || file.startsWith(majorKernelVersion))) { 
+                        matchingFiles.add(file) 
+                    }
                 }
                 
-                if (matchingFiles.isEmpty()) { appendLog("❌ ERROR: No driver found for kernel $majorKernelVersion in $selectedFolder!"); resetButton(); return@Thread }
+                if (matchingFiles.isEmpty()) { 
+                    appendLog("❌ ERROR: No driver found for kernel $majorKernelVersion in $selectedFolder!"); 
+                    resetButton(); return@Thread 
+                }
                 
                 if (matchingFiles.size == 1) {
                     loadDriverFile(matchingFiles[0], selectedFolder)
                 } else {
                     Handler(Looper.getMainLooper()).post {
-                        val adapter = ArrayAdapter(this, R.layout.dialog_item_text, matchingFiles)
-                        AlertDialog.Builder(this)
-                            .setTitle("Select Driver Variant")
-                            .setMessage("Multiple drivers found for $majorKernelVersion. Please choose one:")
-                            .setAdapter(adapter) { _, which ->
-                                val chosenFile = matchingFiles[which]
-                                btnLoad.text = "LOADING $chosenFile..."
-                                loadDriverFile(chosenFile, selectedFolder)
-                            }
+                        val dialogView = layoutInflater.inflate(R.layout.dialog_select_driver, null)
+                        val container = dialogView.findViewById<LinearLayout>(R.id.driverListContainer)
+                        val btnCancel = dialogView.findViewById<MaterialButton>(R.id.btnCancelDialog)
+                        
+                        val dialog = AlertDialog.Builder(this, R.style.AppTheme)
+                            .setView(dialogView)
                             .setCancelable(false)
-                            .show()
+                            .create()
+                            
+                        for (file in matchingFiles) {
+                            val tv = TextView(this)
+                            tv.text = file
+                            tv.textSize = 16f
+                            tv.setTextColor(Color.WHITE)
+                            tv.gravity = Gravity.CENTER
+                            tv.setPadding(20, 20, 20, 20)
+                            tv.background = getDrawable(R.drawable.bg_box_dark)
+                            
+                            val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                            params.setMargins(0, 0, 0, 12)
+                            tv.layoutParams = params
+                            
+                            tv.setOnClickListener {
+                                dialog.dismiss()
+                                btnLoad.text = "LOADING $file..."
+                                loadDriverFile(file, selectedFolder)
+                            }
+                            container.addView(tv)
+                        }
+                        
+                        btnCancel.setOnClickListener { 
+                            dialog.dismiss()
+                            resetButton() 
+                        }
+                        dialog.show()
                     }
                 }
             } catch (e: Exception) { appendLog("❌ CRITICAL ERROR: ${e.message}"); resetButton() }
