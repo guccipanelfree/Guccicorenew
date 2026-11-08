@@ -25,6 +25,12 @@
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796706959630
+    },
+    "GUCCI-JEU233": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796706961277
     }
   }
 }
