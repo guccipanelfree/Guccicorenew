@@ -71,7 +71,9 @@
       "expiresAt": 1796707059630
     },
     "GUCCI-J7620Y": {
-      "deviceIds": [],
+      "deviceIds": [
+        "9aeb11f84b5858b0"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796719963983
