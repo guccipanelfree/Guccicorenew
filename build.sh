@@ -287,7 +287,10 @@ cat > app/src/main/res/layout/list_item_app.xml << 'EOF'
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="12dp" android:gravity="center_vertical">
 <ImageView android:id="@+id/appIcon" android:layout_width="44dp" android:layout_height="44dp"/>
 <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingStart="12dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+<View android:id="@+id/safetyDot" android:layout_width="10dp" android:layout_height="10dp" android:background="@drawable/bg_circle_grey" android:layout_marginEnd="6dp"/>
 <TextView android:id="@+id/appName" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/text_primary" android:textSize="15sp" android:textStyle="bold"/>
+</LinearLayout>
 <TextView android:id="@+id/appPkg" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/text_secondary" android:textSize="11sp"/>
 </LinearLayout>
 <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/appCheck" android:layout_width="wrap_content" android:layout_height="wrap_content" app:buttonTint="@color/accent_green" android:layout_marginEnd="8dp"/>
@@ -841,8 +844,9 @@ class TerminalActivity : AppCompatActivity() {
         val btnRunCmd = findViewById<MaterialButton>(R.id.btnRunCmd)
         val terminalOutput = findViewById<TextView>(R.id.terminalOutput)
         
-        btnHide.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Hiding $pkg...\n"; executeCommand("am force-stop $pkg; pm hide $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } }
-        btnUnhide.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Unhiding $pkg...\n"; executeCommand("pm unhide $pkg; pm enable $pkg; cmd package install-existing --user 0 $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } }
+        btnHide.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Hiding $pkg...\n"; executeCommand("pm hide $pkg; pm disable-user --user 0 $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } }
+        
+        btnUnhide.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Unhiding $pkg...\n"; executeCommand("pm unhide $pkg; pm enable $pkg; pm unsuspend $pkg; cmd package install-existing --user 0 $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } }
         
         btnFreeze.setOnClickListener { 
             val pkg = pkgInput.text.toString().trim()
@@ -851,12 +855,12 @@ class TerminalActivity : AppCompatActivity() {
 
         btnDeepFreeze.setOnClickListener { 
             val pkg = pkgInput.text.toString().trim()
-            if (pkg.isNotEmpty()) { terminalOutput.text = "Deep Freezing $pkg...\n"; executeCommand("am force-stop $pkg; pm suspend $pkg; pm disable-user --user 0 $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
+            if (pkg.isNotEmpty()) { terminalOutput.text = "Deep Freezing $pkg...\n"; executeCommand("am force-stop $pkg; pm suspend $pkg; pm disable-user --user 0 $pkg; pm hide $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
         }
 
         btnUnfreeze.setOnClickListener { 
             val pkg = pkgInput.text.toString().trim()
-            if (pkg.isNotEmpty()) { terminalOutput.text = "Unfreezing $pkg...\n"; executeCommand("pm unsuspend $pkg; pm enable $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
+            if (pkg.isNotEmpty()) { terminalOutput.text = "Unfreezing $pkg...\n"; executeCommand("pm unsuspend $pkg; pm enable $pkg; pm unhide $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Please enter a package name", Toast.LENGTH_SHORT).show() } 
         }
         
         btnDelete.setOnClickListener { 
@@ -890,6 +894,7 @@ cat > app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
 package com.example.shtile
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
@@ -903,13 +908,32 @@ import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.tabs.TabLayout
-data class AppItem(val name: String, val pkg: String, val icon: Drawable?, var isChecked: Boolean, var isHidden: Boolean)
+
+data class AppItem(
+    val name: String, 
+    val pkg: String, 
+    val icon: Drawable?, 
+    var isChecked: Boolean, 
+    var isHidden: Boolean,
+    var isFrozen: Boolean,
+    var isDeepFrozen: Boolean,
+    val safetyLevel: Int // 0=Safe (Green), 1=Caution (Purple), 2=Critical (Red)
+)
+
 class HideAppsActivity : AppCompatActivity() {
     private val appList = ArrayList<AppItem>()
     private var adapterAll: AppAdapter? = null
     private var adapterHidden: AppAdapter? = null
     private val prefs by lazy { getSharedPreferences("HidePrefs", MODE_PRIVATE) }
     private var showSystemApps = false
+
+    // List of Critical System Apps that will break the device if deleted
+    private val criticalApps = setOf(
+        "android", "com.android.systemui", "com.android.settings", "com.android.phone",
+        "com.android.shell", "com.android.providers.settings", "com.android.packageinstaller",
+        "com.google.android.packageinstaller", "com.android.vending", "com.google.android.gms",
+        "com.google.android.gsf", "com.android.launcher3", "com.google.android.apps.nexuslauncher"
+    )
 
     override fun onCreate(s: Bundle?) {
         super.onCreate(s); setContentView(R.layout.activity_hide_apps)
@@ -930,11 +954,64 @@ class HideAppsActivity : AppCompatActivity() {
         showSystemSwitch.setOnCheckedChangeListener { _, isChecked -> showSystemApps = isChecked; loadApps() }
         loadApps()
         
-        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener { override fun onTabSelected(tab: TabLayout.Tab?) { pageAllApps.visibility = if (tab?.position == 0) View.VISIBLE else View.GONE; pageHiddenApps.visibility = if (tab?.position == 1) View.VISIBLE else View.GONE; applyBtn.visibility = if (tab?.position == 0) View.VISIBLE else View.GONE }; override fun onTabUnselected(tab: TabLayout.Tab?) {}; override fun onTabReselected(tab: TabLayout.Tab?) {} })
-        search.addTextChangedListener(object : android.text.TextWatcher { override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}; override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) { adapterAll?.filter(s) }; override fun afterTextChanged(s: android.text.Editable?) {} })
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener { 
+            override fun onTabSelected(tab: TabLayout.Tab?) { 
+                pageAllApps.visibility = if (tab?.position == 0) View.VISIBLE else View.GONE
+                pageHiddenApps.visibility = if (tab?.position == 1) View.VISIBLE else View.GONE
+                applyBtn.visibility = if (tab?.position == 0) View.VISIBLE else View.GONE 
+            }
+            override fun onTabUnselected(tab: TabLayout.Tab?) {}
+            override fun onTabReselected(tab: TabLayout.Tab?) {} 
+        })
         
-        applyBtn.setOnClickListener { val selectedPkgs = HashSet<String>(); for (item in appList) { if (item.isChecked) selectedPkgs.add(item.pkg) }; val selectedMinutes = timerValues[timerSpinner.selectedItemPosition]; prefs.edit().putStringSet("safe_apps", selectedPkgs).putInt("timer_minutes", selectedMinutes).apply(); Toast.makeText(this@HideAppsActivity, "Saved! Timer: ${timerOptions[timerSpinner.selectedItemPosition]}", Toast.LENGTH_SHORT).show() }
-        emergencyBtn.setOnClickListener { Toast.makeText(this@HideAppsActivity, "Emergency Unhiding ALL Apps...", Toast.LENGTH_SHORT).show(); Thread { try { val history = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf(); history.addAll(prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()); if (history.isEmpty()) return@Thread; val cmd = StringBuilder(); for (pkg in history) { cmd.append("pm unhide $pkg; pm enable $pkg; cmd package install-existing --user 0 $pkg; pm unsuspend $pkg; ") }; val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor(); prefs.edit().remove("hidden_history").putBoolean("is_pay_hidden", false).apply(); Handler(Looper.getMainLooper()).post { Toast.makeText(this@HideAppsActivity, "All Apps Restored!", Toast.LENGTH_LONG).show(); loadApps() } } catch (e: Exception) {} }.start() }
+        search.addTextChangedListener(object : android.text.TextWatcher { 
+            override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {} 
+            override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) { adapterAll?.filter(s) } 
+            override fun afterTextChanged(s: android.text.Editable?) {} 
+        })
+        
+        applyBtn.setOnClickListener { 
+            val selectedPkgs = HashSet<String>()
+            for (item in appList) { if (item.isChecked) selectedPkgs.add(item.pkg) }
+            val selectedMinutes = timerValues[timerSpinner.selectedItemPosition]
+            prefs.edit().putStringSet("safe_apps", selectedPkgs).putInt("timer_minutes", selectedMinutes).apply()
+            Toast.makeText(this@HideAppsActivity, "Saved! Timer: ${timerOptions[timerSpinner.selectedItemPosition]}", Toast.LENGTH_SHORT).show() 
+        }
+        
+        emergencyBtn.setOnClickListener { 
+            Toast.makeText(this@HideAppsActivity, "Emergency Restoring ALL Apps...", Toast.LENGTH_SHORT).show()
+            Thread { 
+                try { 
+                    val hidden = prefs.getStringSet("hidden_history", emptySet()) ?: emptySet()
+                    val frozen = prefs.getStringSet("frozen_history", emptySet()) ?: emptySet()
+                    val deepFrozen = prefs.getStringSet("deep_frozen_history", emptySet()) ?: emptySet()
+                    val safe = prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()
+                    val allApps = hidden + frozen + deepFrozen + safe
+                    
+                    if (allApps.isEmpty()) return@Thread
+                    
+                    val cmd = StringBuilder()
+                    for (pkg in allApps) { 
+                        cmd.append("pm unhide $pkg; pm enable $pkg; pm unsuspend $pkg; cmd package install-existing --user 0 $pkg; ") 
+                    }
+                    
+                    val p = Runtime.getRuntime().exec("su")
+                    val os = DataOutputStream(p.outputStream)
+                    os.writeBytes(cmd.toString() + "\n")
+                    os.writeBytes("exit\n")
+                    os.flush()
+                    os.close()
+                    p.waitFor()
+                    
+                    prefs.edit().remove("hidden_history").remove("frozen_history").remove("deep_frozen_history").putBoolean("is_pay_hidden", false).apply()
+                    
+                    Handler(Looper.getMainLooper()).post { 
+                        Toast.makeText(this@HideAppsActivity, "All Apps Restored!", Toast.LENGTH_LONG).show()
+                        loadApps() 
+                    } 
+                } catch (e: Exception) {} 
+            }.start() 
+        }
     }
 
     private fun loadApps() {
@@ -942,27 +1019,53 @@ class HideAppsActivity : AppCompatActivity() {
             val pm = packageManager
             appList.clear()
             val safePkgs = prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()
-            val history = prefs.getStringSet("hidden_history", emptySet()) ?: emptySet()
-            val hiddenPkgs = HashSet<String>()
+            val hiddenHistory = prefs.getStringSet("hidden_history", emptySet()) ?: emptySet()
+            val frozenHistory = prefs.getStringSet("frozen_history", emptySet()) ?: emptySet()
+            val deepFrozenHistory = prefs.getStringSet("deep_frozen_history", emptySet()) ?: emptySet()
             
-            try { val p = Runtime.getRuntime().exec("su -c pm list packages -d -u"); val reader = p.inputStream.bufferedReader(); var line = reader.readLine(); while (line != null) { hiddenPkgs.add(line.replace("package:", "").trim()); line = reader.readLine() } } catch (e: Exception) {}
+            val disabledPkgs = HashSet<String>()
+            try { 
+                val p = Runtime.getRuntime().exec("su -c pm list packages -d -u")
+                val reader = p.inputStream.bufferedReader()
+                var line = reader.readLine()
+                while (line != null) { 
+                    disabledPkgs.add(line.replace("package:", "").trim())
+                    line = reader.readLine() 
+                } 
+            } catch (e: Exception) {}
             
             val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
             for (app in apps) { 
                 if (app.packageName == packageName) continue
                 val isSystem = (app.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-                val isHidden = hiddenPkgs.contains(app.packageName)
                 
-                if (showSystemApps || !isSystem || isHidden) {
+                val isHidden = hiddenHistory.contains(app.packageName) || disabledPkgs.contains(app.packageName)
+                val isFrozen = frozenHistory.contains(app.packageName)
+                val isDeepFrozen = deepFrozenHistory.contains(app.packageName)
+                
+                if (showSystemApps || !isSystem || isHidden || isFrozen || isDeepFrozen) {
                     try { 
                         val name = pm.getApplicationLabel(app).toString()
                         val isChecked = safePkgs.contains(app.packageName)
-                        appList.add(AppItem(name, app.packageName, app.loadIcon(pm), isChecked, isHidden)) 
+                        
+                        val safety = when {
+                            criticalApps.contains(app.packageName) -> 2 // Red
+                            isSystem -> 1 // Purple
+                            else -> 0 // Green
+                        }
+                        
+                        appList.add(AppItem(name, app.packageName, app.loadIcon(pm), isChecked, isHidden, isFrozen, isDeepFrozen, safety)) 
                     } catch (e: Exception) {} 
                 } 
             }
             
-            for (pkg in history) { if (appList.none { it.pkg == pkg }) { try { val ai = pm.getApplicationInfo(pkg, PackageManager.MATCH_UNINSTALLED_PACKAGES); appList.add(AppItem(pm.getApplicationLabel(ai).toString(), pkg, ai.loadIcon(pm), safePkgs.contains(pkg), true)) } catch (e: Exception) { appList.add(AppItem("Ghost App", pkg, null, safePkgs.contains(pkg), true)) } } }
+            val allHistory = hiddenHistory + frozenHistory + deepFrozenHistory
+            for (pkg in allHistory) {
+                if (appList.none { it.pkg == pkg }) {
+                    val safety = if (criticalApps.contains(pkg)) 2 else if (pkg.startsWith("com.android") || pkg.startsWith("com.google")) 1 else 0
+                    appList.add(AppItem("Unknown App", pkg, null, safePkgs.contains(pkg), hiddenHistory.contains(pkg), frozenHistory.contains(pkg), deepFrozenHistory.contains(pkg), safety))
+                }
+            }
             
             Handler(Looper.getMainLooper()).post { 
                 adapterAll = AppAdapter(this@HideAppsActivity, appList, false); findViewById<ListView>(R.id.appsList).adapter = adapterAll
@@ -973,25 +1076,36 @@ class HideAppsActivity : AppCompatActivity() {
     }
 
     private fun showAppOptions(item: AppItem) {
-        val options = arrayOf("Freeze (Kill + Suspend)", "Deep Freeze (+ Disable)", "Unfreeze (Wake Up)", "Delete (Uninstall)", "Hide", "Unhide")
+        val options = arrayOf("Hide (pm hide)", "Unhide (Restore)", "Freeze (Suspend)", "Unfreeze (Unsuspend)", "Deep Freeze (Disable)", "Delete (Uninstall)")
         AlertDialog.Builder(this)
             .setTitle(item.name)
             .setItems(options) { _, which ->
-                val cmd = when (which) {
-                    0 -> "am force-stop ${item.pkg}; pm suspend ${item.pkg}"
-                    1 -> "am force-stop ${item.pkg}; pm suspend ${item.pkg}; pm disable-user --user 0 ${item.pkg}"
-                    2 -> "pm unsuspend ${item.pkg}; pm enable ${item.pkg}"
-                    3 -> "pm uninstall --user 0 ${item.pkg}"
-                    4 -> "am force-stop ${item.pkg}; pm hide ${item.pkg}"
-                    5 -> "pm unhide ${item.pkg}; pm enable ${item.pkg}; cmd package install-existing --user 0 ${item.pkg}"
-                    else -> ""
+                if (which == 5 && item.safetyLevel == 2) {
+                    AlertDialog.Builder(this)
+                        .setTitle("⚠️ CRITICAL SYSTEM APP")
+                        .setMessage("WARNING: ${item.name} is a core system app!\n\nDeleting this WILL break your device and may cause a bootloop.\n\nAre you absolutely sure?")
+                        .setPositiveButton("DELETE ANYWAY") { _, _ ->
+                            executeAction("pm uninstall --user 0 ${item.pkg}", which, item)
+                        }
+                        .setNegativeButton("CANCEL", null)
+                        .show()
+                } else {
+                    val cmd = when (which) {
+                        0 -> "pm hide ${item.pkg}; pm disable-user --user 0 ${item.pkg}" 
+                        1 -> "pm unhide ${item.pkg}; pm enable ${item.pkg}; pm unsuspend ${item.pkg}; cmd package install-existing --user 0 ${item.pkg}" 
+                        2 -> "am force-stop ${item.pkg}; pm suspend ${item.pkg}" 
+                        3 -> "pm unsuspend ${item.pkg}; pm enable ${item.pkg}" 
+                        4 -> "am force-stop ${item.pkg}; pm suspend ${item.pkg}; pm disable-user --user 0 ${item.pkg}; pm hide ${item.pkg}" 
+                        5 -> "pm uninstall --user 0 ${item.pkg}" 
+                        else -> ""
+                    }
+                    executeAction(cmd, which, item)
                 }
-                executeAction(cmd)
             }
             .show()
     }
 
-    private fun executeAction(cmd: String) {
+    private fun executeAction(cmd: String, actionId: Int, item: AppItem) {
         Thread {
             try {
                 val p = Runtime.getRuntime().exec("su")
@@ -1001,6 +1115,21 @@ class HideAppsActivity : AppCompatActivity() {
                 os.flush()
                 os.close()
                 p.waitFor()
+                
+                val hidden = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf()
+                val frozen = prefs.getStringSet("frozen_history", emptySet())?.toMutableSet() ?: mutableSetOf()
+                val deepFrozen = prefs.getStringSet("deep_frozen_history", emptySet())?.toMutableSet() ?: mutableSetOf()
+                
+                when(actionId) {
+                    0 -> { hidden.add(item.pkg); frozen.remove(item.pkg); deepFrozen.remove(item.pkg) }
+                    1 -> { hidden.remove(item.pkg); frozen.remove(item.pkg); deepFrozen.remove(item.pkg) }
+                    2 -> { frozen.add(item.pkg); hidden.remove(item.pkg); deepFrozen.remove(item.pkg) }
+                    3 -> { frozen.remove(item.pkg); deepFrozen.remove(item.pkg) }
+                    4 -> { deepFrozen.add(item.pkg); hidden.remove(item.pkg); frozen.remove(item.pkg) }
+                    5 -> { hidden.remove(item.pkg); frozen.remove(item.pkg); deepFrozen.remove(item.pkg) }
+                }
+                
+                prefs.edit().putStringSet("hidden_history", hidden).putStringSet("frozen_history", frozen).putStringSet("deep_frozen_history", deepFrozen).apply()
                 
                 Handler(Looper.getMainLooper()).post {
                     Toast.makeText(this@HideAppsActivity, "Action Successful!", Toast.LENGTH_SHORT).show()
@@ -1018,7 +1147,27 @@ class HideAppsActivity : AppCompatActivity() {
         
         override fun getView(position: Int, convertView: android.view.View?, parent: android.view.ViewGroup): android.view.View {
             val v = convertView ?: inflater.inflate(R.layout.list_item_app, parent, false); val item = filteredItems[position]
-            v.findViewById<TextView>(R.id.appName).text = item.name
+            
+            var status = ""
+            if (item.isDeepFrozen) status = " [DEEP FREEZE]"
+            else if (item.isHidden) status = " [HIDDEN]"
+            else if (item.isFrozen) status = " [FROZEN]"
+            
+            val textView = v.findViewById<TextView>(R.id.appName)
+            textView.text = "${item.name}$status"
+            
+            if (item.isDeepFrozen) textView.setTextColor(Color.parseColor("#9B59B6"))
+            else if (item.isHidden) textView.setTextColor(Color.parseColor("#FF4D4D"))
+            else if (item.isFrozen) textView.setTextColor(Color.parseColor("#F39C12"))
+            else textView.setTextColor(Color.WHITE)
+            
+            val dot = v.findViewById<View>(R.id.safetyDot)
+            when (item.safetyLevel) {
+                2 -> dot.setBackgroundColor(Color.parseColor("#FF4D4D")) // Red
+                1 -> dot.setBackgroundColor(Color.parseColor("#9B59B6")) // Purple
+                else -> dot.setBackgroundColor(Color.parseColor("#00E5A0")) // Green
+            }
+            
             v.findViewById<TextView>(R.id.appPkg).text = item.pkg
             
             val iconView = v.findViewById<ImageView>(R.id.appIcon)
@@ -1038,8 +1187,9 @@ class HideAppsActivity : AppCompatActivity() {
         fun filter(charSequence: CharSequence?) { 
             val query = charSequence?.toString()?.lowercase() ?: ""
             var baseList = if (query.isEmpty()) items else items.filter { it.name.lowercase().contains(query) || it.pkg.lowercase().contains(query) }
-            if (showHiddenOnly) baseList = baseList.filter { it.isHidden }
-            filteredItems = ArrayList(baseList.sortedWith(compareByDescending<AppItem> { it.isChecked }.thenBy { it.name }))
+            if (showHiddenOnly) baseList = baseList.filter { it.isHidden || it.isFrozen || it.isDeepFrozen }
+            
+            filteredItems = ArrayList(baseList.sortedWith(compareByDescending<AppItem> { it.isHidden || it.isFrozen || it.isDeepFrozen }.thenBy { it.name }))
             notifyDataSetChanged() 
         }
     }
@@ -1064,13 +1214,17 @@ class TimerService : Service() {
             try {
                 Thread.sleep(minutes * 60 * 1000L)
                 val prefs = getSharedPreferences("HidePrefs", MODE_PRIVATE)
-                val hiddenApps = prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()
-                if (hiddenApps.isNotEmpty()) {
-                    val cmd = StringBuilder(); val history = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf()
-                    for (pkg in hiddenApps) { history.remove(pkg); cmd.append("pm unhide $pkg; pm enable $pkg; cmd package install-existing --user 0 $pkg; pm unsuspend $pkg; ") }
+                val hidden = prefs.getStringSet("hidden_history", emptySet()) ?: emptySet()
+                val frozen = prefs.getStringSet("frozen_history", emptySet()) ?: emptySet()
+                val deepFrozen = prefs.getStringSet("deep_frozen_history", emptySet()) ?: emptySet()
+                val allApps = hidden + frozen + deepFrozen
+                
+                if (allApps.isNotEmpty()) {
+                    val cmd = StringBuilder()
+                    for (pkg in allApps) { cmd.append("pm unhide $pkg; pm enable $pkg; pm unsuspend $pkg; cmd package install-existing --user 0 $pkg; ") }
                     val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream)
                     os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor()
-                    prefs.edit().putBoolean("is_pay_hidden", false).putStringSet("hidden_history", history).apply()
+                    prefs.edit().remove("hidden_history").remove("frozen_history").remove("deep_frozen_history").putBoolean("is_pay_hidden", false).apply()
                 }
             } catch (e: Exception) {} finally { stopSelf() }
         }
