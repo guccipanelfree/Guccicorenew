@@ -204,6 +204,45 @@ cat > app/src/main/res/layout/activity_driver_loader.xml << 'EOF'
 </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
 EOF
+cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="16dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Execution Mode" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+<RadioGroup android:id="@+id/modeGroup" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="16dp">
+<RadioButton android:id="@+id/radioRoot" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Root Mode" android:textColor="@color/text_primary" android:checked="true"/>
+<RadioButton android:id="@+id/radioShizuku" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ADB (Shizuku)" android:textColor="@color/text_primary" android:layout_marginStart="16dp"/>
+</RadioGroup>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="App Control" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+<EditText android:id="@+id/pkgInput" android:layout_width="match_parent" android:layout_height="48dp" android:hint="Enter Package Name..." android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginBottom="12dp"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+<com.google.android.material.button.MaterialButton android:id="@+id/btnHide" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="HIDE" app:backgroundTint="@color/accent_red" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginEnd="8dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnUnhide" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="UNHIDE" app:backgroundTint="@color/accent_green" android:textColor="#000000" android:textStyle="bold"/>
+</LinearLayout>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+<com.google.android.material.button.MaterialButton android:id="@+id/btnFreeze" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="FREEZE" app:backgroundTint="#F39C12" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginEnd="8dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnDeepFreeze" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="DEEP FREEZE" app:backgroundTint="#8E44AD" android:textColor="#FFFFFF" android:textStyle="bold"/>
+</LinearLayout>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+<com.google.android.material.button.MaterialButton android:id="@+id/btnUnfreeze" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="UNFREEZE" app:backgroundTint="#2ECC71" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginEnd="8dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnDelete" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="DELETE" app:backgroundTint="#E74C3C" android:textColor="#FFFFFF" android:textStyle="bold"/>
+</LinearLayout>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="16dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="16dp">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Raw Terminal" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+<EditText android:id="@+id/terminalInput" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:hint="Enter command..." android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginEnd="8dp" android:inputType="textNoSuggestions"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnRunCmd" android:layout_width="wrap_content" android:layout_height="48dp" android:text="RUN" app:backgroundTint="@color/accent_green" android:textColor="#000000" android:textStyle="bold"/>
+</LinearLayout>
+<ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:background="@drawable/bg_box_dark" android:padding="12dp">
+<TextView android:id="@+id/terminalOutput" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#00FF00" android:fontFamily="monospace" android:textSize="12sp" android:text="Terminal Ready...\n"/>
+</ScrollView>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+</LinearLayout>
+EOF
 cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
 <com.google.android.material.tabs.TabLayout android:id="@+id/tabLayout" android:layout_width="match_parent" android:layout_height="wrap_content" app:tabIndicatorColor="@color/accent_green" app:tabTextColor="@color/text_secondary" app:tabSelectedTextColor="@color/text_primary" app:tabIndicatorFullWidth="true" android:layout_marginBottom="16dp">
@@ -232,48 +271,15 @@ cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
 <com.google.android.material.button.MaterialButton android:id="@+id/applyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="APPLY FOR TILE" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
 </LinearLayout>
 EOF
-cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
-<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="16dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Execution Mode" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
-<RadioGroup android:id="@+id/modeGroup" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="16dp">
-<RadioButton android:id="@+id/radioRoot" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Root Mode" android:textColor="@color/text_primary" android:checked="true"/>
-<RadioButton android:id="@+id/radioShizuku" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ADB (Shizuku)" android:textColor="@color/text_primary" android:layout_marginStart="16dp"/>
-</RadioGroup>
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="App Control" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
-<EditText android:id="@+id/pkgInput" android:layout_width="match_parent" android:layout_height="48dp" android:hint="Enter Package Name..." android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginBottom="12dp"/>
-
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
-<com.google.android.material.button.MaterialButton android:id="@+id/btnHide" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="HIDE" app:backgroundTint="@color/accent_red" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginEnd="8dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnUnhide" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="UNHIDE" app:backgroundTint="@color/accent_green" android:textColor="#000000" android:textStyle="bold"/>
-</LinearLayout>
-
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
-<com.google.android.material.button.MaterialButton android:id="@+id/btnFreeze" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="FREEZE" app:backgroundTint="#F39C12" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginEnd="8dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnDeepFreeze" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="DEEP FREEZE" app:backgroundTint="#8E44AD" android:textColor="#FFFFFF" android:textStyle="bold"/>
-</LinearLayout>
-
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-<com.google.android.material.button.MaterialButton android:id="@+id/btnUnfreeze" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="UNFREEZE" app:backgroundTint="#2ECC71" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginEnd="8dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnDelete" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="DELETE" app:backgroundTint="#E74C3C" android:textColor="#FFFFFF" android:textStyle="bold"/>
-</LinearLayout>
-
-</LinearLayout>
-</com.google.android.material.card.MaterialCardView>
-<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="16dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="16dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Raw Terminal" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
-<EditText android:id="@+id/terminalInput" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:hint="Enter command..." android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginEnd="8dp" android:inputType="textNoSuggestions"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnRunCmd" android:layout_width="wrap_content" android:layout_height="48dp" android:text="RUN" app:backgroundTint="@color/accent_green" android:textColor="#000000" android:textStyle="bold"/>
-</LinearLayout>
-<ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:background="@drawable/bg_box_dark" android:padding="12dp">
-<TextView android:id="@+id/terminalOutput" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#00FF00" android:fontFamily="monospace" android:textSize="12sp" android:text="Terminal Ready...\n"/>
-</ScrollView>
-</LinearLayout>
-</com.google.android.material.card.MaterialCardView>
-</LinearLayout>
+cat > app/src/main/res/layout/dialog_item_text.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/text1"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp"
+    android:textColor="#FFFFFF"
+    android:textSize="16sp" />
 EOF
 cat > app/src/main/res/layout/list_item_app.xml << 'EOF'
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp">
@@ -345,16 +351,8 @@ class RunnerService : Service() {
         Thread { 
             try { 
                 val p = getSharedPreferences("GucciPrefs", MODE_PRIVATE); 
-                val c = if (a == "BRUTAL") {
-                    "cd /data/local/tmp && (echo 2; sleep 5; echo ${p.getString("brutal_option", "7")}; sleep 2) | ./Gucci_brutal" 
-                } else { 
-                    val k = p.getString("game_key", "")?.trim(); 
-                    if (k.isNullOrEmpty()) { Handler(Looper.getMainLooper()).post { Toast.makeText(applicationContext, "Save Game Key first!", Toast.LENGTH_LONG).show() }; stopSelf(); return@Thread }; 
-                    "cd /data/local/tmp && (sleep 4; echo '$k'; sleep 2) | ./Gucci_core" 
-                }; 
-                val pr = ProcessBuilder("su", "-c", c).redirectErrorStream(true).start(); 
-                pr.inputStream.bufferedReader().readText(); 
-                pr.waitFor() 
+                val c = if (a == "BRUTAL") { "cd /data/local/tmp && (echo 2; sleep 5; echo ${p.getString("brutal_option", "7")}; sleep 2) | ./Gucci_brutal" } else { val k = p.getString("game_key", "")?.trim(); if (k.isNullOrEmpty()) { Handler(Looper.getMainLooper()).post { Toast.makeText(applicationContext, "Save Game Key first!", Toast.LENGTH_LONG).show() }; stopSelf(); return@Thread }; "cd /data/local/tmp && (sleep 4; echo '$k'; sleep 2) | ./Gucci_core" }; 
+                val pr = ProcessBuilder("su", "-c", c).redirectErrorStream(true).start(); pr.inputStream.bufferedReader().readText(); pr.waitFor() 
             } catch (e: Exception) {}; 
             stopForeground(true); stopSelf() 
         }.start(); 
@@ -577,9 +575,7 @@ class MainActivity : AppCompatActivity() {
                             p.edit().putBoolean("is_authenticated", false).apply()
                             startActivity(Intent(this@MainActivity, LoginActivity::class.java))
                             finish()
-                        } else {
-                            handler.postDelayed(this, 60000)
-                        }
+                        } else { handler.postDelayed(this, 60000) }
                     }
                 }
                 handler.post(runnable)
@@ -714,33 +710,24 @@ class DriverLoaderActivity : AppCompatActivity() {
                 appendLog("\n[START] Scanning folder: $selectedFolder...")
                 val filesInFolder = assets.list("drivers/$selectedFolder")
                 
-                if (filesInFolder.isNullOrEmpty()) { 
-                    appendLog("❌ ERROR: Folder $selectedFolder is empty or missing."); 
-                    resetButton(); 
-                    return@Thread 
-                }
+                if (filesInFolder.isNullOrEmpty()) { appendLog("❌ ERROR: Folder $selectedFolder is empty or missing."); resetButton(); return@Thread }
                 
                 val matchingFiles = ArrayList<String>()
                 for (file in filesInFolder) {
-                    if (file.endsWith(".sh") && (file.startsWith(fullKernelVersion) || file.startsWith(majorKernelVersion))) {
-                        matchingFiles.add(file)
-                    }
+                    if (file.endsWith(".sh") && (file.startsWith(fullKernelVersion) || file.startsWith(majorKernelVersion))) { matchingFiles.add(file) }
                 }
                 
-                if (matchingFiles.isEmpty()) { 
-                    appendLog("❌ ERROR: No driver found for kernel $majorKernelVersion in $selectedFolder!"); 
-                    resetButton(); 
-                    return@Thread 
-                }
+                if (matchingFiles.isEmpty()) { appendLog("❌ ERROR: No driver found for kernel $majorKernelVersion in $selectedFolder!"); resetButton(); return@Thread }
                 
                 if (matchingFiles.size == 1) {
                     loadDriverFile(matchingFiles[0], selectedFolder)
                 } else {
                     Handler(Looper.getMainLooper()).post {
+                        val adapter = ArrayAdapter(this, R.layout.dialog_item_text, matchingFiles)
                         AlertDialog.Builder(this)
                             .setTitle("Select Driver Variant")
                             .setMessage("Multiple drivers found for $majorKernelVersion. Please choose one:")
-                            .setItems(matchingFiles.toTypedArray()) { _, which ->
+                            .setAdapter(adapter) { _, which ->
                                 val chosenFile = matchingFiles[which]
                                 btnLoad.text = "LOADING $chosenFile..."
                                 loadDriverFile(chosenFile, selectedFolder)
@@ -759,9 +746,7 @@ class DriverLoaderActivity : AppCompatActivity() {
                 appendLog("📂 Extracting to cache...")
                 
                 val cacheFile = File(cacheDir, foundFile)
-                assets.open("drivers/$folder/$foundFile").use { input ->
-                    FileOutputStream(cacheFile).use { output -> input.copyTo(output) }
-                }
+                assets.open("drivers/$folder/$foundFile").use { input -> FileOutputStream(cacheFile).use { output -> input.copyTo(output) } }
                 
                 appendLog("🚀 Moving to /data/local/tmp/ with root...")
                 val destPath = "/data/local/tmp/$foundFile"
