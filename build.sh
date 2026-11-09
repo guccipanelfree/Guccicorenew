@@ -1,7 +1,6 @@
 wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip; unzip -q gradle-8.2-bin.zip; export PATH="$PWD/gradle-8.2/bin:$PATH"
 rm -rf app *.gradle *.properties; mkdir -p app/src/main/java/com/example/shtile app/src/main/res/drawable app/src/main/res/layout app/src/main/res/values app/src/main/assets
 
-# PERMANENT ICON FIX
 cat > app/src/main/res/drawable/ic_app_icon.xml << 'EOF'
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#00E5A0" android:pathData="M12,2l3,6h6l-5,4 2,7 -6,-4 -6,4 2,-7 -5,-4h6z"/></vector>
 EOF
@@ -265,68 +264,6 @@ cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
 </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
 EOF
-cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
-<com.google.android.material.tabs.TabLayout android:id="@+id/tabLayout" android:layout_width="match_parent" android:layout_height="wrap_content" app:tabIndicatorColor="@color/accent_green" app:tabTextColor="@color/text_secondary" app:tabSelectedTextColor="@color/text_primary" app:tabIndicatorFullWidth="true" android:layout_marginBottom="16dp">
-<com.google.android.material.tabs.TabItem android:text="Manage Apps" /><com.google.android.material.tabs.TabItem android:text="Hidden &amp; Emergency" />
-</com.google.android.material.tabs.TabLayout>
-<FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
-<LinearLayout android:id="@+id/pageAllApps" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:visibility="visible">
-<com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" app:boxStrokeColor="@color/accent_green" app:hintTextColor="@color/accent_green" android:layout_marginBottom="12dp">
-<com.google.android.material.textfield.TextInputEditText android:id="@+id/searchInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Search all apps..." android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:inputType="text"/>
-</com.google.android.material.textfield.TextInputLayout>
-<ListView android:id="@+id/appsList" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:divider="@null" android:dividerHeight="0dp"/>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="12dp" android:gravity="center_vertical" android:background="@drawable/bg_box_dark" android:padding="12dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Show System Apps" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold"/>
-<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showSystemSwitch" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-</LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp" android:gravity="center_vertical" android:background="@drawable/bg_box_dark" android:padding="12dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Auto-Unhide Timer: " android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold"/>
-<Spinner android:id="@+id/timerSpinner" android:layout_width="match_parent" android:layout_height="40dp" android:backgroundTint="@color/accent_green"/>
-</LinearLayout>
-</LinearLayout>
-<LinearLayout android:id="@+id/pageHiddenApps" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:visibility="gone">
-<com.google.android.material.button.MaterialButton android:id="@+id/emergencyBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="56dp" android:text="🚨 EMERGENCY UNHIDE ALL" app:strokeColor="@color/accent_red" android:textColor="@color/accent_red" android:textSize="14sp" app:cornerRadius="16dp" android:layout_marginBottom="16dp" android:textStyle="bold"/>
-<ListView android:id="@+id/hiddenAppsList" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:divider="@null" android:dividerHeight="0dp"/>
-</LinearLayout>
-</FrameLayout>
-<com.google.android.material.button.MaterialButton android:id="@+id/applyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="APPLY FOR TILE" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
-</LinearLayout>
-EOF
-cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="260dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0B0F17" app:cardCornerRadius="16dp" app:cardElevation="12dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
-<LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI MODS" android:textColor="#FF4D4D" android:textStyle="bold" android:textSize="14sp" android:fontFamily="sans-serif-black" android:letterSpacing="0.05"/>
-<ImageButton android:id="@+id/btnMinimize" android:layout_width="28dp" android:layout_height="28dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#FFFFFF" android:layout_marginEnd="8dp"/>
-<ImageButton android:id="@+id/btnClose" android:layout_width="28dp" android:layout_height="28dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
-</LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="STATUS" android:textColor="#8B949E" android:textSize="11sp" android:textStyle="bold" android:letterSpacing="0.1"/>
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="READY" android:textColor="#00E5A0" android:textSize="11sp" android:textStyle="bold" android:letterSpacing="0.1"/>
-</LinearLayout>
-<View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1F2633" android:layout_marginBottom="12dp"/>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI DETECTOR" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
-<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater1" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
-</LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI HS" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
-<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater2" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
-</LinearLayout>
-<View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1F2633" android:layout_marginBottom="8dp"/>
-<LinearLayout android:id="@+id/dragHandleBottom" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="ROOT" android:textColor="#8B949E" android:textSize="10sp" android:textStyle="bold" android:letterSpacing="0.1"/>
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GRANTED" android:textColor="#00E5A0" android:textSize="10sp" android:textStyle="bold" android:letterSpacing="0.1"/>
-</LinearLayout>
-</LinearLayout>
-</com.google.android.material.card.MaterialCardView>
-EOF
-cat > app/src/main/res/layout/overlay_bubble.xml << 'EOF'
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="60dp" android:layout_height="60dp" android:background="@drawable/bg_circle_grey">
-<ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp" android:src="@drawable/ic_tile_floater" app:tint="@color/accent_green"/>
-</FrameLayout>
-EOF
 cat > app/src/main/java/com/example/shtile/Installer.kt << 'EOF'
 package com.example.shtile
 import android.content.Context
@@ -445,7 +382,6 @@ class SafeTileService : TileService() {
     override fun onClick() { 
         val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
         if (!prefs.getBoolean("has_valid_license", false)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
-        // FIXED: Check if INX is locked by Admin
         if (!prefs.getBoolean("allow_inx", true)) { Toast.makeText(this, "🔒 INX (Boost) locked by Admin", Toast.LENGTH_SHORT).show(); return }
         
         val i = Intent(this, RunnerService::class.java).apply { action = "NORMAL" }; 
@@ -465,7 +401,6 @@ class BrutalTileService : TileService() {
     override fun onClick() { 
         val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
         if (!prefs.getBoolean("has_valid_license", false)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
-        // FIXED: Check if INX is locked by Admin
         if (!prefs.getBoolean("allow_inx", true)) { Toast.makeText(this, "🔒 INX (Turbo) locked by Admin", Toast.LENGTH_SHORT).show(); return }
         
         val i = Intent(this, RunnerService::class.java).apply { action = "BRUTAL" }; 
@@ -798,8 +733,7 @@ class MainActivity : AppCompatActivity() {
                 handler.post(runnable)
             }
         }
-EOF
-cat >> app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
+        
         val openTg = { try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/Gucci8240"))) } catch (e: Exception) { Toast.makeText(this@MainActivity, "Telegram not installed", Toast.LENGTH_SHORT).show() } }
         title.setOnClickListener { openTg() }; sub.setOnClickListener { openTg() }; ca.setOnClickListener { openTg() }
         Shizuku.addRequestPermissionResultListener(shizukuListener)
@@ -843,7 +777,6 @@ cat >> app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
         findViewById<ImageButton>(R.id.hideAppsIcon).setOnClickListener { startActivity(Intent(this, HideAppsActivity::class.java)) }
         findViewById<ImageButton>(R.id.terminalIcon).setOnClickListener { startActivity(Intent(this, TerminalActivity::class.java)) }
     }
-
     private fun checkAccess() {
         Thread {
             val hasRoot = try { val pr = ProcessBuilder("su", "-c", "id").start(); pr.inputStream.bufferedReader().readText().contains("uid=0") } catch (e: Exception) { false }
@@ -967,8 +900,6 @@ class DriverLoaderActivity : AppCompatActivity() {
             } catch (e: Exception) { appendLog("❌ CRITICAL ERROR: ${e.message}"); resetButton() }
         }.start()
     }
-EOF
-cat >> app/src/main/java/com/example/shtile/DriverLoaderActivity.kt << 'EOF'
     private fun loadDriverFile(foundFile: String, folder: String) {
         Thread {
             try {
@@ -1096,8 +1027,6 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             Handler(Looper.getMainLooper()).post { adapterAll = AppAdapter(this@HideAppsActivity, appList, false); findViewById<ListView>(R.id.appsList).adapter = adapterAll; adapterHidden = AppAdapter(this@HideAppsActivity, appList, true); findViewById<ListView>(R.id.hiddenAppsList).adapter = adapterHidden; adapterAll?.filter(""); adapterHidden?.filter("") }
         }.start()
     }
-EOF
-cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private fun showAppOptions(item: AppItem) {
         val options = arrayOf("Hide (pm hide)", "Unhide (Restore)", "Freeze (Suspend)", "Unfreeze (Unsuspend)", "Deep Freeze (Disable)", "Delete (Uninstall)")
         AlertDialog.Builder(this).setTitle(item.name).setItems(options) { _, which ->
@@ -1117,6 +1046,8 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             }
         }.show()
     }
+EOF
+cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private fun executeAction(cmd: String, actionType: Int, item: AppItem) {
         Thread {
             try {
