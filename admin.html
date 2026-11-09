@@ -24,9 +24,9 @@
         .msg.error { color: #ff4d4d; }
         
         .global-actions { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .btn-global-off { background-color: #ff4d4d; color: white; flex: 1; }
-        .btn-global-on { background-color: #2dd4a7; color: black; flex: 1; }
-        .btn-delete-all { background-color: #c0392b; color: white; flex: 1; border: 1px solid #e74c3c; }
+        .btn-global-off { background-color: #ff4d4d; color: white; flex: 1; min-width: 45%; }
+        .btn-global-on { background-color: #2dd4a7; color: black; flex: 1; min-width: 45%; }
+        .btn-delete-all { background-color: #c0392b; color: white; flex: 1; border: 1px solid #e74c3c; min-width: 100%; }
         .btn-delete-all:hover { background-color: #e74c3c; }
         
         .key-item { background-color: #1a222c; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #2dd4a7; }
@@ -46,11 +46,12 @@
         .btn-delete { background-color: #e74c3c; color: white; }
         .btn-copy { background-color: #3498db; color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px; margin-left: 10px; }
         
-        .feature-toggles { display: flex; gap: 15px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #2a3645; }
+        .feature-toggles { display: flex; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #2a3645; flex-wrap: wrap; }
         .feature-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #ffffff; cursor: pointer; background: #11161f; padding: 6px 10px; border-radius: 6px; border: 1px solid #2a3645; }
         .feature-label input { accent-color: #2dd4a7; width: 16px; height: 16px; cursor: pointer; }
+        .btn-uncheck { background: #333; color: #ff4d4d; border: 1px solid #ff4d4d; padding: 6px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; margin-left: 5px; }
+        .btn-check { background: #333; color: #2dd4a7; border: 1px solid #2dd4a7; padding: 6px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; margin-left: 5px; }
         
-        /* Search Bar Style */
         .search-container { margin-bottom: 15px; position: relative; }
         .search-container input { width: 100%; padding: 12px 12px 12px 40px; background-color: #1a222c; border: 1px solid #2a3645; border-radius: 8px; color: white; font-size: 14px; }
         .search-container::before { content: '🔍'; position: absolute; left: 12px; top: 12px; font-size: 16px; }
@@ -74,6 +75,11 @@
         </div>
 
         <div class="input-group">
+            <label>Custom Key (Leave empty for Random Key)</label>
+            <input type="text" id="customKeyInput" placeholder="e.g. GUCCI-VIP-2024" style="text-transform: uppercase;">
+        </div>
+
+        <div class="input-group">
             <label>Key Duration (For New Keys)</label>
             <select id="keyDuration">
                 <option value="1">1 Day</option>
@@ -83,7 +89,14 @@
             </select>
         </div>
         
-        <label style="margin-bottom: 8px; color: #2dd4a7; font-weight: bold;">Select Features to Unlock:</label>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label style="color: #2dd4a7; font-weight: bold; margin: 0;">Select Features to Unlock:</label>
+            <div>
+                <button class="btn-check" onclick="checkAllFeatures()">Check All</button>
+                <button class="btn-uncheck" onclick="uncheckAllFeatures()">Uncheck All</button>
+            </div>
+        </div>
+
         <div class="feature-toggles" style="margin-bottom: 20px; border: none; padding: 0;">
             <label class="feature-label"><input type="checkbox" id="allowInx" checked> Allow INX</label>
             <label class="feature-label"><input type="checkbox" id="allowFloater" checked> Allow Floater</label>
@@ -100,14 +113,15 @@
             <button style="background: #1a222c; color: #2dd4a7; border: 1px solid #2dd4a7; padding: 6px 12px; font-size: 12px;" onclick="loadKeys()">Refresh</button>
         </div>
         
-        <!-- Global Actions (Kill All, Enable All, Delete All) -->
+        <!-- GLOBAL CONTROLS -->
         <div class="global-actions" style="margin-top: 15px;">
             <button class="btn-global-off" onclick="toggleAllKeys(true)">🚨 Kill ALL Keys</button>
             <button class="btn-global-on" onclick="toggleAllKeys(false)">✅ Enable ALL Keys</button>
             <button class="btn-delete-all" onclick="deleteAllKeys()">🗑️ Delete ALL Keys</button>
+            <button class="btn-global-on" onclick="toggleAllFeatures(true)">🔓 Unlock ALL Features</button>
+            <button class="btn-global-off" onclick="toggleAllFeatures(false)">🔒 Lock ALL Features</button>
         </div>
 
-        <!-- Search Bar -->
         <div class="search-container">
             <input type="text" id="searchKey" oninput="renderKeys()" placeholder="Search by Key or HWID...">
         </div>
@@ -115,7 +129,6 @@
         <div id="keysContainer"></div>
     </div>
 </div>
-
 <script>
     let token, user, repo, currentSha, currentJson;
 
@@ -141,7 +154,7 @@
     }
 
     function loadKeys() {
-        document.getElementById('searchKey').value = ''; // Clear search on refresh
+        document.getElementById('searchKey').value = '';
         fetch(`https://api.github.com/repos/${user}/${repo}/contents/data.json`, {
             headers: { "Authorization": `Bearer ${token}`, "Accept": "application/vnd.github.v3+json" }
         })
@@ -170,11 +183,7 @@
     }
 
     function copyKey(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            alert("✅ Key Copied: " + text);
-        }).catch(err => {
-            alert("❌ Failed to copy: " + err);
-        });
+        navigator.clipboard.writeText(text).then(() => { alert("✅ Key Copied: " + text); }).catch(err => { alert("❌ Failed to copy: " + err); });
     }
 
     function updateFeature(keyName, featureName, isChecked) {
@@ -182,13 +191,35 @@
         saveToGitHub(`Updated ${featureName} for ${keyName} to ${isChecked}`);
     }
 
+    function checkAllFeatures() {
+        document.getElementById('allowInx').checked = true;
+        document.getElementById('allowFloater').checked = true;
+        document.getElementById('allowKernel').checked = true;
+    }
+
+    function uncheckAllFeatures() {
+        document.getElementById('allowInx').checked = false;
+        document.getElementById('allowFloater').checked = false;
+        document.getElementById('allowKernel').checked = false;
+    }
+
     function generateKey() {
         const days = parseInt(document.getElementById('keyDuration').value);
         const allowInx = document.getElementById('allowInx').checked;
         const allowFloater = document.getElementById('allowFloater').checked;
         const allowKernel = document.getElementById('allowKernel').checked;
-        const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
-        const newKey = "GUCCI-" + randomStr;
+        
+        let newKey = document.getElementById('customKeyInput').value.trim().toUpperCase();
+        
+        if (!newKey) {
+            const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+            newKey = "GUCCI-" + randomStr;
+        } else {
+            if (currentJson.keys && currentJson.keys[newKey]) {
+                if(!confirm(`⚠️ Key "${newKey}" already exists! Do you want to OVERWRITE it?`)) return;
+            }
+        }
+
         let expiresAt = days > 0 ? Date.now() + (days * 24 * 60 * 60 * 1000) : 0;
         if(!currentJson.keys) currentJson.keys = {};
         
@@ -201,6 +232,8 @@
             "allowFloater": allowFloater,
             "allowKernel": allowKernel
         };
+        
+        document.getElementById('customKeyInput').value = "";
         saveToGitHub(`Generated key ${newKey}`, document.getElementById('genMsg'));
     }
 
@@ -211,8 +244,7 @@
     }
 
     function editDays(keyName) {
-        let promptMsg = "Enter days (0 for Lifetime):";
-        let days = prompt(promptMsg);
+        let days = prompt("Enter days (0 for Lifetime):");
         if(days !== null) {
             days = parseInt(days);
             if(isNaN(days)) return alert("Invalid number");
@@ -242,12 +274,20 @@
         saveToGitHub(`Toggled ALL keys to ${action}`);
     }
 
-    // NEW: Delete All Keys Function
+    function toggleAllFeatures(state) {
+        let action = state ? "Unlock" : "Lock";
+        if(!confirm(`Are you sure you want to ${action} ALL features (INX, Floater, Kernel) for EVERY key?`)) return;
+        for(let k in currentJson.keys) {
+            currentJson.keys[k].allowInx = state;
+            currentJson.keys[k].allowFloater = state;
+            currentJson.keys[k].allowKernel = state;
+        }
+        saveToGitHub(`Toggled ALL features to ${action} for ALL keys`);
+    }
+
     function deleteAllKeys() {
         if(!confirm("⚠️ WARNING: Are you absolutely sure you want to DELETE EVERY SINGLE KEY?\n\nThis cannot be undone!")) return;
-        // Double confirmation for safety
         if(!confirm("🚨 FINAL WARNING: ALL USERS WILL BE LOGGED OUT AND KEYS WILL BE DESTROYED.\n\nProceed?")) return;
-        
         currentJson.keys = {};
         saveToGitHub(`🚨 DELETED ALL KEYS`);
     }
@@ -257,8 +297,6 @@
         container.innerHTML = "";
         const keys = currentJson.keys || {};
         const keyNames = Object.keys(keys).reverse();
-        
-        // NEW: Get search value
         const searchVal = document.getElementById('searchKey').value.toLowerCase();
 
         if(keyNames.length === 0) { 
@@ -272,10 +310,7 @@
             const data = keys[k];
             let hwidText = (data.deviceIds && data.deviceIds.length > 0) ? data.deviceIds[0] : "None";
             
-            // NEW: Search Filter Logic
-            if(searchVal && !k.toLowerCase().includes(searchVal) && !hwidText.toLowerCase().includes(searchVal)) {
-                return; // Skip rendering if it doesn't match search
-            }
+            if(searchVal && !k.toLowerCase().includes(searchVal) && !hwidText.toLowerCase().includes(searchVal)) return;
             hasVisibleKeys = true;
 
             let statusHtml = data.revoked ? `<span class="key-status status-revoked">REVOKED</span>` : 
