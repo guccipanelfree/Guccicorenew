@@ -8,31 +8,23 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #0a0e14; color: #ffffff; padding: 20px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 700px; }
-        
         .card { background-color: #11161f; padding: 24px; border-radius: 12px; border: 1px solid #1f2633; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         h2 { color: #2dd4a7; margin-bottom: 20px; font-size: 22px; }
         h3 { color: #ffffff; margin-bottom: 15px; font-size: 18px; }
-        
         .input-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-size: 14px; color: #8b949e; }
-        input, select { width: 100%; padding: 12px; background-color: #1a222c; border: 1px solid #2a3645; border-radius: 8px; color: white; font-size: 15px; outline: none; }
+        input[type="text"], input[type="password"], select { width: 100%; padding: 12px; background-color: #1a222c; border: 1px solid #2a3645; border-radius: 8px; color: white; font-size: 15px; outline: none; }
         input:focus, select:focus { border-color: #2dd4a7; }
-        
         button { padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; }
         .btn-main { width: 100%; background-color: #2dd4a7; color: #000000; font-size: 16px; padding: 14px; }
         .btn-main:hover { background-color: #24b78f; }
-        
         .hidden { display: none !important; }
         .msg { margin-top: 10px; font-size: 14px; text-align: center; font-weight: bold; }
         .msg.success { color: #2dd4a7; }
         .msg.error { color: #ff4d4d; }
-
-        /* Global Actions */
         .global-actions { display: flex; gap: 10px; margin-bottom: 20px; }
         .btn-global-off { background-color: #ff4d4d; color: white; flex: 1; }
         .btn-global-on { background-color: #2dd4a7; color: black; flex: 1; }
-
-        /* Key List Table */
         .key-item { background-color: #1a222c; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #2dd4a7; }
         .key-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .key-title { font-weight: bold; font-size: 16px; color: #ffffff; word-break: break-all; }
@@ -40,49 +32,36 @@
         .status-bound { background-color: rgba(45, 212, 167, 0.2); color: #2dd4a7; }
         .status-unbound { background-color: rgba(255, 77, 77, 0.2); color: #ff4d4d; }
         .status-revoked { background-color: #333; color: #888; }
-        
         .key-details { font-size: 13px; color: #8b949e; line-height: 1.6; margin-bottom: 15px; }
         .key-details b { color: #ffffff; }
-        
-        /* Action Buttons inside Key */
         .action-row { display: flex; flex-wrap: wrap; gap: 8px; }
         .btn-action { flex: 1; padding: 8px; font-size: 12px; text-align: center; border-radius: 6px; }
         .btn-reset { background-color: #f39c12; color: white; }
         .btn-edit { background-color: #3498db; color: white; }
         .btn-toggle { background-color: #9b59b6; color: white; }
         .btn-delete { background-color: #e74c3c; color: white; }
+        .toggle-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .toggle-row label { display: flex; align-items: center; gap: 8px; color: white; font-size: 14px; cursor: pointer; background: #1a222c; padding: 10px 15px; border-radius: 8px; border: 1px solid #2a3645; }
+        .toggle-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: #2dd4a7; }
     </style>
 </head>
 <body>
-
 <div class="container">
-    <!-- LOGIN CARD -->
     <div class="card" id="loginCard">
         <h2>Admin Login</h2>
-        <div class="input-group">
-            <label>GitHub Username</label>
-            <input type="text" id="ghUser" placeholder="guccipanelfree">
-        </div>
-        <div class="input-group">
-            <label>Repository Name</label>
-            <input type="text" id="ghRepo" placeholder="Guccicorenew">
-        </div>
-        <div class="input-group">
-            <label>GitHub Token (ghp_...)</label>
-            <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxx">
-        </div>
+        <div class="input-group"><label>GitHub Username</label><input type="text" id="ghUser" placeholder="guccipanelfree"></div>
+        <div class="input-group"><label>Repository Name</label><input type="text" id="ghRepo" placeholder="Guccicorenew"></div>
+        <div class="input-group"><label>GitHub Token (ghp_...)</label><input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxx"></div>
         <button class="btn-main" onclick="connectAdmin()">Connect</button>
         <div id="loginMsg" class="msg error"></div>
     </div>
 
-    <!-- DASHBOARD CARD -->
     <div class="card hidden" id="dashboardCard">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2 style="margin: 0;">Admin Dashboard</h2>
             <button style="background: transparent; color: #8b949e; border: 1px solid #8b949e; padding: 6px 12px;" onclick="logout()">Logout</button>
         </div>
 
-        <!-- Generate Key -->
         <div class="input-group">
             <label>Key Duration</label>
             <select id="keyDuration">
@@ -92,12 +71,19 @@
                 <option value="0">Lifetime</option>
             </select>
         </div>
-        <button class="btn-main" style="margin-bottom: 25px;" onclick="generateKey()">Generate New Key</button>
+        
+        <label style="margin-bottom: 8px; color: #2dd4a7; font-weight: bold;">Select Features to Unlock for this Key:</label>
+        <div class="toggle-row">
+            <label><input type="checkbox" id="allowInx" checked> Allow INX</label>
+            <label><input type="checkbox" id="allowFloater" checked> Allow Floater</label>
+            <label><input type="checkbox" id="allowKernel" checked> Allow Kernel Loader</label>
+        </div>
+
+        <button class="btn-main" style="margin-bottom: 25px; margin-top: 10px;" onclick="generateKey()">Generate New Key</button>
         <div id="genMsg" class="msg"></div>
 
         <hr style="border: 0; border-top: 1px solid #1f2633; margin: 25px 0;">
 
-        <!-- Global Controls -->
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h3>Active Keys</h3>
             <button style="background: #1a222c; color: #2dd4a7; border: 1px solid #2dd4a7; padding: 6px 12px; font-size: 12px;" onclick="loadKeys()">Refresh</button>
@@ -120,10 +106,8 @@
         repo = document.getElementById('ghRepo').value.trim();
         token = document.getElementById('ghToken').value.trim();
         const msg = document.getElementById('loginMsg');
-
         if(!user || !repo || !token) { msg.innerText = "Please fill all fields."; return; }
         msg.innerText = "Connecting..."; msg.className = "msg";
-
         fetch(`https://api.github.com/repos/${user}/${repo}/contents/data.json`, {
             headers: { "Authorization": `Bearer ${token}`, "Accept": "application/vnd.github.v3+json" }
         })
@@ -166,17 +150,25 @@
         .catch(err => { alert(err.message); });
     }
 
-    // ---- ACTIONS ----
-
     function generateKey() {
         const days = parseInt(document.getElementById('keyDuration').value);
+        const allowInx = document.getElementById('allowInx').checked;
+        const allowFloater = document.getElementById('allowFloater').checked;
+        const allowKernel = document.getElementById('allowKernel').checked;
         const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
         const newKey = "GUCCI-" + randomStr;
         let expiresAt = days > 0 ? Date.now() + (days * 24 * 60 * 60 * 1000) : 0;
-
         if(!currentJson.keys) currentJson.keys = {};
-        currentJson.keys[newKey] = { "deviceIds": [], "maxDevices": 1, "revoked": false, "expiresAt": expiresAt };
-
+        
+        currentJson.keys[newKey] = { 
+            "deviceIds": [], 
+            "maxDevices": 1, 
+            "revoked": false, 
+            "expiresAt": expiresAt,
+            "allowInx": allowInx,
+            "allowFloater": allowFloater,
+            "allowKernel": allowKernel
+        };
         saveToGitHub(`Generated key ${newKey}`, document.getElementById('genMsg'));
     }
 
@@ -187,19 +179,12 @@
     }
 
     function editDays(keyName) {
-        let currentExp = currentJson.keys[keyName].expiresAt;
-        let promptMsg = "Enter days (0 for Lifetime, -1 to expire immediately):";
+        let promptMsg = "Enter days (0 for Lifetime):";
         let days = prompt(promptMsg);
-        
         if(days !== null) {
             days = parseInt(days);
             if(isNaN(days)) return alert("Invalid number");
-            
-            let newExp = 0;
-            if(days === 0) newExp = 0;
-            else if(days < 0) newExp = Date.now() - 1000; // Expire now
-            else newExp = Date.now() + (days * 24 * 60 * 60 * 1000);
-
+            let newExp = days === 0 ? 0 : Date.now() + (days * 24 * 60 * 60 * 1000);
             currentJson.keys[keyName].expiresAt = newExp;
             saveToGitHub(`Edited expiry for ${keyName} to ${days} days`);
         }
@@ -221,44 +206,39 @@
     function toggleAllKeys(state) {
         let action = state ? "Revoke" : "Unrevoke";
         if(!confirm(`Are you sure you want to ${action} ALL keys?`)) return;
-        
-        for(let k in currentJson.keys) {
-            currentJson.keys[k].revoked = state;
-        }
+        for(let k in currentJson.keys) { currentJson.keys[k].revoked = state; }
         saveToGitHub(`Toggled ALL keys to ${action}`);
     }
-
-    // ---- RENDER ----
 
     function renderKeys() {
         const container = document.getElementById('keysContainer');
         container.innerHTML = "";
         const keys = currentJson.keys || {};
         const keyNames = Object.keys(keys).reverse();
-
         if(keyNames.length === 0) { container.innerHTML = "<p style='color:#8b949e; font-size:14px;'>No keys generated yet.</p>"; return; }
-
+        
         keyNames.forEach(k => {
             const data = keys[k];
-            
             let statusHtml = data.revoked ? `<span class="key-status status-revoked">REVOKED</span>` : 
                              (data.deviceIds && data.deviceIds.length > 0 ? `<span class="key-status status-bound">BOUND</span>` : `<span class="key-status status-unbound">UNBOUND</span>`);
-            
             let expiryText = data.expiresAt === 0 ? "Lifetime" : new Date(data.expiresAt).toLocaleString();
             let hwidText = (data.deviceIds && data.deviceIds.length > 0) ? data.deviceIds[0] : "None";
-            
             let toggleText = data.revoked ? "Unrevoke" : "Revoke";
             let toggleColor = data.revoked ? "btn-global-on" : "btn-global-off";
+            
+            let perms = [];
+            if(data.allowInx) perms.push("INX");
+            if(data.allowFloater) perms.push("Floater");
+            if(data.allowKernel) perms.push("Kernel");
+            let permText = perms.length > 0 ? perms.join(", ") : "None";
 
             container.innerHTML += `
                 <div class="key-item" style="border-left-color: ${data.revoked ? '#888' : (data.deviceIds.length > 0 ? '#2dd4a7' : '#ff4d4d')}">
-                    <div class="key-header">
-                        <span class="key-title">${k}</span>
-                        ${statusHtml}
-                    </div>
+                    <div class="key-header"><span class="key-title">${k}</span>${statusHtml}</div>
                     <div class="key-details">
                         <b>HWID:</b> ${hwidText} <br>
-                        <b>Expires:</b> ${expiryText}
+                        <b>Expires:</b> ${expiryText} <br>
+                        <b>Features:</b> <span style="color:#2dd4a7">${permText}</span>
                     </div>
                     <div class="action-row">
                         <button class="btn-action btn-reset" onclick="resetHwid('${k}')">Reset HWID</button>
@@ -269,7 +249,6 @@
                 </div>`;
         });
     }
-
     function logout() { location.reload(); }
 </script>
 </body>
