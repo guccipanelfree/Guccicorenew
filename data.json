@@ -8,7 +8,7 @@
       "revoked": false,
       "expiresAt": 8641793993537508,
       "allowKernel": false,
-      "allowInx": false,
+      "allowInx": true,
       "allowFloater": false
     },
     "GUCCI-KDRUT9": {
