@@ -142,7 +142,7 @@
       "revoked": false,
       "expiresAt": 0,
       "allowInx": true,
-      "allowFloater": true,
+      "allowFloater": false,
       "allowKernel": false
     }
   }
