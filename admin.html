@@ -40,9 +40,12 @@
         .btn-edit { background-color: #3498db; color: white; }
         .btn-toggle { background-color: #9b59b6; color: white; }
         .btn-delete { background-color: #e74c3c; color: white; }
-        .toggle-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
-        .toggle-row label { display: flex; align-items: center; gap: 8px; color: white; font-size: 14px; cursor: pointer; background: #1a222c; padding: 10px 15px; border-radius: 8px; border: 1px solid #2a3645; }
-        .toggle-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: #2dd4a7; }
+        .btn-copy { background-color: #3498db; color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px; margin-left: 10px; }
+        
+        /* New styles for inline feature editing */
+        .feature-toggles { display: flex; gap: 15px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #2a3645; }
+        .feature-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #ffffff; cursor: pointer; background: #11161f; padding: 6px 10px; border-radius: 6px; border: 1px solid #2a3645; }
+        .feature-label input { accent-color: #2dd4a7; width: 16px; height: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -63,7 +66,7 @@
         </div>
 
         <div class="input-group">
-            <label>Key Duration</label>
+            <label>Key Duration (For New Keys)</label>
             <select id="keyDuration">
                 <option value="1">1 Day</option>
                 <option value="7">7 Days</option>
@@ -72,14 +75,14 @@
             </select>
         </div>
         
-        <label style="margin-bottom: 8px; color: #2dd4a7; font-weight: bold;">Select Features to Unlock for this Key:</label>
-        <div class="toggle-row">
-            <label><input type="checkbox" id="allowInx" checked> Allow INX</label>
-            <label><input type="checkbox" id="allowFloater" checked> Allow Floater</label>
-            <label><input type="checkbox" id="allowKernel" checked> Allow Kernel Loader</label>
+        <label style="margin-bottom: 8px; color: #2dd4a7; font-weight: bold;">Select Features to Unlock:</label>
+        <div class="feature-toggles" style="margin-bottom: 20px; border: none; padding: 0;">
+            <label class="feature-label"><input type="checkbox" id="allowInx" checked> Allow INX</label>
+            <label class="feature-label"><input type="checkbox" id="allowFloater" checked> Allow Floater</label>
+            <label class="feature-label"><input type="checkbox" id="allowKernel" checked> Allow Kernel</label>
         </div>
 
-        <button class="btn-main" style="margin-bottom: 25px; margin-top: 10px;" onclick="generateKey()">Generate New Key</button>
+        <button class="btn-main" style="margin-bottom: 25px;" onclick="generateKey()">Generate New Key</button>
         <div id="genMsg" class="msg"></div>
 
         <hr style="border: 0; border-top: 1px solid #1f2633; margin: 25px 0;">
@@ -144,10 +147,25 @@
         .then(res => { if(!res.ok) throw new Error("Failed to save."); return res.json(); })
         .then(data => {
             currentSha = data.content.sha;
-            renderKeys();
+            renderKeys(); // Re-render to update UI
             if(msgElement) { msgElement.innerText = "✅ " + commitMsg; msgElement.className = "msg success"; setTimeout(() => msgElement.innerText = "", 3000); }
         })
         .catch(err => { alert(err.message); });
+    }
+
+    // --- COPY KEY FUNCTION ---
+    function copyKey(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert("✅ Key Copied: " + text);
+        }).catch(err => {
+            alert("❌ Failed to copy: " + err);
+        });
+    }
+
+    // --- UPDATE FEATURES ON THE FLY ---
+    function updateFeature(keyName, featureName, isChecked) {
+        currentJson.keys[keyName][featureName] = isChecked;
+        saveToGitHub(`Updated ${featureName} for ${keyName} to ${isChecked}`);
     }
 
     function generateKey() {
@@ -226,21 +244,40 @@
             let toggleText = data.revoked ? "Unrevoke" : "Revoke";
             let toggleColor = data.revoked ? "btn-global-on" : "btn-global-off";
             
-            let perms = [];
-            if(data.allowInx) perms.push("INX");
-            if(data.allowFloater) perms.push("Floater");
-            if(data.allowKernel) perms.push("Kernel");
-            let permText = perms.length > 0 ? perms.join(", ") : "None";
+            // Fallbacks in case old keys don't have these fields
+            let isInx = data.allowInx !== false;
+            let isFloater = data.allowFloater !== false;
+            let isKernel = data.allowKernel !== false;
 
             container.innerHTML += `
                 <div class="key-item" style="border-left-color: ${data.revoked ? '#888' : (data.deviceIds.length > 0 ? '#2dd4a7' : '#ff4d4d')}">
-                    <div class="key-header"><span class="key-title">${k}</span>${statusHtml}</div>
+                    <div class="key-header">
+                        <div style="display: flex; align-items: center;">
+                            <span class="key-title">${k}</span>
+                            <button class="btn-copy" onclick="copyKey('${k}')">Copy</button>
+                        </div>
+                        ${statusHtml}
+                    </div>
+                    
                     <div class="key-details">
                         <b>HWID:</b> ${hwidText} <br>
-                        <b>Expires:</b> ${expiryText} <br>
-                        <b>Features:</b> <span style="color:#2dd4a7">${permText}</span>
+                        <b>Expires:</b> ${expiryText}
                     </div>
-                    <div class="action-row">
+
+                    <!-- NEW: Edit features directly from the card -->
+                    <div class="feature-toggles">
+                        <label class="feature-label">
+                            <input type="checkbox" ${isInx ? 'checked' : ''} onchange="updateFeature('${k}', 'allowInx', this.checked)"> INX
+                        </label>
+                        <label class="feature-label">
+                            <input type="checkbox" ${isFloater ? 'checked' : ''} onchange="updateFeature('${k}', 'allowFloater', this.checked)"> Floater
+                        </label>
+                        <label class="feature-label">
+                            <input type="checkbox" ${isKernel ? 'checked' : ''} onchange="updateFeature('${k}', 'allowKernel', this.checked)"> Kernel
+                        </label>
+                    </div>
+
+                    <div class="action-row" style="margin-top: 15px;">
                         <button class="btn-action btn-reset" onclick="resetHwid('${k}')">Reset HWID</button>
                         <button class="btn-action btn-edit" onclick="editDays('${k}')">Edit Days</button>
                         <button class="btn-action btn-toggle ${toggleColor}" onclick="toggleKey('${k}')">${toggleText}</button>
