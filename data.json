@@ -9,7 +9,7 @@
       "expiresAt": 8641793993537508,
       "allowKernel": true,
       "allowInx": true,
-      "allowFloater": false
+      "allowFloater": true
     },
     "GUCCI-KDRUT9": {
       "deviceIds": [
