@@ -122,7 +122,7 @@
       "expiresAt": 0,
       "allowInx": false,
       "allowFloater": true,
-      "allowKernel": true
+      "allowKernel": false
     }
   }
 }
