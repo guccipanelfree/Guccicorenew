@@ -1,3 +1,13 @@
 {
-  "keys": {}
+  "keys": {
+    "GUCCI": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 0,
+      "allowInx": false,
+      "allowFloater": false,
+      "allowKernel": false
+    }
+  }
 }
