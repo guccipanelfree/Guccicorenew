@@ -116,7 +116,9 @@
       "expiresAt": 1796747463004
     },
     "GUCCI": {
-      "deviceIds": [],
+      "deviceIds": [
+        "114d3a4a7cd63b90"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 0,
