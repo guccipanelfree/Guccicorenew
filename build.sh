@@ -1,6 +1,12 @@
 wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip; unzip -q gradle-8.2-bin.zip; export PATH="$PWD/gradle-8.2/bin:$PATH"
 rm -rf app *.gradle *.properties; mkdir -p app/src/main/java/com/example/shtile app/src/main/res/drawable app/src/main/res/layout app/src/main/res/values app/src/main/assets
 
+# CRITICAL ASSET COPY FIX
+for file in Gucci_core Gucci_brutal Gucci_Ch Gucci_h Gucci_O; do
+    if [ -f "$file" ]; then cp "$file" app/src/main/assets/; fi
+done
+if [ -d "drivers" ]; then cp -r drivers app/src/main/assets/; fi
+
 cat > settings.gradle << 'EOF'
 pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
 dependencyResolutionManagement { repositories { google(); mavenCentral() } }
