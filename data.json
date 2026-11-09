@@ -122,6 +122,15 @@
       "allowInx": false,
       "allowFloater": false,
       "allowKernel": false
+    },
+    "GUCCI-5Q42JE": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 0,
+      "allowInx": true,
+      "allowFloater": true,
+      "allowKernel": true
     }
   }
 }
