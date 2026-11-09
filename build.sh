@@ -1,11 +1,10 @@
 wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip; unzip -q gradle-8.2-bin.zip; export PATH="$PWD/gradle-8.2/bin:$PATH"
 rm -rf app *.gradle *.properties; mkdir -p app/src/main/java/com/example/shtile app/src/main/res/drawable app/src/main/res/layout app/src/main/res/values app/src/main/assets
 
-# --- PERMANENT ICON FIX ---
+# PERMANENT ICON FIX
 cat > app/src/main/res/drawable/ic_app_icon.xml << 'EOF'
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#00E5A0" android:pathData="M12,2l3,6h6l-5,4 2,7 -6,-4 -6,4 2,-7 -5,-4h6z"/></vector>
 EOF
-# --------------------------
 
 for file in Gucci_core Gucci_brutal Gucci_Ch Gucci_h Gucci_O; do
     if [ -f "$file" ]; then cp "$file" app/src/main/assets/; fi
@@ -446,6 +445,9 @@ class SafeTileService : TileService() {
     override fun onClick() { 
         val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
         if (!prefs.getBoolean("has_valid_license", false)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
+        // FIXED: Check if INX is locked by Admin
+        if (!prefs.getBoolean("allow_inx", true)) { Toast.makeText(this, "🔒 INX (Boost) locked by Admin", Toast.LENGTH_SHORT).show(); return }
+        
         val i = Intent(this, RunnerService::class.java).apply { action = "NORMAL" }; 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i) 
     } 
@@ -463,6 +465,9 @@ class BrutalTileService : TileService() {
     override fun onClick() { 
         val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
         if (!prefs.getBoolean("has_valid_license", false)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
+        // FIXED: Check if INX is locked by Admin
+        if (!prefs.getBoolean("allow_inx", true)) { Toast.makeText(this, "🔒 INX (Turbo) locked by Admin", Toast.LENGTH_SHORT).show(); return }
+        
         val i = Intent(this, RunnerService::class.java).apply { action = "BRUTAL" }; 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i) 
     } 
@@ -1117,11 +1122,7 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             try {
                 val p = Runtime.getRuntime().exec("su")
                 val os = DataOutputStream(p.outputStream)
-                os.writeBytes("$cmd\n")
-                os.writeBytes("exit\n")
-                os.flush()
-                os.close()
-                p.waitFor()
+                os.writeBytes("$cmd\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor()
                 val hidden = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf()
                 val frozen = prefs.getStringSet("frozen_history", emptySet())?.toMutableSet() ?: mutableSetOf()
                 val deepFrozen = prefs.getStringSet("deep_frozen_history", emptySet())?.toMutableSet() ?: mutableSetOf()
@@ -1138,8 +1139,6 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             } catch (e: Exception) { Handler(Looper.getMainLooper()).post { Toast.makeText(this@HideAppsActivity, "Failed: ${e.message}", Toast.LENGTH_SHORT).show() } }
         }.start()
     }
-EOF
-cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private inner class AppAdapter(private val context: Context, private val items: List<AppItem>, private val showHiddenOnly: Boolean) : android.widget.BaseAdapter() {
         private val inflater = android.view.LayoutInflater.from(context); private var filteredItems = ArrayList<AppItem>()
         override fun getCount(): Int = filteredItems.size; override fun getItem(position: Int): Any = filteredItems[position]; override fun getItemId(position: Int): Long = position.toLong()
