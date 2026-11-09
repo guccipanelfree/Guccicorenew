@@ -1,5 +1,17 @@
 wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip; unzip -q gradle-8.2-bin.zip; export PATH="$PWD/gradle-8.2/bin:$PATH"
 rm -rf app *.gradle *.properties; mkdir -p app/src/main/java/com/example/shtile app/src/main/res/drawable app/src/main/res/layout app/src/main/res/values app/src/main/assets
+
+# --- PERMANENT ICON FIX ---
+cat > app/src/main/res/drawable/ic_app_icon.xml << 'EOF'
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#00E5A0" android:pathData="M12,2l3,6h6l-5,4 2,7 -6,-4 -6,4 2,-7 -5,-4h6z"/></vector>
+EOF
+# --------------------------
+
+for file in Gucci_core Gucci_brutal Gucci_Ch Gucci_h Gucci_O; do
+    if [ -f "$file" ]; then cp "$file" app/src/main/assets/; fi
+done
+if [ -d "drivers" ]; then cp -r drivers app/src/main/assets/; fi
+
 cat > settings.gradle << 'EOF'
 pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
 dependencyResolutionManagement { repositories { google(); mavenCentral() } }
@@ -781,7 +793,8 @@ class MainActivity : AppCompatActivity() {
                 handler.post(runnable)
             }
         }
-        
+EOF
+cat >> app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
         val openTg = { try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/Gucci8240"))) } catch (e: Exception) { Toast.makeText(this@MainActivity, "Telegram not installed", Toast.LENGTH_SHORT).show() } }
         title.setOnClickListener { openTg() }; sub.setOnClickListener { openTg() }; ca.setOnClickListener { openTg() }
         Shizuku.addRequestPermissionResultListener(shizukuListener)
@@ -825,6 +838,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<ImageButton>(R.id.hideAppsIcon).setOnClickListener { startActivity(Intent(this, HideAppsActivity::class.java)) }
         findViewById<ImageButton>(R.id.terminalIcon).setOnClickListener { startActivity(Intent(this, TerminalActivity::class.java)) }
     }
+
     private fun checkAccess() {
         Thread {
             val hasRoot = try { val pr = ProcessBuilder("su", "-c", "id").start(); pr.inputStream.bufferedReader().readText().contains("uid=0") } catch (e: Exception) { false }
@@ -948,6 +962,8 @@ class DriverLoaderActivity : AppCompatActivity() {
             } catch (e: Exception) { appendLog("❌ CRITICAL ERROR: ${e.message}"); resetButton() }
         }.start()
     }
+EOF
+cat >> app/src/main/java/com/example/shtile/DriverLoaderActivity.kt << 'EOF'
     private fun loadDriverFile(foundFile: String, folder: String) {
         Thread {
             try {
@@ -1075,6 +1091,8 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             Handler(Looper.getMainLooper()).post { adapterAll = AppAdapter(this@HideAppsActivity, appList, false); findViewById<ListView>(R.id.appsList).adapter = adapterAll; adapterHidden = AppAdapter(this@HideAppsActivity, appList, true); findViewById<ListView>(R.id.hiddenAppsList).adapter = adapterHidden; adapterAll?.filter(""); adapterHidden?.filter("") }
         }.start()
     }
+EOF
+cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private fun showAppOptions(item: AppItem) {
         val options = arrayOf("Hide (pm hide)", "Unhide (Restore)", "Freeze (Suspend)", "Unfreeze (Unsuspend)", "Deep Freeze (Disable)", "Delete (Uninstall)")
         AlertDialog.Builder(this).setTitle(item.name).setItems(options) { _, which ->
@@ -1120,6 +1138,8 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             } catch (e: Exception) { Handler(Looper.getMainLooper()).post { Toast.makeText(this@HideAppsActivity, "Failed: ${e.message}", Toast.LENGTH_SHORT).show() } }
         }.start()
     }
+EOF
+cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private inner class AppAdapter(private val context: Context, private val items: List<AppItem>, private val showHiddenOnly: Boolean) : android.widget.BaseAdapter() {
         private val inflater = android.view.LayoutInflater.from(context); private var filteredItems = ArrayList<AppItem>()
         override fun getCount(): Int = filteredItems.size; override fun getItem(position: Int): Any = filteredItems[position]; override fun getItemId(position: Int): Long = position.toLong()
@@ -1205,6 +1225,8 @@ class FloaterOverlayService : Service() {
         sw2.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f2_on", isChecked).apply(); applyFloater(2, isChecked) }
         panel = v; wm.addView(v, params)
     }
+EOF
+cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
     private fun minimize() {
         panel?.let { runCatching { wm.removeView(it) } }; panel = null
         val b = LayoutInflater.from(this).inflate(R.layout.overlay_bubble, null); val params = overlayParams(120, 120)
@@ -1219,8 +1241,6 @@ class FloaterOverlayService : Service() {
         }
         bubble = b; wm.addView(b, params)
     }
-EOF
-cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
     private fun setupDrag(handle: View, rootView: View, params: WindowManager.LayoutParams) {
         handle.setOnTouchListener(object : View.OnTouchListener {
             var initialX = 0; var initialY = 0; var initialTouchX = 0f; var initialTouchY = 0f
