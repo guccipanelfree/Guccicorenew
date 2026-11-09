@@ -114,6 +114,15 @@
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796747463004
+    },
+    "GUCCI": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 0,
+      "allowInx": true,
+      "allowFloater": true,
+      "allowKernel": true
     }
   }
 }
