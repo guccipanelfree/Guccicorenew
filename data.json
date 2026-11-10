@@ -32,7 +32,9 @@
       "allowKernel": true
     },
     "NO NAME": {
-      "deviceIds": [],
+      "deviceIds": [
+        "bf30076fea9a9067"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796882824161,
