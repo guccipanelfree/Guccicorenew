@@ -118,7 +118,7 @@
       "revoked": false,
       "expiresAt": 1796885078464,
       "allowInx": true,
-      "allowFloater": false,
+      "allowFloater": true,
       "allowKernel": true
     },
     "ROY": {
