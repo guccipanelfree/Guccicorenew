@@ -116,6 +116,15 @@
       "allowInx": true,
       "allowFloater": true,
       "allowKernel": true
+    },
+    "ROY": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796885636807,
+      "allowInx": true,
+      "allowFloater": false,
+      "allowKernel": true
     }
   }
 }
