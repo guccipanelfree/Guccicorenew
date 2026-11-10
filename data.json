@@ -74,7 +74,7 @@
       "revoked": false,
       "expiresAt": 1796882862298,
       "allowInx": true,
-      "allowFloater": false,
+      "allowFloater": true,
       "allowKernel": true
     },
     "RITIK": {
