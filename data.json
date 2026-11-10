@@ -146,7 +146,7 @@
       "expiresAt": 1796919771015,
       "allowInx": true,
       "allowFloater": true,
-      "allowKernel": true
+      "allowKernel": false
     }
   }
 }
