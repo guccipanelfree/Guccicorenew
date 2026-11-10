@@ -149,7 +149,7 @@
       "revoked": false,
       "expiresAt": 1796919771015,
       "allowInx": true,
-      "allowFloater": false,
+      "allowFloater": true,
       "allowKernel": true
     }
   }
