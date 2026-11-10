@@ -76,7 +76,9 @@
       "allowKernel": true
     },
     "RITIK": {
-      "deviceIds": [],
+      "deviceIds": [
+        "bb63cdc37a916a8c"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796883001120,
