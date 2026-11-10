@@ -107,7 +107,9 @@
       "allowKernel": false
     },
     "FARHAN": {
-      "deviceIds": [],
+      "deviceIds": [
+        "501e3798bde188c7"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796885078464,
