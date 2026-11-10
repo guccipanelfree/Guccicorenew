@@ -10,6 +10,15 @@
       "allowInx": true,
       "allowFloater": true,
       "allowKernel": true
+    },
+    "RYZEN": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796882606850,
+      "allowInx": true,
+      "allowFloater": true,
+      "allowKernel": true
     }
   }
 }
