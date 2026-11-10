@@ -30,6 +30,15 @@
       "allowInx": true,
       "allowFloater": true,
       "allowKernel": true
+    },
+    "NO NAME": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796882824161,
+      "allowInx": true,
+      "allowFloater": true,
+      "allowKernel": true
     }
   }
 }
