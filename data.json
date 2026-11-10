@@ -8,7 +8,7 @@
       "revoked": false,
       "expiresAt": 0,
       "allowInx": true,
-      "allowFloater": false,
+      "allowFloater": true,
       "allowKernel": true
     }
   }
