@@ -45,7 +45,9 @@
       "allowKernel": true
     },
     "WARTH": {
-      "deviceIds": [],
+      "deviceIds": [
+        "2357b7de90d76763"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796882832701,
