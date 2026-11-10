@@ -105,6 +105,15 @@
       "allowInx": true,
       "allowFloater": false,
       "allowKernel": false
+    },
+    "FARHAN": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796885078464,
+      "allowInx": true,
+      "allowFloater": true,
+      "allowKernel": true
     }
   }
 }
