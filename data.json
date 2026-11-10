@@ -64,7 +64,7 @@
       "expiresAt": 1796882838727,
       "allowInx": true,
       "allowFloater": false,
-      "allowKernel": true
+      "allowKernel": false
     },
     "WOTA": {
       "deviceIds": [
