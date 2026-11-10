@@ -10,6 +10,15 @@
       "allowInx": true,
       "allowFloater": true,
       "allowKernel": true
+    },
+    "GUCCI-Z4K9U3": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796882580361,
+      "allowInx": true,
+      "allowFloater": true,
+      "allowKernel": true
     }
   }
 }
