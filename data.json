@@ -7,7 +7,7 @@
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 0,
-      "allowInx": false,
+      "allowInx": true,
       "allowFloater": false,
       "allowKernel": false
     }
