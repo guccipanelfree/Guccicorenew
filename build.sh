@@ -1,8 +1,8 @@
 wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip; unzip -q gradle-8.2-bin.zip; export PATH="$PWD/gradle-8.2/bin:$PATH"
 rm -rf app *.gradle *.properties; mkdir -p app/src/main/java/com/example/shtile app/src/main/res/drawable app/src/main/res/layout app/src/main/res/values app/src/main/assets
 
-# CRITICAL ASSET COPY FIX
-for file in Gucci_core Gucci_brutal Gucci_Ch Gucci_h Gucci_O; do
+# CRITICAL ASSET COPY (Includes Gucci_G and Gucci_GO)
+for file in Gucci_core Gucci_brutal Gucci_Ch Gucci_h Gucci_O Gucci_G Gucci_GO; do
     if [ -f "$file" ]; then cp "$file" app/src/main/assets/; fi
 done
 if [ -d "drivers" ]; then cp -r drivers app/src/main/assets/; fi
@@ -264,34 +264,6 @@ cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
 </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
 EOF
-cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
-<com.google.android.material.tabs.TabLayout android:id="@+id/tabLayout" android:layout_width="match_parent" android:layout_height="wrap_content" app:tabIndicatorColor="@color/accent_green" app:tabTextColor="@color/text_secondary" app:tabSelectedTextColor="@color/text_primary" app:tabIndicatorFullWidth="true" android:layout_marginBottom="16dp">
-<com.google.android.material.tabs.TabItem android:text="Manage Apps" /><com.google.android.material.tabs.TabItem android:text="Hidden &amp; Emergency" />
-</com.google.android.material.tabs.TabLayout>
-<FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
-<LinearLayout android:id="@+id/pageAllApps" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:visibility="visible">
-<com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" app:boxStrokeColor="@color/accent_green" app:hintTextColor="@color/accent_green" android:layout_marginBottom="12dp">
-<com.google.android.material.textfield.TextInputEditText android:id="@+id/searchInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Search all apps..." android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:inputType="text"/>
-</com.google.android.material.textfield.TextInputLayout>
-<ListView android:id="@+id/appsList" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:divider="@null" android:dividerHeight="0dp"/>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="12dp" android:gravity="center_vertical" android:background="@drawable/bg_box_dark" android:padding="12dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Show System Apps" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold"/>
-<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showSystemSwitch" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-</LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp" android:gravity="center_vertical" android:background="@drawable/bg_box_dark" android:padding="12dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Auto-Unhide Timer: " android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold"/>
-<Spinner android:id="@+id/timerSpinner" android:layout_width="match_parent" android:layout_height="40dp" android:backgroundTint="@color/accent_green"/>
-</LinearLayout>
-</LinearLayout>
-<LinearLayout android:id="@+id/pageHiddenApps" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:visibility="gone">
-<com.google.android.material.button.MaterialButton android:id="@+id/emergencyBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="56dp" android:text="🚨 EMERGENCY UNHIDE ALL" app:strokeColor="@color/accent_red" android:textColor="@color/accent_red" android:textSize="14sp" app:cornerRadius="16dp" android:layout_marginBottom="16dp" android:textStyle="bold"/>
-<ListView android:id="@+id/hiddenAppsList" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:divider="@null" android:dividerHeight="0dp"/>
-</LinearLayout>
-</FrameLayout>
-<com.google.android.material.button.MaterialButton android:id="@+id/applyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="APPLY FOR TILE" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
-</LinearLayout>
-EOF
 cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="260dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0B0F17" app:cardCornerRadius="16dp" app:cardElevation="12dp">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
@@ -312,6 +284,10 @@ cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
 <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI HS" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
 <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater2" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
+</LinearLayout>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GLOO CROSS" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater3" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
 </LinearLayout>
 <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1F2633" android:layout_marginBottom="8dp"/>
 <LinearLayout android:id="@+id/dragHandleBottom" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
@@ -395,41 +371,6 @@ class TimerService : Service() {
     }
     override fun onDestroy() { timerThread?.interrupt(); super.onDestroy() }
     override fun onBind(intent: Intent?): IBinder? = null
-}
-EOF
-cat > app/src/main/java/com/example/shtile/TransparentActivity.kt << 'EOF'
-package com.example.shtile
-import android.content.Intent
-import android.os.Build
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-class TransparentActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val i = Intent(this, FloaterOverlayService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { startForegroundService(i) } else { startService(i) }
-        finish()
-    }
-}
-EOF
-cat > app/src/main/java/com/example/shtile/PackageReceiver.kt << 'EOF'
-package com.example.shtile
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import java.io.DataOutputStream
-class PackageReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_PACKAGE_ADDED) {
-            if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
-            val pkg = intent.data?.encodedSchemeSpecificPart ?: return
-            val prefs = context.getSharedPreferences("HidePrefs", Context.MODE_PRIVATE)
-            if (prefs.getBoolean("is_pay_hidden", false) && (prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()).contains(pkg)) {
-                val pendingResult = goAsync()
-                Thread { try { val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes("pm hide $pkg; pm disable-user --user 0 $pkg\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor() } catch (e: Exception) {} finally { pendingResult.finish() } }.start()
-            }
-        }
-    }
 }
 EOF
 cat > app/src/main/java/com/example/shtile/SafeTileService.kt << 'EOF'
@@ -1191,7 +1132,10 @@ import androidx.appcompat.view.ContextThemeWrapper
 import com.google.android.material.materialswitch.MaterialSwitch
 import java.io.File
 class FloaterOverlayService : Service() {
-    private val floater1OnAsset  = "Gucci_Ch"; private val floater1OffAsset = "Gucci_O"; private val floater2OnAsset  = "Gucci_h"; private val floater2OffAsset = "Gucci_O"
+    private val floater1OnAsset  = "Gucci_Ch"; private val floater1OffAsset = "Gucci_O"
+    private val floater2OnAsset  = "Gucci_h";  private val floater2OffAsset = "Gucci_O"
+    private val floater3OnAsset  = "Gucci_G";  private val floater3OffAsset = "Gucci_GO"
+    
     private lateinit var wm: WindowManager; private var panel: View? = null; private var bubble: View? = null
     private val prefs by lazy { getSharedPreferences("FloaterPrefs", MODE_PRIVATE) }
     override fun onBind(intent: Intent?): IBinder? = null
@@ -1214,10 +1158,14 @@ class FloaterOverlayService : Service() {
         val params = overlayParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT)
         setupDrag(v.findViewById(R.id.dragHandleTop), v, params); setupDrag(v.findViewById(R.id.dragHandleBottom), v, params)
         v.findViewById<ImageButton>(R.id.btnMinimize).setOnClickListener { minimize() }; v.findViewById<ImageButton>(R.id.btnClose).setOnClickListener { close() }
-        val sw1 = v.findViewById<MaterialSwitch>(R.id.switchFloater1); val sw2 = v.findViewById<MaterialSwitch>(R.id.switchFloater2)
-        sw1.isChecked = prefs.getBoolean("f1_on", false); sw2.isChecked = prefs.getBoolean("f2_on", false)
+        
+        val sw1 = v.findViewById<MaterialSwitch>(R.id.switchFloater1); val sw2 = v.findViewById<MaterialSwitch>(R.id.switchFloater2); val sw3 = v.findViewById<MaterialSwitch>(R.id.switchFloater3)
+        sw1.isChecked = prefs.getBoolean("f1_on", false); sw2.isChecked = prefs.getBoolean("f2_on", false); sw3.isChecked = prefs.getBoolean("f3_on", false)
+        
         sw1.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f1_on", isChecked).apply(); applyFloater(1, isChecked) }
         sw2.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f2_on", isChecked).apply(); applyFloater(2, isChecked) }
+        sw3.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f3_on", isChecked).apply(); applyFloater(3, isChecked) }
+        
         panel = v; wm.addView(v, params)
     }
 EOF
@@ -1249,11 +1197,21 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
         })
     }
     private fun close() { panel?.let { runCatching { wm.removeView(it) } }; panel = null; bubble?.let { runCatching { wm.removeView(it) } }; bubble = null; stopSelf() }
+    
     private fun applyFloater(number: Int, on: Boolean) {
+        if (number == 3) {
+            val asset = if (on) floater3OnAsset else floater3OffAsset
+            val error = copyGlooCrossToTarget(asset)
+            val tag = "GLOO CROSS"
+            if (error == null) { val msg = if (on) "✅ Activated\n🎯 $tag\n📦 Asset: $asset" else "✅ Deactivated\n🎯 $tag\n📦 Asset: $asset"; Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() } else { Toast.makeText(this, "❌ Paste Failed!\nReason: $error", Toast.LENGTH_LONG).show() }
+            return
+        }
+        
         val asset = when { number == 1 && on -> floater1OnAsset; number == 1 && !on -> floater1OffAsset; number == 2 && on -> floater2OnAsset; else -> floater2OffAsset }
         val error = copyAssetToTarget(asset); val tag = if (number == 1) "GUCCI DETECTOR" else "GUCCI HS"
         if (error == null) { val msg = if (on) "✅ Successfully Activated\n🎯 $tag\n📦 Asset: $asset" else "✅ Successfully Deactivated\n🎯 $tag\n📦 Asset: $asset"; Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() } else { Toast.makeText(this, "❌ Paste Failed!\nReason: $error", Toast.LENGTH_LONG).show() }
     }
+    
     private fun copyAssetToTarget(name: String): String? {
         try {
             val tmp = File(cacheDir, name); assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
@@ -1275,6 +1233,34 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
             val output = p.inputStream.bufferedReader().readText(); val code = p.waitFor()
             tmp.delete(); scriptFile.delete()
             return if (output.contains("PASTE_SUCCESSFUL") && code == 0) null else { if (output.contains("FAILED_NO_FOLDER")) "Avatar folder missing." else "Check Root. Output: $output" }
+        } catch (e: Exception) { return e.message }
+    }
+
+    private fun copyGlooCrossToTarget(name: String): String? {
+        try {
+            val tmp = File(cacheDir, name); assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
+            
+            val targetDir = "/storage/emulated/0/Android/data/com.dts.freefiremax/files/contentcache/Optional/android"
+            val targetFile = "fileinfo"
+            val scriptFile = File(cacheDir, "paste_g.sh")
+            
+            scriptFile.writeText("""
+                #!/system/bin/sh
+                TARGET_DIR="$targetDir"
+                mkdir -p "${'$'}TARGET_DIR"
+                FULL_PATH="${'$'}TARGET_DIR/$targetFile"
+                cp -f "${tmp.absolutePath}" "/data/local/tmp/$name"; chmod 777 "/data/local/tmp/$name"
+                cat "/data/local/tmp/$name" > "${'$'}FULL_PATH"
+                chmod 777 "${'$'}FULL_PATH"
+                if [ -s "${'$'}FULL_PATH" ]; then echo "PASTE_SUCCESSFUL"; else echo "PASTE_FAILED"; fi
+            """.trimIndent())
+            
+            val chmodP = ProcessBuilder("su", "-c", "chmod 777 " + scriptFile.absolutePath).start(); chmodP.waitFor()
+            val p = ProcessBuilder("su", "-mm", "-c", "sh " + scriptFile.absolutePath).redirectErrorStream(true).start()
+            val output = p.inputStream.bufferedReader().readText(); val code = p.waitFor()
+            tmp.delete(); scriptFile.delete()
+            
+            return if (output.contains("PASTE_SUCCESSFUL") && code == 0) null else { "Check Root. Output: $output" }
         } catch (e: Exception) { return e.message }
     }
     override fun onDestroy() { panel?.let { runCatching { wm.removeView(it) } }; bubble?.let { runCatching { wm.removeView(it) } }; super.onDestroy() }
