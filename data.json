@@ -57,6 +57,15 @@
       "allowInx": true,
       "allowFloater": true,
       "allowKernel": true
+    },
+    "WOTA": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796882862298,
+      "allowInx": true,
+      "allowFloater": true,
+      "allowKernel": true
     }
   }
 }
