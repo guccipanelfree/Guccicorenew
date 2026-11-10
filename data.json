@@ -87,7 +87,9 @@
       "allowKernel": true
     },
     "ANKIT": {
-      "deviceIds": [],
+      "deviceIds": [
+        "88731dedcabac8f2"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796883088942,
