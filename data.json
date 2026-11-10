@@ -23,7 +23,9 @@
       "allowKernel": true
     },
     "FAISAL": {
-      "deviceIds": [],
+      "deviceIds": [
+        "ee65b3b2f72e0d2c"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796882773381,
