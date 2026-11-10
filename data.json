@@ -92,6 +92,15 @@
       "allowInx": false,
       "allowFloater": true,
       "allowKernel": false
+    },
+    "SUMIT": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796884231932,
+      "allowInx": true,
+      "allowFloater": true,
+      "allowKernel": true
     }
   }
 }
