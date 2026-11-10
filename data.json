@@ -56,7 +56,9 @@
       "allowKernel": true
     },
     "ZARA": {
-      "deviceIds": [],
+      "deviceIds": [
+        "2883781af51f4236"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796882838727,
