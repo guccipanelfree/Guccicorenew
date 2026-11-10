@@ -81,6 +81,15 @@
       "allowInx": true,
       "allowFloater": false,
       "allowKernel": true
+    },
+    "ANKIT": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796883088942,
+      "allowInx": true,
+      "allowFloater": true,
+      "allowKernel": true
     }
   }
 }
