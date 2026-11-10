@@ -72,6 +72,15 @@
       "allowInx": true,
       "allowFloater": true,
       "allowKernel": true
+    },
+    "RITIK": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796883001120,
+      "allowInx": true,
+      "allowFloater": true,
+      "allowKernel": true
     }
   }
 }
