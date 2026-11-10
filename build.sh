@@ -1,7 +1,7 @@
 wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip; unzip -q gradle-8.2-bin.zip; export PATH="$PWD/gradle-8.2/bin:$PATH"
 rm -rf app *.gradle *.properties; mkdir -p app/src/main/java/com/example/shtile app/src/main/res/drawable app/src/main/res/layout app/src/main/res/values app/src/main/assets
 
-# CRITICAL ASSET COPY (Includes Gucci_G and Gucci_GO)
+# CRITICAL ASSETS (Includes Gucci_G and Gucci_GO)
 for file in Gucci_core Gucci_brutal Gucci_Ch Gucci_h Gucci_O Gucci_G Gucci_GO; do
     if [ -f "$file" ]; then cp "$file" app/src/main/assets/; fi
 done
@@ -264,6 +264,34 @@ cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
 </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
 EOF
+cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
+<com.google.android.material.tabs.TabLayout android:id="@+id/tabLayout" android:layout_width="match_parent" android:layout_height="wrap_content" app:tabIndicatorColor="@color/accent_green" app:tabTextColor="@color/text_secondary" app:tabSelectedTextColor="@color/text_primary" app:tabIndicatorFullWidth="true" android:layout_marginBottom="16dp">
+<com.google.android.material.tabs.TabItem android:text="Manage Apps" /><com.google.android.material.tabs.TabItem android:text="Hidden &amp; Emergency" />
+</com.google.android.material.tabs.TabLayout>
+<FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+<LinearLayout android:id="@+id/pageAllApps" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:visibility="visible">
+<com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" app:boxStrokeColor="@color/accent_green" app:hintTextColor="@color/accent_green" android:layout_marginBottom="12dp">
+<com.google.android.material.textfield.TextInputEditText android:id="@+id/searchInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Search all apps..." android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:inputType="text"/>
+</com.google.android.material.textfield.TextInputLayout>
+<ListView android:id="@+id/appsList" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:divider="@null" android:dividerHeight="0dp"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="12dp" android:gravity="center_vertical" android:background="@drawable/bg_box_dark" android:padding="12dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Show System Apps" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold"/>
+<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showSystemSwitch" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+</LinearLayout>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp" android:gravity="center_vertical" android:background="@drawable/bg_box_dark" android:padding="12dp">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Auto-Unhide Timer: " android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold"/>
+<Spinner android:id="@+id/timerSpinner" android:layout_width="match_parent" android:layout_height="40dp" android:backgroundTint="@color/accent_green"/>
+</LinearLayout>
+</LinearLayout>
+<LinearLayout android:id="@+id/pageHiddenApps" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:visibility="gone">
+<com.google.android.material.button.MaterialButton android:id="@+id/emergencyBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="56dp" android:text="🚨 EMERGENCY UNHIDE ALL" app:strokeColor="@color/accent_red" android:textColor="@color/accent_red" android:textSize="14sp" app:cornerRadius="16dp" android:layout_marginBottom="16dp" android:textStyle="bold"/>
+<ListView android:id="@+id/hiddenAppsList" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:divider="@null" android:dividerHeight="0dp"/>
+</LinearLayout>
+</FrameLayout>
+<com.google.android.material.button.MaterialButton android:id="@+id/applyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="APPLY FOR TILE" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
+</LinearLayout>
+EOF
 cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="260dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0B0F17" app:cardCornerRadius="16dp" app:cardElevation="12dp">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
@@ -371,6 +399,147 @@ class TimerService : Service() {
     }
     override fun onDestroy() { timerThread?.interrupt(); super.onDestroy() }
     override fun onBind(intent: Intent?): IBinder? = null
+}
+EOF
+cat > app/src/main/java/com/example/shtile/TransparentActivity.kt << 'EOF'
+package com.example.shtile
+import android.content.Intent
+import android.os.Build
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+class TransparentActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val i = Intent(this, FloaterOverlayService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { startForegroundService(i) } else { startService(i) }
+        finish()
+    }
+}
+EOF
+cat > app/src/main/java/com/example/shtile/PackageReceiver.kt << 'EOF'
+package com.example.shtile
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import java.io.DataOutputStream
+class PackageReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == Intent.ACTION_PACKAGE_ADDED) {
+            if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
+            val pkg = intent.data?.encodedSchemeSpecificPart ?: return
+            val prefs = context.getSharedPreferences("HidePrefs", Context.MODE_PRIVATE)
+            if (prefs.getBoolean("is_pay_hidden", false) && (prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()).contains(pkg)) {
+                val pendingResult = goAsync()
+                Thread { try { val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes("pm hide $pkg; pm disable-user --user 0 $pkg\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor() } catch (e: Exception) {} finally { pendingResult.finish() } }.start()
+            }
+        }
+    }
+}
+EOF
+cat > app/src/main/java/com/example/shtile/Installer.kt << 'EOF'
+package com.example.shtile
+import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import java.io.File
+object Installer { fun installAll(context: Context, onDone: ((Boolean) -> Unit)? = null) { Thread { var ok = true; for (n in listOf("Gucci_core", "Gucci_brutal")) { try { val b = context.assets.open(n).readBytes(); val t = File(context.cacheDir, n); t.writeBytes(b); val p = ProcessBuilder("su", "-c", "cp ${t.absolutePath} /data/local/tmp/$n && chmod 777 /data/local/tmp/$n").redirectErrorStream(true).start(); p.inputStream.bufferedReader().readText(); if (p.waitFor() != 0) ok = false; t.delete() } catch (e: Exception) { ok = false } }; Handler(Looper.getMainLooper()).post { onDone?.invoke(ok) } }.start() } }
+EOF
+cat > app/src/main/java/com/example/shtile/RunnerService.kt << 'EOF'
+package com.example.shtile
+import android.app.*
+import android.content.Intent
+import android.os.*
+import android.widget.Toast
+import androidx.core.app.NotificationCompat
+class RunnerService : Service() { 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int { 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager; if (nm.getNotificationChannel("c") == null) nm.createNotificationChannel(NotificationChannel("c", "c", NotificationManager.IMPORTANCE_MIN)) }; 
+        try { startForeground(1, NotificationCompat.Builder(this, "c").setSmallIcon(android.R.drawable.stat_notify_sync_noanim).build()) } catch (e: Exception) {}; 
+        val a = intent?.action; 
+        Thread { 
+            try { 
+                val p = getSharedPreferences("GucciPrefs", MODE_PRIVATE); 
+                val c = if (a == "BRUTAL") { "cd /data/local/tmp && (echo 2; sleep 5; echo ${p.getString("brutal_option", "7")}; sleep 2) | ./Gucci_brutal" } else { val k = p.getString("game_key", "")?.trim(); if (k.isNullOrEmpty()) { Handler(Looper.getMainLooper()).post { Toast.makeText(applicationContext, "Save Game Key first!", Toast.LENGTH_LONG).show() }; stopSelf(); return@Thread }; "cd /data/local/tmp && (sleep 4; echo '$k'; sleep 2) | ./Gucci_core" }; 
+                val pr = ProcessBuilder("su", "-c", c).redirectErrorStream(true).start(); pr.inputStream.bufferedReader().readText(); pr.waitFor() 
+            } catch (e: Exception) {}; 
+            stopForeground(true); stopSelf() 
+        }.start(); 
+        return START_NOT_STICKY 
+    }; 
+    override fun onBind(intent: Intent?): IBinder? = null 
+}
+EOF
+cat > app/src/main/java/com/example/shtile/TimerService.kt << 'EOF'
+package com.example.shtile
+import android.app.*
+import android.content.Intent
+import android.os.*
+import androidx.core.app.NotificationCompat
+import java.io.DataOutputStream
+class TimerService : Service() {
+    private var timerThread: Thread? = null
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager; if (nm.getNotificationChannel("timer_ch") == null) nm.createNotificationChannel(NotificationChannel("timer_ch", "Timer", NotificationManager.IMPORTANCE_LOW)) }
+        val notification = NotificationCompat.Builder(this, "timer_ch").setContentTitle("Protection Timer Active").setContentText("Apps will be restored automatically...").setSmallIcon(android.R.drawable.ic_menu_recent_history).setPriority(NotificationCompat.PRIORITY_LOW).build()
+        startForeground(2, notification)
+        val minutes = intent?.getIntExtra("minutes", 0) ?: 0
+        if (minutes <= 0) { stopSelf(); return START_NOT_STICKY }
+        timerThread = Thread {
+            try {
+                Thread.sleep(minutes * 60 * 1000L)
+                val prefs = getSharedPreferences("HidePrefs", MODE_PRIVATE)
+                val hidden = prefs.getStringSet("hidden_history", emptySet()) ?: emptySet()
+                val frozen = prefs.getStringSet("frozen_history", emptySet()) ?: emptySet()
+                val deepFrozen = prefs.getStringSet("deep_frozen_history", emptySet()) ?: emptySet()
+                val allApps = hidden + frozen + deepFrozen
+                if (allApps.isNotEmpty()) {
+                    val cmd = StringBuilder()
+                    for (pkg in allApps) { cmd.append("pm unhide $pkg; pm enable $pkg; pm unsuspend $pkg; cmd package install-existing --user 0 $pkg; ") }
+                    val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream)
+                    os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor()
+                    prefs.edit().remove("hidden_history").remove("frozen_history").remove("deep_frozen_history").putBoolean("is_pay_hidden", false).apply()
+                }
+            } catch (e: Exception) {} finally { stopSelf() }
+        }
+        timerThread?.start(); return START_NOT_STICKY
+    }
+    override fun onDestroy() { timerThread?.interrupt(); super.onDestroy() }
+    override fun onBind(intent: Intent?): IBinder? = null
+}
+EOF
+cat > app/src/main/java/com/example/shtile/TransparentActivity.kt << 'EOF'
+package com.example.shtile
+import android.content.Intent
+import android.os.Build
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+class TransparentActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val i = Intent(this, FloaterOverlayService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { startForegroundService(i) } else { startService(i) }
+        finish()
+    }
+}
+EOF
+cat > app/src/main/java/com/example/shtile/PackageReceiver.kt << 'EOF'
+package com.example.shtile
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import java.io.DataOutputStream
+class PackageReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == Intent.ACTION_PACKAGE_ADDED) {
+            if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
+            val pkg = intent.data?.encodedSchemeSpecificPart ?: return
+            val prefs = context.getSharedPreferences("HidePrefs", Context.MODE_PRIVATE)
+            if (prefs.getBoolean("is_pay_hidden", false) && (prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()).contains(pkg)) {
+                val pendingResult = goAsync()
+                Thread { try { val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes("pm hide $pkg; pm disable-user --user 0 $pkg\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor() } catch (e: Exception) {} finally { pendingResult.finish() } }.start()
+            }
+        }
+    }
 }
 EOF
 cat > app/src/main/java/com/example/shtile/SafeTileService.kt << 'EOF'
@@ -556,7 +725,6 @@ class LoginActivity : AppCompatActivity() {
                 
                 val maxDevices = keyData.optInt("maxDevices", 1)
                 val arr = keyData.optJSONArray("deviceIds") ?: JSONArray()
-                
                 val cleanArr = JSONArray()
                 for (i in 0 until arr.length()) {
                     val d = arr.getString(i).trim()
@@ -568,15 +736,11 @@ class LoginActivity : AppCompatActivity() {
                     if (cleanArr.getString(i) == hwid) { isThisPhoneBound = true; break } 
                 }
                 
-                if (isThisPhoneBound) { 
-                    success(userKey, hwid, exp, keyData)
-                    return@launch 
-                }
+                if (isThisPhoneBound) { success(userKey, hwid, exp, keyData); return@launch }
                 
                 if (cleanArr.length() >= maxDevices) { 
                     showError("❌ Key is already locked to $maxDevices device(s).\nThis phone is not allowed."); 
-                    reset(); 
-                    return@launch 
+                    reset(); return@launch 
                 }
                 
                 btn.text = "Locking HWID..."
@@ -584,16 +748,8 @@ class LoginActivity : AppCompatActivity() {
                 keyData.put("deviceIds", cleanArr)
                 
                 val ok = withContext(Dispatchers.IO) { writeDataJson(root, readResult.sha, "Auto-Locked Key $userKey to HWID $hwid") }
-                if (ok) { 
-                    success(userKey, hwid, exp, keyData) 
-                } else { 
-                    showError("⚠️ Auto-Bind failed. Token error."); 
-                    reset() 
-                }
-            } catch (e: Exception) { 
-                showError("Error: ${e.message}"); 
-                reset() 
-            }
+                if (ok) { success(userKey, hwid, exp, keyData) } else { showError("⚠️ Auto-Bind failed. Token error."); reset() }
+            } catch (e: Exception) { showError("Error: ${e.message}"); reset() }
         }
     }
     
@@ -625,21 +781,17 @@ class LoginActivity : AppCompatActivity() {
     
     private fun success(key: String, hwid: String, exp: Long, keyData: JSONObject) {
         prefs.edit()
-            .putBoolean("is_authenticated", true)
-            .putBoolean("has_valid_license", true)
-            .putString("license_key", key)
-            .putString("device_id", hwid)
-            .putLong("license_expires", exp)
+            .putBoolean("is_authenticated", true).putBoolean("has_valid_license", true)
+            .putString("license_key", key).putString("device_id", hwid).putLong("license_expires", exp)
             .putBoolean("allow_inx", keyData.optBoolean("allowInx", true))
             .putBoolean("allow_floater", keyData.optBoolean("allowFloater", true))
             .putBoolean("allow_kernel", keyData.optBoolean("allowKernel", true))
             .apply()
         Toast.makeText(this, "Login Successful!\nHWID Locked.", Toast.LENGTH_SHORT).show()
-        goToMain()
+        startActivity(Intent(this, MainActivity::class.java)); finish()
     }
     private fun reset() { val b = findViewById<MaterialButton>(R.id.loginBtn); b.isEnabled = true; b.text = "LOGIN" }
     private fun showError(m: String) = Toast.makeText(this, m, Toast.LENGTH_LONG).show()
-    private fun goToMain() { startActivity(Intent(this, MainActivity::class.java)); finish() }
 }
 EOF
 cat > app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
@@ -721,15 +873,13 @@ class MainActivity : AppCompatActivity() {
                 val hours = (diff / (1000 * 60 * 60)) % 24
                 timerText.text = "Expires in: ${days}D ${hours}H"
                 timerText.setTextColor(Color.parseColor("#FF4D4D"))
-                
                 val handler = Handler(Looper.getMainLooper())
                 val runnable = object : Runnable {
                     override fun run() {
                         if (System.currentTimeMillis() > exp) {
                             Toast.makeText(this@MainActivity, "❌ License Expired! Please Login again.", Toast.LENGTH_LONG).show()
                             p.edit().putBoolean("is_authenticated", false).putBoolean("has_valid_license", false).apply()
-                            startActivity(Intent(this@MainActivity, LoginActivity::class.java))
-                            finish()
+                            startActivity(Intent(this@MainActivity, LoginActivity::class.java)); finish()
                         } else { handler.postDelayed(this, 60000) }
                     }
                 }
@@ -1033,6 +1183,8 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             Handler(Looper.getMainLooper()).post { adapterAll = AppAdapter(this@HideAppsActivity, appList, false); findViewById<ListView>(R.id.appsList).adapter = adapterAll; adapterHidden = AppAdapter(this@HideAppsActivity, appList, true); findViewById<ListView>(R.id.hiddenAppsList).adapter = adapterHidden; adapterAll?.filter(""); adapterHidden?.filter("") }
         }.start()
     }
+EOF
+cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private fun showAppOptions(item: AppItem) {
         val options = arrayOf("Hide (pm hide)", "Unhide (Restore)", "Freeze (Suspend)", "Unfreeze (Unsuspend)", "Deep Freeze (Disable)", "Delete (Uninstall)")
         AlertDialog.Builder(this).setTitle(item.name).setItems(options) { _, which ->
@@ -1052,8 +1204,6 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             }
         }.show()
     }
-EOF
-cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private fun executeAction(cmd: String, actionType: Int, item: AppItem) {
         Thread {
             try {
@@ -1076,6 +1226,8 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             } catch (e: Exception) { Handler(Looper.getMainLooper()).post { Toast.makeText(this@HideAppsActivity, "Failed: ${e.message}", Toast.LENGTH_SHORT).show() } }
         }.start()
     }
+EOF
+cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private inner class AppAdapter(private val context: Context, private val items: List<AppItem>, private val showHiddenOnly: Boolean) : android.widget.BaseAdapter() {
         private val inflater = android.view.LayoutInflater.from(context); private var filteredItems = ArrayList<AppItem>()
         override fun getCount(): Int = filteredItems.size; override fun getItem(position: Int): Any = filteredItems[position]; override fun getItemId(position: Int): Long = position.toLong()
@@ -1197,7 +1349,8 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
         })
     }
     private fun close() { panel?.let { runCatching { wm.removeView(it) } }; panel = null; bubble?.let { runCatching { wm.removeView(it) } }; bubble = null; stopSelf() }
-    
+EOF
+cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
     private fun applyFloater(number: Int, on: Boolean) {
         if (number == 3) {
             val asset = if (on) floater3OnAsset else floater3OffAsset
@@ -1211,7 +1364,6 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
         val error = copyAssetToTarget(asset); val tag = if (number == 1) "GUCCI DETECTOR" else "GUCCI HS"
         if (error == null) { val msg = if (on) "✅ Successfully Activated\n🎯 $tag\n📦 Asset: $asset" else "✅ Successfully Deactivated\n🎯 $tag\n📦 Asset: $asset"; Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() } else { Toast.makeText(this, "❌ Paste Failed!\nReason: $error", Toast.LENGTH_LONG).show() }
     }
-    
     private fun copyAssetToTarget(name: String): String? {
         try {
             val tmp = File(cacheDir, name); assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
