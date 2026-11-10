@@ -9,7 +9,7 @@
       "expiresAt": 0,
       "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true
+      "allowKernel": false
     }
   }
 }
