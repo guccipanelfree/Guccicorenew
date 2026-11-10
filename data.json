@@ -127,7 +127,9 @@
       "allowKernel": true
     },
     "RONY": {
-      "deviceIds": [],
+      "deviceIds": [
+        "9aeb11f84b5858b0"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796887982683,
