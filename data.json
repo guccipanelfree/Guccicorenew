@@ -48,6 +48,15 @@
       "allowInx": true,
       "allowFloater": true,
       "allowKernel": true
+    },
+    "ZARA": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1796882838727,
+      "allowInx": true,
+      "allowFloater": true,
+      "allowKernel": true
     }
   }
 }
