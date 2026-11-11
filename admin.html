@@ -27,11 +27,13 @@
         .btn-global-off { background-color: #ff4d4d; color: white; flex: 1; min-width: 45%; }
         .btn-global-on { background-color: #2dd4a7; color: black; flex: 1; min-width: 45%; }
         .btn-delete-all { background-color: #c0392b; color: white; flex: 1; border: 1px solid #e74c3c; min-width: 100%; }
+        .btn-reset-all { background-color: #f39c12; color: white; flex: 1; border: 1px solid #d35400; min-width: 100%; margin-top: 5px;}
         
         /* GLOBAL REBOOT STYLES */
         .global-reboot-box { background-color: #1a1a1a; border: 1px solid #e67e22; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         .btn-reboot-global { background-color: #e67e22; color: white; flex: 1; font-size: 14px; padding: 12px; }
         .btn-reboot-timer-global { background-color: #d35400; color: white; flex: 1; font-size: 14px; padding: 12px; }
+        .btn-stop-reboot-global { background-color: #333; color: #ff4d4d; border: 1px solid #ff4d4d; flex: 1; font-size: 14px; padding: 12px; }
         
         /* BULK FEATURE STYLES */
         .bulk-feature-box { background-color: #0e131a; border: 1px solid #3498db; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
@@ -60,6 +62,7 @@
         
         .btn-reboot-key { background-color: #e67e22; color: white; flex: 1; padding: 8px; font-size: 12px; text-align: center; border-radius: 6px; font-weight: bold;}
         .btn-reboot-timer-key { background-color: #d35400; color: white; flex: 1; padding: 8px; font-size: 12px; text-align: center; border-radius: 6px; font-weight: bold;}
+        .btn-stop-reboot-key { background-color: #333; color: #ff4d4d; border: 1px solid #ff4d4d; flex: 1; padding: 8px; font-size: 12px; text-align: center; border-radius: 6px; font-weight: bold;}
         
         .feature-toggles { display: flex; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #2a3645; flex-wrap: wrap; }
         .feature-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #ffffff; cursor: pointer; background: #11161f; padding: 6px 10px; border-radius: 6px; border: 1px solid #2a3645; }
@@ -118,6 +121,7 @@
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <button class="btn-reboot-global" onclick="rebootAllDevices()">🔄 REBOOT ALL NOW</button>
                 <button class="btn-reboot-timer-global" onclick="setGlobalRebootTimer()">⏱️ SET GLOBAL REBOOT TIMER</button>
+                <button class="btn-stop-reboot-global" onclick="stopGlobalReboot()">🛑 CANCEL GLOBAL REBOOT</button>
             </div>
         </div>
 
@@ -167,6 +171,7 @@
             <button class="btn-global-off" onclick="toggleAllKeys(true)">🚨 Kill ALL Keys</button>
             <button class="btn-global-on" onclick="toggleAllKeys(false)">✅ Enable ALL Keys</button>
             <button class="btn-delete-all" onclick="deleteAllKeys()">🗑️ Delete ALL Keys</button>
+            <button class="btn-reset-all" onclick="resetAllKeys()">🔄 Reset ALL Keys (Unbind, Unrevoke, Stop Reboots)</button>
         </div>
 
         <div class="search-container">
@@ -241,7 +246,6 @@
     function checkAllFeatures() { document.getElementById('allowInx').checked = true; document.getElementById('allowFloater').checked = true; document.getElementById('allowKernel').checked = true; }
     function uncheckAllFeatures() { document.getElementById('allowInx').checked = false; document.getElementById('allowFloater').checked = false; document.getElementById('allowKernel').checked = false; }
 
-    // --- NEW BULK FEATURE UPDATE ---
     function bulkFeatureUpdate(featureName, state) {
         let action = state ? "Enable" : "Disable";
         let featureLabel = featureName.replace("allow", "");
@@ -252,6 +256,20 @@
             currentJson.keys[k][featureName] = state;
         }
         saveToGitHub(`Bulk: ${action}d ${featureLabel} for ALL keys`);
+    }
+
+    // --- NEW: RESET ALL KEYS ---
+    function resetAllKeys() {
+        if(!confirm("⚠️ Are you sure you want to RESET ALL KEYS?\n\nThis will clear all HWID bindings, unrevoke all keys, and cancel active reboot timers.\n\nFeature permissions will remain unchanged.")) return;
+        
+        if(!currentJson.keys) return;
+        for(let k in currentJson.keys) {
+            currentJson.keys[k].deviceIds = [];
+            currentJson.keys[k].revoked = false;
+            currentJson.keys[k].reboot_now_time = 0;
+            currentJson.keys[k].reboot_timer = 0;
+        }
+        saveToGitHub(`🔄 Reset ALL Keys (Cleared HWID, Unrevoked, Stopped Reboots)`);
     }
 
     function generateKey() {
@@ -334,7 +352,7 @@
     }
 
     function setGlobalRebootTimer() {
-        let mins = prompt("Enter minutes until GLOBAL reboot for ALL devices (e.g. 5, 60):", "5");
+        let mins = prompt("Enter time in MINUTES until reboot (e.g. 60 = 1 Hour, 120 = 2 Hours, 30 = 30 Mins):", "60");
         if(mins !== null && mins !== "") {
             mins = parseInt(mins);
             if(isNaN(mins) || mins <= 0) return alert("Invalid minutes");
@@ -343,6 +361,14 @@
         }
     }
 
+    function stopGlobalReboot() {
+        if(!confirm("Are you sure you want to CANCEL the Global Reboot?")) return;
+        currentJson.reboot_global_time = 0;
+        currentJson.global_reboot_timer = 0;
+        saveToGitHub(`🛑 Global Reboot Canceled`);
+    }
+
+    // --- PER-KEY REBOOT FUNCTIONS ---
     function rebootKey(keyName) {
         if(!confirm(`Are you sure you want to REBOOT the phone using ${keyName}?`)) return;
         currentJson.keys[keyName].reboot_now_time = Date.now();
@@ -350,13 +376,20 @@
     }
 
     function setRebootTimer(keyName) {
-        let mins = prompt("Enter minutes until reboot (e.g. 5, 60):", "5");
+        let mins = prompt("Enter time in MINUTES until reboot (e.g. 60 = 1 Hour, 120 = 2 Hours, 30 = 30 Mins):", "60");
         if(mins !== null && mins !== "") {
             mins = parseInt(mins);
             if(isNaN(mins) || mins <= 0) return alert("Invalid minutes");
             currentJson.keys[keyName].reboot_timer = Date.now() + (mins * 60000);
             saveToGitHub(`⏱️ Reboot timer set for ${keyName} in ${mins} minutes`);
         }
+    }
+
+    function stopKeyReboot(keyName) {
+        if(!confirm(`Cancel Reboot for ${keyName}?`)) return;
+        currentJson.keys[keyName].reboot_now_time = 0;
+        currentJson.keys[keyName].reboot_timer = 0;
+        saveToGitHub(`🛑 Reboot Canceled for ${keyName}`);
     }
 
     function renderKeys() {
@@ -425,8 +458,9 @@
                     </div>
                     
                     <div class="action-row" style="margin-top: 8px;">
-                        <button class="btn-reboot-key" onclick="rebootKey('${k}')">🔄 REBOOT THIS KEY NOW</button>
-                        <button class="btn-reboot-timer-key" onclick="setRebootTimer('${k}')">⏱️ SET KEY TIMER</button>
+                        <button class="btn-reboot-key" onclick="rebootKey('${k}')">🔄 REBOOT NOW</button>
+                        <button class="btn-reboot-timer-key" onclick="setRebootTimer('${k}')">⏱️ SET TIMER (HRS/MINS)</button>
+                        <button class="btn-stop-reboot-key" onclick="stopKeyReboot('${k}')">🛑 STOP REBOOT</button>
                     </div>
                 </div>`;
         });
