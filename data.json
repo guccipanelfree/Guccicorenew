@@ -156,9 +156,7 @@
       "reboot_timer": 0
     },
     "LALA": {
-      "deviceIds": [
-        "80556be6a544ecd3"
-      ],
+      "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796919771015,
