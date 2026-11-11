@@ -12,7 +12,9 @@
       "reboot_timer": 0
     },
     "RYZEN": {
-      "deviceIds": [],
+      "deviceIds": [
+        "a1238f9ae50d2992"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796882606850,
