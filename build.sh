@@ -1,7 +1,6 @@
 wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip; unzip -q gradle-8.2-bin.zip; export PATH="$PWD/gradle-8.2/bin:$PATH"
 rm -rf app *.gradle *.properties; mkdir -p app/src/main/java/com/example/shtile app/src/main/res/drawable app/src/main/res/layout app/src/main/res/values app/src/main/assets
 
-# CRITICAL ASSETS (Includes Gucci_G and Gucci_GO)
 for file in Gucci_core Gucci_brutal Gucci_Ch Gucci_h Gucci_O Gucci_G Gucci_GO; do
     if [ -f "$file" ]; then cp "$file" app/src/main/assets/; fi
 done
@@ -46,6 +45,7 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 <uses-permission android:name="android.permission.INTERNET"/>
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
@@ -182,7 +182,6 @@ cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 <com.google.android.material.button.MaterialButton android:id="@+id/loadFilesBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="wrap_content" android:layout_height="50dp" android:layout_marginTop="8dp" android:layout_gravity="center_horizontal" android:paddingStart="48dp" android:paddingEnd="48dp" android:text="LOAD INX" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="25dp" android:layout_marginBottom="16dp"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/launchFloaterBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="60dp" android:text="🚀 LAUNCH FLOATER" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/loadDriverBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="⚡ KERNEL DRIVER LOADER" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
-<!-- NEW CLEAR REPORT BUTTON -->
 <com.google.android.material.button.MaterialButton android:id="@+id/clearReportBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="🧹 CLEAR REPORTS" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
 <TextView android:paddingTop="40dp" android:gravity="center" android:text="Use Quick Setting tiles to load INX-Payload" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
 <TextView android:id="@+id/contactAdminText" android:paddingTop="16dp" android:gravity="center" android:text="Contact Admin for Help" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold" android:layout_width="match_parent" android:layout_height="wrap_content"/>
@@ -192,27 +191,6 @@ cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 </LinearLayout>
 </LinearLayout>
 </ScrollView>
-EOF
-cat > app/src/main/res/layout/activity_clear_report.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="24dp" android:gravity="center_vertical">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="REPORT MANAGER" android:textColor="@color/text_primary" android:textSize="28sp" android:textStyle="bold" android:layout_gravity="center_horizontal" android:layout_marginBottom="8dp"/>
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Clean up game files and reports" android:textColor="@color/text_secondary" android:textSize="14sp" android:layout_gravity="center_horizontal" android:layout_marginBottom="32dp"/>
-<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="24dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="CLEAR REPORT" android:textColor="#2ECC71" android:textSize="20sp" android:textStyle="bold"/>
-<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="✅ Safe: Only deletes cache and logs.\nIt is safe and no data wipe of your game settings or accounts." android:textColor="@color/text_secondary" android:textSize="13sp" android:layout_marginTop="4dp" android:layout_marginBottom="16dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnSafeClear" android:layout_width="match_parent" android:layout_height="56dp" android:text="CLEAR REPORT SAFELY" android:textColor="#000000" app:backgroundTint="#2ECC71" app:cornerRadius="12dp" android:textStyle="bold"/>
-</LinearLayout>
-</com.google.android.material.card.MaterialCardView>
-<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="CLEAR REPORT DEEPLY" android:textColor="#FF4D4D" android:textSize="20sp" android:textStyle="bold"/>
-<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ RISKY: Deletes the entire files folder.\nWarning: It may delete your settings or game data permanently." android:textColor="#FF4D4D" android:textSize="13sp" android:layout_marginTop="4dp" android:layout_marginBottom="16dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnDeepClear" android:layout_width="match_parent" android:layout_height="64dp" android:text="⚠️ CLEAR REPORT DEEPLY" android:textColor="#FFFFFF" app:backgroundTint="#FF4D4D" app:cornerRadius="12dp" android:textStyle="bold" android:textSize="16sp"/>
-</LinearLayout>
-</com.google.android.material.card.MaterialCardView>
-</LinearLayout>
 EOF
 cat > app/src/main/res/layout/activity_driver_loader.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
@@ -355,6 +333,27 @@ cat > app/src/main/res/layout/overlay_bubble.xml << 'EOF'
 <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp" android:src="@drawable/ic_tile_floater" app:tint="@color/accent_green"/>
 </FrameLayout>
 EOF
+cat > app/src/main/res/layout/activity_clear_report.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="24dp" android:gravity="center_vertical">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="REPORT MANAGER" android:textColor="@color/text_primary" android:textSize="28sp" android:textStyle="bold" android:layout_gravity="center_horizontal" android:layout_marginBottom="8dp"/>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Clean up game files and reports" android:textColor="@color/text_secondary" android:textSize="14sp" android:layout_gravity="center_horizontal" android:layout_marginBottom="32dp"/>
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="24dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="CLEAR REPORT" android:textColor="#2ECC71" android:textSize="20sp" android:textStyle="bold"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="✅ Safe: Only deletes cache and logs.\nIt is safe and no data wipe of your game settings or accounts." android:textColor="@color/text_secondary" android:textSize="13sp" android:layout_marginTop="4dp" android:layout_marginBottom="16dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnSafeClear" android:layout_width="match_parent" android:layout_height="56dp" android:text="CLEAR REPORT SAFELY" android:textColor="#000000" app:backgroundTint="#2ECC71" app:cornerRadius="12dp" android:textStyle="bold"/>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="CLEAR REPORT DEEPLY" android:textColor="#FF4D4D" android:textSize="20sp" android:textStyle="bold"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ RISKY: Deletes the entire files folder.\nWarning: It may delete your settings or game data permanently." android:textColor="#FF4D4D" android:textSize="13sp" android:layout_marginTop="4dp" android:layout_marginBottom="16dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnDeepClear" android:layout_width="match_parent" android:layout_height="64dp" android:text="⚠️ CLEAR REPORT DEEPLY" android:textColor="#FFFFFF" app:backgroundTint="#FF4D4D" app:cornerRadius="12dp" android:textStyle="bold" android:textSize="16sp"/>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+</LinearLayout>
+EOF
 cat > app/src/main/java/com/example/shtile/Installer.kt << 'EOF'
 package com.example.shtile
 import android.content.Context
@@ -430,6 +429,7 @@ cat > app/src/main/java/com/example/shtile/RebootService.kt << 'EOF'
 package com.example.shtile
 import android.app.*
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import android.util.Base64
@@ -447,22 +447,16 @@ class RebootService : Service() {
             if (nm.getNotificationChannel("reboot_ch") == null) {
                 nm.createNotificationChannel(NotificationChannel("reboot_ch", "Reboot Service", NotificationManager.IMPORTANCE_MIN))
             }
-            val notification = NotificationCompat.Builder(this, "reboot_ch")
-                .setContentTitle("Gucci Protection")
-                .setContentText("Running in background...")
-                .setSmallIcon(android.R.drawable.stat_notify_sync_noanim)
-                .build()
-            startForeground(3, notification)
+            val notification = NotificationCompat.Builder(this, "reboot_ch").setContentTitle("Gucci Protection").setContentText("Running in background...").setSmallIcon(android.R.drawable.stat_notify_sync_noanim).build()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) { startForeground(3, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC) } else { startForeground(3, notification) }
         }
         val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
         val licenseKey = prefs.getString("license_key", "")
-        
         if (!licenseKey.isNullOrEmpty()) {
             scope.launch {
                 val tokenPart1 = "ghp_Lla9yGQggCqrab1"
                 val tokenPart2 = "OA7X7yTpxrhNX6w0AZarM"
                 val token = tokenPart1 + tokenPart2
-
                 while (isActive) {
                     try {
                         val conn = URL("https://api.github.com/repos/guccipanelfree/Guccicorenew/contents/data.json").openConnection() as HttpURLConnection
@@ -988,9 +982,7 @@ cat >> app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
             loadDriverBtn.setOnClickListener { startActivity(Intent(this, DriverLoaderActivity::class.java)) }
         }
         
-        // 🚨 NEW: Clear Report Button Routing
-        findViewById<Button>(R.id.clearReportBtn).setOnClickListener { startActivity(Intent(this, ClearReportActivity::class.java)) }
-        
+        findViewById<Button>(R.id.clearReportBtn)?.setOnClickListener { startActivity(Intent(this, ClearReportActivity::class.java)) }
         findViewById<ImageButton>(R.id.hideAppsIcon).setOnClickListener { startActivity(Intent(this, HideAppsActivity::class.java)) }
         findViewById<ImageButton>(R.id.terminalIcon).setOnClickListener { startActivity(Intent(this, TerminalActivity::class.java)) }
     }
@@ -1247,6 +1239,8 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             Handler(Looper.getMainLooper()).post { adapterAll = AppAdapter(this@HideAppsActivity, appList, false); findViewById<ListView>(R.id.appsList).adapter = adapterAll; adapterHidden = AppAdapter(this@HideAppsActivity, appList, true); findViewById<ListView>(R.id.hiddenAppsList).adapter = adapterHidden; adapterAll?.filter(""); adapterHidden?.filter("") }
         }.start()
     }
+EOF
+cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private fun showAppOptions(item: AppItem) {
         val options = arrayOf("Hide (pm hide)", "Unhide (Restore)", "Freeze (Suspend)", "Unfreeze (Unsuspend)", "Deep Freeze (Disable)", "Delete (Uninstall)")
         AlertDialog.Builder(this).setTitle(item.name).setItems(options) { _, which ->
@@ -1266,8 +1260,6 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             }
         }.show()
     }
-EOF
-cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private fun executeAction(cmd: String, actionType: Int, item: AppItem) {
         Thread {
             try {
