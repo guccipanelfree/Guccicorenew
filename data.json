@@ -7,7 +7,7 @@
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 0,
-      "allowInx": true,
+      "allowInx": false,
       "allowFloater": true,
       "allowKernel": true,
       "reboot_now_time": 1794381519985
@@ -30,7 +30,7 @@
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796882773381,
-      "allowInx": true,
+      "allowInx": false,
       "allowFloater": true,
       "allowKernel": true
     },
