@@ -141,7 +141,7 @@
       "allowFloater": true,
       "allowKernel": false,
       "reboot_now_time": 0,
-      "reboot_timer": 1794397408993
+      "reboot_timer": 0
     },
     "LALA": {
       "deviceIds": [],
