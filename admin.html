@@ -27,7 +27,7 @@
         .btn-global-off { background-color: #ff4d4d; color: white; flex: 1; min-width: 45%; }
         .btn-global-on { background-color: #2dd4a7; color: black; flex: 1; min-width: 45%; }
         .btn-delete-all { background-color: #c0392b; color: white; flex: 1; border: 1px solid #e74c3c; min-width: 100%; }
-        .btn-delete-all:hover { background-color: #e74c3c; }
+        .btn-reboot { background-color: #e67e22; color: white; flex: 1; border: 1px solid #d35400; min-width: 100%; }
         
         .key-item { background-color: #1a222c; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #2dd4a7; }
         .key-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -45,6 +45,8 @@
         .btn-toggle { background-color: #9b59b6; color: white; }
         .btn-delete { background-color: #e74c3c; color: white; }
         .btn-copy { background-color: #3498db; color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px; margin-left: 10px; }
+        .btn-reboot-key { background-color: #e67e22; color: white; flex: 1; padding: 8px; font-size: 12px; text-align: center; border-radius: 6px; }
+        .btn-reboot-timer { background-color: #d35400; color: white; flex: 1; padding: 8px; font-size: 12px; text-align: center; border-radius: 6px; }
         
         .feature-toggles { display: flex; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #2a3645; flex-wrap: wrap; }
         .feature-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #ffffff; cursor: pointer; background: #11161f; padding: 6px 10px; border-radius: 6px; border: 1px solid #2a3645; }
@@ -113,13 +115,13 @@
             <button style="background: #1a222c; color: #2dd4a7; border: 1px solid #2dd4a7; padding: 6px 12px; font-size: 12px;" onclick="loadKeys()">Refresh</button>
         </div>
         
-        <!-- GLOBAL CONTROLS -->
         <div class="global-actions" style="margin-top: 15px;">
             <button class="btn-global-off" onclick="toggleAllKeys(true)">🚨 Kill ALL Keys</button>
             <button class="btn-global-on" onclick="toggleAllKeys(false)">✅ Enable ALL Keys</button>
             <button class="btn-delete-all" onclick="deleteAllKeys()">🗑️ Delete ALL Keys</button>
             <button class="btn-global-on" onclick="toggleAllFeatures(true)">🔓 Unlock ALL Features</button>
             <button class="btn-global-off" onclick="toggleAllFeatures(false)">🔒 Lock ALL Features</button>
+            <button class="btn-reboot" onclick="rebootAllDevices()">🔄 Reboot ALL Devices</button>
         </div>
 
         <div class="search-container">
@@ -191,24 +193,14 @@
         saveToGitHub(`Updated ${featureName} for ${keyName} to ${isChecked}`);
     }
 
-    function checkAllFeatures() {
-        document.getElementById('allowInx').checked = true;
-        document.getElementById('allowFloater').checked = true;
-        document.getElementById('allowKernel').checked = true;
-    }
-
-    function uncheckAllFeatures() {
-        document.getElementById('allowInx').checked = false;
-        document.getElementById('allowFloater').checked = false;
-        document.getElementById('allowKernel').checked = false;
-    }
+    function checkAllFeatures() { document.getElementById('allowInx').checked = true; document.getElementById('allowFloater').checked = true; document.getElementById('allowKernel').checked = true; }
+    function uncheckAllFeatures() { document.getElementById('allowInx').checked = false; document.getElementById('allowFloater').checked = false; document.getElementById('allowKernel').checked = false; }
 
     function generateKey() {
         const days = parseInt(document.getElementById('keyDuration').value);
         const allowInx = document.getElementById('allowInx').checked;
         const allowFloater = document.getElementById('allowFloater').checked;
         const allowKernel = document.getElementById('allowKernel').checked;
-        
         let newKey = document.getElementById('customKeyInput').value.trim().toUpperCase();
         
         if (!newKey) {
@@ -224,15 +216,10 @@
         if(!currentJson.keys) currentJson.keys = {};
         
         currentJson.keys[newKey] = { 
-            "deviceIds": [], 
-            "maxDevices": 1, 
-            "revoked": false, 
-            "expiresAt": expiresAt,
-            "allowInx": allowInx,
-            "allowFloater": allowFloater,
-            "allowKernel": allowKernel
+            "deviceIds": [], "maxDevices": 1, "revoked": false, "expiresAt": expiresAt,
+            "allowInx": allowInx, "allowFloater": allowFloater, "allowKernel": allowKernel,
+            "reboot_now": false, "reboot_timer": 0
         };
-        
         document.getElementById('customKeyInput').value = "";
         saveToGitHub(`Generated key ${newKey}`, document.getElementById('genMsg'));
     }
@@ -290,6 +277,29 @@
         if(!confirm("🚨 FINAL WARNING: ALL USERS WILL BE LOGGED OUT AND KEYS WILL BE DESTROYED.\n\nProceed?")) return;
         currentJson.keys = {};
         saveToGitHub(`🚨 DELETED ALL KEYS`);
+    }
+
+    // NEW: Reboot Functions
+    function rebootAllDevices() {
+        if(!confirm("⚠️ Are you sure you want to REBOOT ALL DEVICES?\n\nAll active phones will restart immediately.")) return;
+        currentJson.reboot_global = true;
+        saveToGitHub("🚨 REBOOT ALL DEVICES INITIATED");
+    }
+
+    function rebootKey(keyName) {
+        if(!confirm(`Are you sure you want to REBOOT the phone using ${keyName}?`)) return;
+        currentJson.keys[keyName].reboot_now = true;
+        saveToGitHub(`🔄 Reboot command sent for ${keyName}`);
+    }
+
+    function setRebootTimer(keyName) {
+        let mins = prompt("Enter minutes until reboot (e.g. 5, 60):", "5");
+        if(mins !== null && mins !== "") {
+            mins = parseInt(mins);
+            if(isNaN(mins) || mins <= 0) return alert("Invalid minutes");
+            currentJson.keys[keyName].reboot_timer = Date.now() + (mins * 60000);
+            saveToGitHub(`⏱️ Reboot timer set for ${keyName} in ${mins} minutes`);
+        }
     }
 
     function renderKeys() {
@@ -355,6 +365,11 @@
                         <button class="btn-action btn-edit" onclick="editDays('${k}')">Edit Days</button>
                         <button class="btn-action btn-toggle ${toggleColor}" onclick="toggleKey('${k}')">${toggleText}</button>
                         <button class="btn-action btn-delete" onclick="deleteKey('${k}')">Delete</button>
+                    </div>
+                    
+                    <div class="action-row" style="margin-top: 8px;">
+                        <button class="btn-reboot-key" onclick="rebootKey('${k}')">🔄 Reboot Now</button>
+                        <button class="btn-reboot-timer" onclick="setRebootTimer('${k}')">⏱️ Set Reboot Timer</button>
                     </div>
                 </div>`;
         });
