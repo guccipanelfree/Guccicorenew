@@ -42,7 +42,7 @@
       "revoked": true,
       "expiresAt": 1796882824161,
       "allowInx": false,
-      "allowFloater": false,
+      "allowFloater": true,
       "allowKernel": false
     },
     "WARTH": {
