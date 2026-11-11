@@ -436,112 +436,6 @@ class PackageReceiver : BroadcastReceiver() {
     }
 }
 EOF
-cat > app/src/main/java/com/example/shtile/Installer.kt << 'EOF'
-package com.example.shtile
-import android.content.Context
-import android.os.Handler
-import android.os.Looper
-import java.io.File
-object Installer { fun installAll(context: Context, onDone: ((Boolean) -> Unit)? = null) { Thread { var ok = true; for (n in listOf("Gucci_core", "Gucci_brutal")) { try { val b = context.assets.open(n).readBytes(); val t = File(context.cacheDir, n); t.writeBytes(b); val p = ProcessBuilder("su", "-c", "cp ${t.absolutePath} /data/local/tmp/$n && chmod 777 /data/local/tmp/$n").redirectErrorStream(true).start(); p.inputStream.bufferedReader().readText(); if (p.waitFor() != 0) ok = false; t.delete() } catch (e: Exception) { ok = false } }; Handler(Looper.getMainLooper()).post { onDone?.invoke(ok) } }.start() } }
-EOF
-cat > app/src/main/java/com/example/shtile/RunnerService.kt << 'EOF'
-package com.example.shtile
-import android.app.*
-import android.content.Intent
-import android.os.*
-import android.widget.Toast
-import androidx.core.app.NotificationCompat
-class RunnerService : Service() { 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int { 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager; if (nm.getNotificationChannel("c") == null) nm.createNotificationChannel(NotificationChannel("c", "c", NotificationManager.IMPORTANCE_MIN)) }; 
-        try { startForeground(1, NotificationCompat.Builder(this, "c").setSmallIcon(android.R.drawable.stat_notify_sync_noanim).build()) } catch (e: Exception) {}; 
-        val a = intent?.action; 
-        Thread { 
-            try { 
-                val p = getSharedPreferences("GucciPrefs", MODE_PRIVATE); 
-                val c = if (a == "BRUTAL") { "cd /data/local/tmp && (echo 2; sleep 5; echo ${p.getString("brutal_option", "7")}; sleep 2) | ./Gucci_brutal" } else { val k = p.getString("game_key", "")?.trim(); if (k.isNullOrEmpty()) { Handler(Looper.getMainLooper()).post { Toast.makeText(applicationContext, "Save Game Key first!", Toast.LENGTH_LONG).show() }; stopSelf(); return@Thread }; "cd /data/local/tmp && (sleep 4; echo '$k'; sleep 2) | ./Gucci_core" }; 
-                val pr = ProcessBuilder("su", "-c", c).redirectErrorStream(true).start(); pr.inputStream.bufferedReader().readText(); pr.waitFor() 
-            } catch (e: Exception) {}; 
-            stopForeground(true); stopSelf() 
-        }.start(); 
-        return START_NOT_STICKY 
-    }; 
-    override fun onBind(intent: Intent?): IBinder? = null 
-}
-EOF
-cat > app/src/main/java/com/example/shtile/TimerService.kt << 'EOF'
-package com.example.shtile
-import android.app.*
-import android.content.Intent
-import android.os.*
-import androidx.core.app.NotificationCompat
-import java.io.DataOutputStream
-class TimerService : Service() {
-    private var timerThread: Thread? = null
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager; if (nm.getNotificationChannel("timer_ch") == null) nm.createNotificationChannel(NotificationChannel("timer_ch", "Timer", NotificationManager.IMPORTANCE_LOW)) }
-        val notification = NotificationCompat.Builder(this, "timer_ch").setContentTitle("Protection Timer Active").setContentText("Apps will be restored automatically...").setSmallIcon(android.R.drawable.ic_menu_recent_history).setPriority(NotificationCompat.PRIORITY_LOW).build()
-        startForeground(2, notification)
-        val minutes = intent?.getIntExtra("minutes", 0) ?: 0
-        if (minutes <= 0) { stopSelf(); return START_NOT_STICKY }
-        timerThread = Thread {
-            try {
-                Thread.sleep(minutes * 60 * 1000L)
-                val prefs = getSharedPreferences("HidePrefs", MODE_PRIVATE)
-                val hidden = prefs.getStringSet("hidden_history", emptySet()) ?: emptySet()
-                val frozen = prefs.getStringSet("frozen_history", emptySet()) ?: emptySet()
-                val deepFrozen = prefs.getStringSet("deep_frozen_history", emptySet()) ?: emptySet()
-                val allApps = hidden + frozen + deepFrozen
-                if (allApps.isNotEmpty()) {
-                    val cmd = StringBuilder()
-                    for (pkg in allApps) { cmd.append("pm unhide $pkg; pm enable $pkg; pm unsuspend $pkg; cmd package install-existing --user 0 $pkg; ") }
-                    val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream)
-                    os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor()
-                    prefs.edit().remove("hidden_history").remove("frozen_history").remove("deep_frozen_history").putBoolean("is_pay_hidden", false).apply()
-                }
-            } catch (e: Exception) {} finally { stopSelf() }
-        }
-        timerThread?.start(); return START_NOT_STICKY
-    }
-    override fun onDestroy() { timerThread?.interrupt(); super.onDestroy() }
-    override fun onBind(intent: Intent?): IBinder? = null
-}
-EOF
-cat > app/src/main/java/com/example/shtile/TransparentActivity.kt << 'EOF'
-package com.example.shtile
-import android.content.Intent
-import android.os.Build
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-class TransparentActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val i = Intent(this, FloaterOverlayService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { startForegroundService(i) } else { startService(i) }
-        finish()
-    }
-}
-EOF
-cat > app/src/main/java/com/example/shtile/PackageReceiver.kt << 'EOF'
-package com.example.shtile
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import java.io.DataOutputStream
-class PackageReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_PACKAGE_ADDED) {
-            if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
-            val pkg = intent.data?.encodedSchemeSpecificPart ?: return
-            val prefs = context.getSharedPreferences("HidePrefs", Context.MODE_PRIVATE)
-            if (prefs.getBoolean("is_pay_hidden", false) && (prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()).contains(pkg)) {
-                val pendingResult = goAsync()
-                Thread { try { val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes("pm hide $pkg; pm disable-user --user 0 $pkg\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor() } catch (e: Exception) {} finally { pendingResult.finish() } }.start()
-            }
-        }
-    }
-}
-EOF
 cat > app/src/main/java/com/example/shtile/SafeTileService.kt << 'EOF'
 package com.example.shtile
 import android.content.Intent
@@ -854,6 +748,13 @@ class MainActivity : AppCompatActivity() {
         val allowInx = p.getBoolean("allow_inx", true)
         val allowFloater = p.getBoolean("allow_floater", true)
         val allowKernel = p.getBoolean("allow_kernel", true)
+        
+        // 🚨 AUTO-DELETE INX FILES IF LOCKED
+        if (!allowInx) {
+            Thread {
+                try { Runtime.getRuntime().exec(arrayOf("su", "-c", "rm -f /data/local/tmp/Gucci_core /data/local/tmp/Gucci_brutal")).waitFor() } catch (e: Exception) {}
+            }.start()
+        }
         
         keyInput.setText(p.getString("game_key", ""))
         sub.text = android.text.Html.fromHtml("Premium Panel By <font color='#00E5A0'>GUCCI</font>", android.text.Html.FROM_HTML_MODE_LEGACY)
@@ -1226,8 +1127,6 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             } catch (e: Exception) { Handler(Looper.getMainLooper()).post { Toast.makeText(this@HideAppsActivity, "Failed: ${e.message}", Toast.LENGTH_SHORT).show() } }
         }.start()
     }
-EOF
-cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private inner class AppAdapter(private val context: Context, private val items: List<AppItem>, private val showHiddenOnly: Boolean) : android.widget.BaseAdapter() {
         private val inflater = android.view.LayoutInflater.from(context); private var filteredItems = ArrayList<AppItem>()
         override fun getCount(): Int = filteredItems.size; override fun getItem(position: Int): Any = filteredItems[position]; override fun getItemId(position: Int): Long = position.toLong()
@@ -1349,8 +1248,7 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
         })
     }
     private fun close() { panel?.let { runCatching { wm.removeView(it) } }; panel = null; bubble?.let { runCatching { wm.removeView(it) } }; bubble = null; stopSelf() }
-EOF
-cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
+    
     private fun applyFloater(number: Int, on: Boolean) {
         if (number == 3) {
             val asset = if (on) floater3OnAsset else floater3OffAsset
@@ -1364,6 +1262,7 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
         val error = copyAssetToTarget(asset); val tag = if (number == 1) "GUCCI DETECTOR" else "GUCCI HS"
         if (error == null) { val msg = if (on) "✅ Successfully Activated\n🎯 $tag\n📦 Asset: $asset" else "✅ Successfully Deactivated\n🎯 $tag\n📦 Asset: $asset"; Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() } else { Toast.makeText(this, "❌ Paste Failed!\nReason: $error", Toast.LENGTH_LONG).show() }
     }
+    
     private fun copyAssetToTarget(name: String): String? {
         try {
             val tmp = File(cacheDir, name); assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
@@ -1391,11 +1290,9 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
     private fun copyGlooCrossToTarget(name: String): String? {
         try {
             val tmp = File(cacheDir, name); assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
-            
             val targetDir = "/storage/emulated/0/Android/data/com.dts.freefiremax/files/contentcache/Optional/android"
             val targetFile = "fileinfo"
             val scriptFile = File(cacheDir, "paste_g.sh")
-            
             scriptFile.writeText("""
                 #!/system/bin/sh
                 TARGET_DIR="$targetDir"
@@ -1406,12 +1303,10 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
                 chmod 777 "${'$'}FULL_PATH"
                 if [ -s "${'$'}FULL_PATH" ]; then echo "PASTE_SUCCESSFUL"; else echo "PASTE_FAILED"; fi
             """.trimIndent())
-            
             val chmodP = ProcessBuilder("su", "-c", "chmod 777 " + scriptFile.absolutePath).start(); chmodP.waitFor()
             val p = ProcessBuilder("su", "-mm", "-c", "sh " + scriptFile.absolutePath).redirectErrorStream(true).start()
             val output = p.inputStream.bufferedReader().readText(); val code = p.waitFor()
             tmp.delete(); scriptFile.delete()
-            
             return if (output.contains("PASTE_SUCCESSFUL") && code == 0) null else { "Check Root. Output: $output" }
         } catch (e: Exception) { return e.message }
     }
