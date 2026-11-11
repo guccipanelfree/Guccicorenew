@@ -5,7 +5,7 @@
         "114d3a4a7cd63b90"
       ],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 0,
       "allowInx": true,
       "allowFloater": true,
@@ -16,7 +16,7 @@
         "a1238f9ae50d2992"
       ],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 1796882606850,
       "allowInx": true,
       "allowFloater": true,
@@ -27,7 +27,7 @@
         "ee65b3b2f72e0d2c"
       ],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 1796882773381,
       "allowInx": true,
       "allowFloater": false,
@@ -38,7 +38,7 @@
         "bf30076fea9a9067"
       ],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 1796882824161,
       "allowInx": true,
       "allowFloater": true,
@@ -49,7 +49,7 @@
         "2357b7de90d76763"
       ],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 1796882832701,
       "allowInx": true,
       "allowFloater": true,
@@ -60,7 +60,7 @@
         "2883781af51f4236"
       ],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 1796882838727,
       "allowInx": true,
       "allowFloater": false,
@@ -71,7 +71,7 @@
         "46ee4cbc0580ef66"
       ],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 1796882862298,
       "allowInx": true,
       "allowFloater": true,
@@ -82,7 +82,7 @@
         "bb63cdc37a916a8c"
       ],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 1796883001120,
       "allowInx": true,
       "allowFloater": false,
@@ -93,7 +93,7 @@
         "88731dedcabac8f2"
       ],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 1796883088942,
       "allowInx": false,
       "allowFloater": true,
@@ -104,7 +104,7 @@
         "4582325e581a0586"
       ],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 1796884231932,
       "allowInx": true,
       "allowFloater": false,
@@ -115,7 +115,7 @@
         "501e3798bde188c7"
       ],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 1796885078464,
       "allowInx": true,
       "allowFloater": true,
@@ -124,7 +124,7 @@
     "ROY": {
       "deviceIds": [],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 1796885636807,
       "allowInx": true,
       "allowFloater": false,
@@ -135,7 +135,7 @@
         "9aeb11f84b5858b0"
       ],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 1796887982683,
       "allowInx": true,
       "allowFloater": false,
@@ -146,7 +146,7 @@
         "71daced2b5e2395e"
       ],
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 1796919771015,
       "allowInx": true,
       "allowFloater": true,
