@@ -7,7 +7,7 @@
       "expiresAt": 0,
       "allowInx": true,
       "allowFloater": true,
-      "allowKernel": false,
+      "allowKernel": true,
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
