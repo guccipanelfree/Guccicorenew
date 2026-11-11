@@ -169,7 +169,9 @@
       "reboot_timer": 0
     },
     "KRISHNA": {
-      "deviceIds": [],
+      "deviceIds": [
+        "6cba3ae516d675f5"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1797003107097,
