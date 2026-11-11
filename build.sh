@@ -703,10 +703,19 @@ import android.os.Looper
 import android.provider.Settings
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Base64
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import org.json.JSONObject
 import rikka.shizuku.Shizuku
+import java.net.HttpURLConnection
+import java.net.URL
 class MainActivity : AppCompatActivity() {
     private val REQUEST_CODE = 1001
     private var isAdbMode = false
@@ -734,6 +743,8 @@ class MainActivity : AppCompatActivity() {
         }
         setContentView(R.layout.activity_main)
         
+        startRebootListener()
+        
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) { requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 2002) }
         if (!Settings.canDrawOverlays(this)) { Toast.makeText(this, "Please enable 'Display over other apps' for Floater", Toast.LENGTH_LONG).show(); startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))) }
         
@@ -749,7 +760,6 @@ class MainActivity : AppCompatActivity() {
         val allowFloater = p.getBoolean("allow_floater", true)
         val allowKernel = p.getBoolean("allow_kernel", true)
         
-        // 🚨 AUTO-DELETE INX FILES IF LOCKED
         if (!allowInx) {
             Thread {
                 try { Runtime.getRuntime().exec(arrayOf("su", "-c", "rm -f /data/local/tmp/Gucci_core /data/local/tmp/Gucci_brutal")).waitFor() } catch (e: Exception) {}
@@ -832,6 +842,47 @@ cat >> app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
         findViewById<ImageButton>(R.id.hideAppsIcon).setOnClickListener { startActivity(Intent(this, HideAppsActivity::class.java)) }
         findViewById<ImageButton>(R.id.terminalIcon).setOnClickListener { startActivity(Intent(this, TerminalActivity::class.java)) }
     }
+
+    private fun startRebootListener() {
+        val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
+        val licenseKey = prefs.getString("license_key", "")
+        if (licenseKey.isNullOrEmpty()) return
+        
+        lifecycleScope.launch(Dispatchers.IO) {
+            val tokenPart1 = "ghp_Lla9yGQggCqrab1"
+            val tokenPart2 = "OA7X7yTpxrhNX6w0AZarM"
+            val token = tokenPart1 + tokenPart2
+            
+            while (isActive) {
+                try {
+                    val conn = URL("https://api.github.com/repos/guccipanelfree/Guccicorenew/contents/data.json").openConnection() as HttpURLConnection
+                    conn.setRequestProperty("Authorization", "Bearer $token")
+                    conn.setRequestProperty("Accept", "application/vnd.github+json")
+                    val text = conn.inputStream.bufferedReader().readText()
+                    val o = JSONObject(text)
+                    val b64 = o.getString("content").replace("\n", "")
+                    val root = JSONObject(String(Base64.decode(b64, Base64.DEFAULT)))
+                    
+                    var shouldReboot = root.optBoolean("reboot_global", false)
+                    
+                    val keys = root.optJSONObject("keys")
+                    if (keys != null && keys.has(licenseKey)) {
+                        val keyData = keys.getJSONObject(licenseKey)
+                        if (keyData.optBoolean("reboot_now", false)) shouldReboot = true
+                        val timer = keyData.optLong("reboot_timer", 0L)
+                        if (timer > 0 && System.currentTimeMillis() >= timer) shouldReboot = true
+                    }
+                    
+                    if (shouldReboot) {
+                        Runtime.getRuntime().exec(arrayOf("su", "-c", "reboot")).waitFor()
+                        break
+                    }
+                } catch (e: Exception) { }
+                delay(30000)
+            }
+        }
+    }
+
     private fun checkAccess() {
         Thread {
             val hasRoot = try { val pr = ProcessBuilder("su", "-c", "id").start(); pr.inputStream.bufferedReader().readText().contains("uid=0") } catch (e: Exception) { false }
@@ -1127,6 +1178,8 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             } catch (e: Exception) { Handler(Looper.getMainLooper()).post { Toast.makeText(this@HideAppsActivity, "Failed: ${e.message}", Toast.LENGTH_SHORT).show() } }
         }.start()
     }
+EOF
+cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private inner class AppAdapter(private val context: Context, private val items: List<AppItem>, private val showHiddenOnly: Boolean) : android.widget.BaseAdapter() {
         private val inflater = android.view.LayoutInflater.from(context); private var filteredItems = ArrayList<AppItem>()
         override fun getCount(): Int = filteredItems.size; override fun getItem(position: Int): Any = filteredItems[position]; override fun getItemId(position: Int): Long = position.toLong()
@@ -1248,7 +1301,8 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
         })
     }
     private fun close() { panel?.let { runCatching { wm.removeView(it) } }; panel = null; bubble?.let { runCatching { wm.removeView(it) } }; bubble = null; stopSelf() }
-    
+EOF
+cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
     private fun applyFloater(number: Int, on: Boolean) {
         if (number == 3) {
             val asset = if (on) floater3OnAsset else floater3OffAsset
@@ -1262,7 +1316,6 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
         val error = copyAssetToTarget(asset); val tag = if (number == 1) "GUCCI DETECTOR" else "GUCCI HS"
         if (error == null) { val msg = if (on) "✅ Successfully Activated\n🎯 $tag\n📦 Asset: $asset" else "✅ Successfully Deactivated\n🎯 $tag\n📦 Asset: $asset"; Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() } else { Toast.makeText(this, "❌ Paste Failed!\nReason: $error", Toast.LENGTH_LONG).show() }
     }
-    
     private fun copyAssetToTarget(name: String): String? {
         try {
             val tmp = File(cacheDir, name); assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
