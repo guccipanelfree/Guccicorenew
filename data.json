@@ -49,7 +49,7 @@
         "2357b7de90d76763"
       ],
       "maxDevices": 1,
-      "revoked": true,
+      "revoked": false,
       "expiresAt": 1796882832701,
       "allowInx": true,
       "allowFloater": true,
