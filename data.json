@@ -7,9 +7,9 @@
       "maxDevices": 1,
       "revoked": true,
       "expiresAt": 0,
-      "allowInx": true,
-      "allowFloater": true,
-      "allowKernel": true
+      "allowInx": false,
+      "allowFloater": false,
+      "allowKernel": false
     },
     "RYZEN": {
       "deviceIds": [
@@ -18,9 +18,9 @@
       "maxDevices": 1,
       "revoked": true,
       "expiresAt": 1796882606850,
-      "allowInx": true,
-      "allowFloater": true,
-      "allowKernel": true
+      "allowInx": false,
+      "allowFloater": false,
+      "allowKernel": false
     },
     "FAISAL": {
       "deviceIds": [
@@ -29,9 +29,9 @@
       "maxDevices": 1,
       "revoked": true,
       "expiresAt": 1796882773381,
-      "allowInx": true,
+      "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true
+      "allowKernel": false
     },
     "NO NAME": {
       "deviceIds": [
@@ -40,9 +40,9 @@
       "maxDevices": 1,
       "revoked": true,
       "expiresAt": 1796882824161,
-      "allowInx": true,
-      "allowFloater": true,
-      "allowKernel": true
+      "allowInx": false,
+      "allowFloater": false,
+      "allowKernel": false
     },
     "WARTH": {
       "deviceIds": [
@@ -51,9 +51,9 @@
       "maxDevices": 1,
       "revoked": true,
       "expiresAt": 1796882832701,
-      "allowInx": true,
-      "allowFloater": true,
-      "allowKernel": true
+      "allowInx": false,
+      "allowFloater": false,
+      "allowKernel": false
     },
     "ZARA": {
       "deviceIds": [
@@ -62,9 +62,9 @@
       "maxDevices": 1,
       "revoked": true,
       "expiresAt": 1796882838727,
-      "allowInx": true,
+      "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true
+      "allowKernel": false
     },
     "WOTA": {
       "deviceIds": [
@@ -73,9 +73,9 @@
       "maxDevices": 1,
       "revoked": true,
       "expiresAt": 1796882862298,
-      "allowInx": true,
-      "allowFloater": true,
-      "allowKernel": true
+      "allowInx": false,
+      "allowFloater": false,
+      "allowKernel": false
     },
     "RITIK": {
       "deviceIds": [
@@ -84,9 +84,9 @@
       "maxDevices": 1,
       "revoked": true,
       "expiresAt": 1796883001120,
-      "allowInx": true,
+      "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true
+      "allowKernel": false
     },
     "ANKIT": {
       "deviceIds": [
@@ -96,7 +96,7 @@
       "revoked": true,
       "expiresAt": 1796883088942,
       "allowInx": false,
-      "allowFloater": true,
+      "allowFloater": false,
       "allowKernel": false
     },
     "SUMIT": {
@@ -106,9 +106,9 @@
       "maxDevices": 1,
       "revoked": true,
       "expiresAt": 1796884231932,
-      "allowInx": true,
+      "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true
+      "allowKernel": false
     },
     "FARHAN": {
       "deviceIds": [
@@ -117,18 +117,18 @@
       "maxDevices": 1,
       "revoked": true,
       "expiresAt": 1796885078464,
-      "allowInx": true,
-      "allowFloater": true,
-      "allowKernel": true
+      "allowInx": false,
+      "allowFloater": false,
+      "allowKernel": false
     },
     "ROY": {
       "deviceIds": [],
       "maxDevices": 1,
       "revoked": true,
       "expiresAt": 1796885636807,
-      "allowInx": true,
+      "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true
+      "allowKernel": false
     },
     "RONY": {
       "deviceIds": [
@@ -137,9 +137,9 @@
       "maxDevices": 1,
       "revoked": true,
       "expiresAt": 1796887982683,
-      "allowInx": true,
+      "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true
+      "allowKernel": false
     },
     "LALA": {
       "deviceIds": [
@@ -148,9 +148,9 @@
       "maxDevices": 1,
       "revoked": true,
       "expiresAt": 1796919771015,
-      "allowInx": true,
-      "allowFloater": true,
-      "allowKernel": true
+      "allowInx": false,
+      "allowFloater": false,
+      "allowKernel": false
     }
   }
 }
