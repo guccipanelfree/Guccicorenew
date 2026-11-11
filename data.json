@@ -20,7 +20,7 @@
       "revoked": true,
       "expiresAt": 1796882606850,
       "allowInx": false,
-      "allowFloater": false,
+      "allowFloater": true,
       "allowKernel": false
     },
     "FAISAL": {
