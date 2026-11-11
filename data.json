@@ -54,7 +54,7 @@
       "expiresAt": 1796882832701,
       "allowInx": true,
       "allowFloater": true,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 1794384654193
     },
     "ZARA": {
