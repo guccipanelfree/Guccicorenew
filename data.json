@@ -144,9 +144,7 @@
       "allowKernel": false
     },
     "LALA": {
-      "deviceIds": [
-        "71daced2b5e2395e"
-      ],
+      "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796919771015,
