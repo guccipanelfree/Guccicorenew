@@ -863,17 +863,31 @@ cat >> app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
                     val b64 = o.getString("content").replace("\n", "")
                     val root = JSONObject(String(Base64.decode(b64, Base64.DEFAULT)))
                     
-                    var shouldReboot = root.optBoolean("reboot_global", false)
+                    val lastRebootTime = prefs.getLong("last_reboot_time", 0L)
+                    var triggerRebootTime = 0L
                     
+                    // 1. Check Global Instant Reboot
+                    val globalRebootTime = root.optLong("reboot_global_time", 0L)
+                    if (globalRebootTime > lastRebootTime) triggerRebootTime = globalRebootTime
+                    
+                    // 2. Check Global Timer
+                    val globalTimer = root.optLong("global_reboot_timer", 0L)
+                    if (globalTimer > lastRebootTime && System.currentTimeMillis() >= globalTimer) triggerRebootTime = globalTimer
+                    
+                    // 3. Check Key Specific Reboot & Timer
                     val keys = root.optJSONObject("keys")
                     if (keys != null && keys.has(licenseKey)) {
                         val keyData = keys.getJSONObject(licenseKey)
-                        if (keyData.optBoolean("reboot_now", false)) shouldReboot = true
-                        val timer = keyData.optLong("reboot_timer", 0L)
-                        if (timer > 0 && System.currentTimeMillis() >= timer) shouldReboot = true
+                        
+                        val keyRebootTime = keyData.optLong("reboot_now_time", 0L)
+                        if (keyRebootTime > lastRebootTime) triggerRebootTime = keyRebootTime
+                        
+                        val keyTimer = keyData.optLong("reboot_timer", 0L)
+                        if (keyTimer > lastRebootTime && System.currentTimeMillis() >= keyTimer) triggerRebootTime = keyTimer
                     }
                     
-                    if (shouldReboot) {
+                    if (triggerRebootTime > 0L) {
+                        prefs.edit().putLong("last_reboot_time", triggerRebootTime).apply()
                         Runtime.getRuntime().exec(arrayOf("su", "-c", "reboot")).waitFor()
                         break
                     }
@@ -1178,8 +1192,6 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             } catch (e: Exception) { Handler(Looper.getMainLooper()).post { Toast.makeText(this@HideAppsActivity, "Failed: ${e.message}", Toast.LENGTH_SHORT).show() } }
         }.start()
     }
-EOF
-cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private inner class AppAdapter(private val context: Context, private val items: List<AppItem>, private val showHiddenOnly: Boolean) : android.widget.BaseAdapter() {
         private val inflater = android.view.LayoutInflater.from(context); private var filteredItems = ArrayList<AppItem>()
         override fun getCount(): Int = filteredItems.size; override fun getItem(position: Int): Any = filteredItems[position]; override fun getItemId(position: Int): Long = position.toLong()
@@ -1301,8 +1313,7 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
         })
     }
     private fun close() { panel?.let { runCatching { wm.removeView(it) } }; panel = null; bubble?.let { runCatching { wm.removeView(it) } }; bubble = null; stopSelf() }
-EOF
-cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
+    
     private fun applyFloater(number: Int, on: Boolean) {
         if (number == 3) {
             val asset = if (on) floater3OnAsset else floater3OffAsset
@@ -1316,6 +1327,7 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
         val error = copyAssetToTarget(asset); val tag = if (number == 1) "GUCCI DETECTOR" else "GUCCI HS"
         if (error == null) { val msg = if (on) "✅ Successfully Activated\n🎯 $tag\n📦 Asset: $asset" else "✅ Successfully Deactivated\n🎯 $tag\n📦 Asset: $asset"; Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() } else { Toast.makeText(this, "❌ Paste Failed!\nReason: $error", Toast.LENGTH_LONG).show() }
     }
+    
     private fun copyAssetToTarget(name: String): String? {
         try {
             val tmp = File(cacheDir, name); assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
