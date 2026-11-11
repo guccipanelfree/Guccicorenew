@@ -65,7 +65,7 @@
       "revoked": true,
       "expiresAt": 1796882838727,
       "allowInx": false,
-      "allowFloater": false,
+      "allowFloater": true,
       "allowKernel": false
     },
     "WOTA": {
