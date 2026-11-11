@@ -268,67 +268,6 @@ cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
 </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
 EOF
-cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="280dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0B0F17" app:cardCornerRadius="20dp" app:cardElevation="15dp" app:strokeColor="#1F2633" app:strokeWidth="1dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-<LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI MODS" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="16sp" android:fontFamily="sans-serif-black" android:letterSpacing="0.05"/>
-<ImageButton android:id="@+id/btnMinimize" android:layout_width="30dp" android:layout_height="30dp" android:padding="6dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#8B949E" android:layout_marginEnd="8dp"/>
-<ImageButton android:id="@+id/btnClose" android:layout_width="30dp" android:layout_height="30dp" android:padding="6dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
-</LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="STATUS" android:textColor="#8B949E" android:textSize="11sp" android:textStyle="bold" android:letterSpacing="0.1"/>
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="READY" android:textColor="#00E5A0" android:textSize="11sp" android:textStyle="bold" android:letterSpacing="0.1"/>
-</LinearLayout>
-<View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1F2633" android:layout_marginBottom="12dp"/>
-<ScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:maxHeight="320dp" android:scrollbars="none">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="10dp" android:background="#12161F" android:padding="8dp" android:layout_marginEnd="4dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI DETECTOR" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold"/>
-<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater1" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
-</LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="10dp" android:background="#12161F" android:padding="8dp" android:layout_marginEnd="4dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI HS" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold"/>
-<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater2" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
-</LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="10dp" android:background="#12161F" android:padding="8dp" android:layout_marginEnd="4dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GLOO CROSS" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold"/>
-<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater3" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
-</LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="10dp" android:background="#12161F" android:padding="8dp" android:layout_marginEnd="4dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="CHEST HS" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold"/>
-<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater4" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
-</LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginBottom="10dp" android:background="#12161F" android:padding="8dp" android:layout_marginEnd="4dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="BODY HS" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold"/>
-<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater5" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
-</LinearLayout>
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⚠️ Use only In Custom" android:textColor="#FF4D4D" android:textSize="10sp" android:textStyle="bold"/>
-</LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="10dp" android:background="#12161F" android:padding="8dp" android:layout_marginEnd="4dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="MAGIC" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold"/>
-<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater6" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
-</LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="4dp" android:background="#12161F" android:padding="8dp" android:layout_marginEnd="4dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="LOCATION" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold"/>
-<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater7" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
-</LinearLayout>
-</LinearLayout>
-</ScrollView>
-<View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1F2633" android:layout_marginBottom="12dp" android:layout_marginTop="4dp"/>
-<LinearLayout android:id="@+id/dragHandleBottom" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="ROOT" android:textColor="#8B949E" android:textSize="10sp" android:textStyle="bold" android:letterSpacing="0.1"/>
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GRANTED" android:textColor="#00E5A0" android:textSize="10sp" android:textStyle="bold" android:letterSpacing="0.1"/>
-</LinearLayout>
-</LinearLayout>
-</com.google.android.material.card.MaterialCardView>
-EOF
-cat > app/src/main/res/layout/overlay_bubble.xml << 'EOF'
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="60dp" android:layout_height="60dp" android:background="@drawable/bg_circle_grey">
-<ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp" android:src="@drawable/ic_tile_floater" app:tint="@color/accent_green"/>
-</FrameLayout>
-EOF
 cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
 <com.google.android.material.tabs.TabLayout android:id="@+id/tabLayout" android:layout_width="match_parent" android:layout_height="wrap_content" app:tabIndicatorColor="@color/accent_green" app:tabTextColor="@color/text_secondary" app:tabSelectedTextColor="@color/text_primary" app:tabIndicatorFullWidth="true" android:layout_marginBottom="16dp">
@@ -377,6 +316,67 @@ cat > app/src/main/res/layout/activity_clear_report.xml << 'EOF'
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
+EOF
+cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="280dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0B0F17" app:cardCornerRadius="20dp" app:cardElevation="15dp" app:strokeColor="#1F2633" app:strokeWidth="1dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
+<LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI MODS" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="14sp" android:fontFamily="sans-serif-black" android:letterSpacing="0.05"/>
+<ImageButton android:id="@+id/btnMinimize" android:layout_width="28dp" android:layout_height="28dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#8B949E" android:layout_marginEnd="8dp"/>
+<ImageButton android:id="@+id/btnClose" android:layout_width="28dp" android:layout_height="28dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
+</LinearLayout>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="STATUS" android:textColor="#8B949E" android:textSize="10sp" android:textStyle="bold" android:letterSpacing="0.1"/>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="READY" android:textColor="#00E5A0" android:textSize="10sp" android:textStyle="bold" android:letterSpacing="0.1"/>
+</LinearLayout>
+<View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1F2633" android:layout_marginBottom="8dp"/>
+<ScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:maxHeight="240dp" android:scrollbars="none">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp" android:background="#12161F" android:padding="6dp" android:layout_marginEnd="4dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI DETECTOR" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater1" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
+</LinearLayout>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp" android:background="#12161F" android:padding="6dp" android:layout_marginEnd="4dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI HS" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater2" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
+</LinearLayout>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp" android:background="#12161F" android:padding="6dp" android:layout_marginEnd="4dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GLOO CROSS" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater3" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
+</LinearLayout>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp" android:background="#12161F" android:padding="6dp" android:layout_marginEnd="4dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="CHEST HS" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater4" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
+</LinearLayout>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginBottom="6dp" android:background="#12161F" android:padding="6dp" android:layout_marginEnd="4dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="BODY HS" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater5" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
+</LinearLayout>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⚠️ Use only In Custom" android:textColor="#FF4D4D" android:textSize="9sp" android:textStyle="bold"/>
+</LinearLayout>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp" android:background="#12161F" android:padding="6dp" android:layout_marginEnd="4dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="MAGIC" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater6" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
+</LinearLayout>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="4dp" android:background="#12161F" android:padding="6dp" android:layout_marginEnd="4dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="LOCATION" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+<com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater7" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
+</LinearLayout>
+</LinearLayout>
+</ScrollView>
+<View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1F2633" android:layout_marginBottom="8dp" android:layout_marginTop="4dp"/>
+<LinearLayout android:id="@+id/dragHandleBottom" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="ROOT" android:textColor="#8B949E" android:textSize="10sp" android:textStyle="bold" android:letterSpacing="0.1"/>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GRANTED" android:textColor="#00E5A0" android:textSize="10sp" android:textStyle="bold" android:letterSpacing="0.1"/>
+</LinearLayout>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+EOF
+cat > app/src/main/res/layout/overlay_bubble.xml << 'EOF'
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="60dp" android:layout_height="60dp" android:background="@drawable/bg_circle_grey">
+<ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp" android:src="@drawable/ic_tile_floater" app:tint="@color/accent_green"/>
+</FrameLayout>
 EOF
 cat > app/src/main/java/com/example/shtile/Installer.kt << 'EOF'
 package com.example.shtile
@@ -639,38 +639,88 @@ class PayTileService : TileService() {
     private fun updateState(forceState: Boolean? = null) { val isHidden = forceState ?: getSharedPreferences("HidePrefs", MODE_PRIVATE).getBoolean("is_pay_hidden", false); qsTile?.apply { label = "Payment Protection"; state = if (isHidden) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE; updateTile() } }
 }
 EOF
-cat > app/src/main/java/com/example/shtile/TransparentActivity.kt << 'EOF'
+cat > app/src/main/java/com/example/shtile/ClearReportActivity.kt << 'EOF'
 package com.example.shtile
-import android.content.Intent
-import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-class TransparentActivity : AppCompatActivity() {
+import com.google.android.material.button.MaterialButton
+import java.io.File
+
+class ClearReportActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val i = Intent(this, FloaterOverlayService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { startForegroundService(i) } else { startService(i) }
-        finish()
-    }
-}
-EOF
-cat > app/src/main/java/com/example/shtile/PackageReceiver.kt << 'EOF'
-package com.example.shtile
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import java.io.DataOutputStream
-class PackageReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_PACKAGE_ADDED) {
-            if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
-            val pkg = intent.data?.encodedSchemeSpecificPart ?: return
-            val prefs = context.getSharedPreferences("HidePrefs", Context.MODE_PRIVATE)
-            if (prefs.getBoolean("is_pay_hidden", false) && (prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()).contains(pkg)) {
-                val pendingResult = goAsync()
-                Thread { try { val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes("pm hide $pkg; pm disable-user --user 0 $pkg\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor() } catch (e: Exception) {} finally { pendingResult.finish() } }.start()
-            }
+        setContentView(R.layout.activity_clear_report)
+        
+        val btnSafe = findViewById<MaterialButton>(R.id.btnSafeClear)
+        val btnDeep = findViewById<MaterialButton>(R.id.btnDeepClear)
+
+        // SAFE CLEAR
+        btnSafe.setOnClickListener {
+            Toast.makeText(this, "Clearing safe reports...", Toast.LENGTH_SHORT).show()
+            executeClearScript(false)
         }
+
+        // DEEP CLEAR
+        btnDeep.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("⚠️ WARNING: DEEP CLEAN")
+                .setMessage("Are you absolutely sure?\n\nThis will delete EVERYTHING inside the Free Fire folder (/data/user/0/com.dts.freefiremax/).\n\nIt MAY delete your game settings, logins, or data. This cannot be undone.")
+                .setPositiveButton("YES, DELETE EVERYTHING") { _, _ ->
+                    Toast.makeText(this, "Deep cleaning...", Toast.LENGTH_SHORT).show()
+                    executeClearScript(true)
+                }
+                .setNegativeButton("CANCEL", null).show()
+        }
+    }
+
+    private fun executeClearScript(isDeep: Boolean) {
+        Thread {
+            try {
+                // Use the exact same logic as the Floater: create a script, use su -mm
+                val scriptFile = File(cacheDir, "clear_report.sh")
+                val targetPath = if (isDeep) "/data/user/0/com.dts.freefiremax/" else "/data/user/0/com.dts.freefiremax/files/"
+                
+                scriptFile.writeText("""
+                    #!/system/bin/sh
+                    TARGET_DIR="$targetPath"
+                    if [ -d "${'$'}TARGET_DIR" ]; then
+                        rm -rf "${'$'}TARGET_DIR"*
+                        echo "SUCCESS"
+                    else
+                        echo "FOLDER_NOT_FOUND"
+                    fi
+                """.trimIndent())
+                
+                // Grant execute permission to the script
+                val chmodP = ProcessBuilder("su", "-c", "chmod 777 " + scriptFile.absolutePath).start()
+                chmodP.waitFor()
+                
+                // Execute with -mm (Master Mount) to bypass namespace restrictions
+                val p = ProcessBuilder("su", "-mm", "-c", "sh " + scriptFile.absolutePath).redirectErrorStream(true).start()
+                val output = p.inputStream.bufferedReader().readText()
+                val code = p.waitFor()
+                scriptFile.delete()
+                
+                Handler(Looper.getMainLooper()).post {
+                    if (output.contains("SUCCESS") && code == 0) {
+                        val msg = if (isDeep) "🚨 Deep Report Cleared!" else "✅ Safe Reports Cleared!"
+                        Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+                    } else if (output.contains("FOLDER_NOT_FOUND")) {
+                        Toast.makeText(this, "❌ Folder Not Found!\nIs Free Fire installed?", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(this, "❌ Failed (Check Root).\nOutput: $output", Toast.LENGTH_LONG).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post { 
+                    Toast.makeText(this, "❌ Error: ${e.message}", Toast.LENGTH_LONG).show() 
+                }
+            }
+        }.start()
     }
 }
 EOF
@@ -809,50 +859,6 @@ class LoginActivity : AppCompatActivity() {
     }
     private fun reset() { val b = findViewById<MaterialButton>(R.id.loginBtn); b.isEnabled = true; b.text = "LOGIN" }
     private fun showError(m: String) = Toast.makeText(this, m, Toast.LENGTH_LONG).show()
-}
-EOF
-cat > app/src/main/java/com/example/shtile/ClearReportActivity.kt << 'EOF'
-package com.example.shtile
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.button.MaterialButton
-class ClearReportActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_clear_report)
-        val btnSafe = findViewById<MaterialButton>(R.id.btnSafeClear)
-        val btnDeep = findViewById<MaterialButton>(R.id.btnDeepClear)
-        btnSafe.setOnClickListener {
-            Toast.makeText(this, "Clearing safe reports...", Toast.LENGTH_SHORT).show()
-            Thread {
-                try {
-                    val cmd = "rm -rf /data/user/0/com.dts.freefiremax/files/*"
-                    Runtime.getRuntime().exec(arrayOf("su", "-c", cmd)).waitFor()
-                    Handler(Looper.getMainLooper()).post { Toast.makeText(this, "✅ Safe Reports Cleared!", Toast.LENGTH_LONG).show() }
-                } catch (e: Exception) { Handler(Looper.getMainLooper()).post { Toast.makeText(this, "❌ Failed: ${e.message}", Toast.LENGTH_LONG).show() } }
-            }.start()
-        }
-        btnDeep.setOnClickListener {
-            AlertDialog.Builder(this)
-                .setTitle("⚠️ WARNING: DEEP CLEAN")
-                .setMessage("Are you absolutely sure?\n\nThis will delete EVERYTHING inside the Free Fire folder (/data/user/0/com.dts.freefiremax/).\n\nIt MAY delete your game settings, logins, or data. This cannot be undone.")
-                .setPositiveButton("YES, DELETE EVERYTHING") { _, _ ->
-                    Toast.makeText(this, "Deep cleaning...", Toast.LENGTH_SHORT).show()
-                    Thread {
-                        try {
-                            val cmd = "rm -rf /data/user/0/com.dts.freefiremax/*"
-                            Runtime.getRuntime().exec(arrayOf("su", "-c", cmd)).waitFor()
-                            Handler(Looper.getMainLooper()).post { Toast.makeText(this, "🚨 Deep Report Cleared!", Toast.LENGTH_LONG).show() }
-                        } catch (e: Exception) { Handler(Looper.getMainLooper()).post { Toast.makeText(this, "❌ Failed: ${e.message}", Toast.LENGTH_LONG).show() } }
-                    }.start()
-                }
-                .setNegativeButton("CANCEL", null).show()
-        }
-    }
 }
 EOF
 cat > app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
@@ -1360,7 +1366,6 @@ class FloaterOverlayService : Service() {
     private val floater4OnAsset  = "Gucci_CHS"; private val floater5OnAsset = "Gucci_B"
     private val floater6OnAsset  = "Gucci_M";   private val floater7OnAsset = "Gucci_L"
 
-    // 🚨 YOUR SPECIFIC PATHS 🚨
     private val glooTargetDir = "/storage/emulated/0/Android/data/com.dts.freefiremax/files/contentcache/Optional/android"
     private val compulsoryDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/"
     private val filesDir = "/data/user/0/com.dts.freefiremax/files/"
@@ -1443,33 +1448,34 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
 EOF
 cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
     private fun applyFloater(number: Int, on: Boolean) {
-        if (number == 3) { // Gloo Cross
+        if (number == 3) { 
             val error = copyAssetToTarget(if (on) floater3OnAsset else floater3OffAsset, "fileinfo", glooTargetDir)
-            val tag = "GLOO CROSS"
-            if (error == null) { Toast.makeText(this, if (on) "✅ Activated\n🎯 $tag" else "✅ Deactivated\n🎯 $tag", Toast.LENGTH_SHORT).show() } else { Toast.makeText(this, "❌ Paste Failed!\nReason: $error", Toast.LENGTH_LONG).show() }
+            if (error == null) Toast.makeText(this, if (on) "✅ GLOO CROSS Activated" else "✅ GLOO CROSS Deactivated", Toast.LENGTH_SHORT).show() 
+            else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
             return
         }
         
-        if (number == 4 || number == 5 || number == 6) { // Chest, Body, Magic
+        if (number == 4 || number == 5 || number == 6) { 
             val asset = when(number) { 4 -> floater4OnAsset; 5 -> floater5OnAsset; else -> floater6OnAsset }
             val tag = when(number) { 4 -> "CHEST HS"; 5 -> "BODY HS"; else -> "MAGIC" }
             val error = copyWithBackup(asset, cacheResName, compulsoryDir, on)
-            if (error == null) { Toast.makeText(this, if (on) "✅ Activated\n🎯 $tag" else "✅ Deactivated\n🎯 $tag", Toast.LENGTH_SHORT).show() } else { Toast.makeText(this, "❌ Paste Failed!\nReason: $error", Toast.LENGTH_LONG).show() }
+            if (error == null) Toast.makeText(this, if (on) "✅ $tag Activated" else "✅ $tag Deactivated", Toast.LENGTH_SHORT).show() 
+            else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
             return
         }
 
-        if (number == 7) { // Location
+        if (number == 7) { 
             val error = copyWithBackup(floater7OnAsset, pdcacheName, filesDir, on)
-            val tag = "LOCATION"
-            if (error == null) { Toast.makeText(this, if (on) "✅ Activated\n🎯 $tag" else "✅ Deactivated\n🎯 $tag", Toast.LENGTH_SHORT).show() } else { Toast.makeText(this, "❌ Paste Failed!\nReason: $error", Toast.LENGTH_LONG).show() }
+            if (error == null) Toast.makeText(this, if (on) "✅ LOCATION Activated" else "✅ LOCATION Deactivated", Toast.LENGTH_SHORT).show() 
+            else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
             return
         }
         
-        // 1 & 2
         val asset = when { number == 1 && on -> floater1OnAsset; number == 1 && !on -> floater1OffAsset; number == 2 && on -> floater2OnAsset; else -> floater2OffAsset }
         val targetFile = "assetindexer.U0jVgfPVdG5YZ2HvIuO5tFkQcCM~3D"
         val error = copyAssetToTarget(asset, targetFile, glooTargetDir); val tag = if (number == 1) "GUCCI DETECTOR" else "GUCCI HS"
-        if (error == null) { Toast.makeText(this, if (on) "✅ Successfully Activated\n🎯 $tag" else "✅ Successfully Deactivated\n🎯 $tag", Toast.LENGTH_SHORT).show() } else { Toast.makeText(this, "❌ Paste Failed!\nReason: $error", Toast.LENGTH_LONG).show() }
+        if (error == null) Toast.makeText(this, if (on) "✅ $tag Activated" else "✅ $tag Deactivated", Toast.LENGTH_SHORT).show() 
+        else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
     }
 
     private fun copyWithBackup(assetName: String, targetName: String, targetDir: String, enable: Boolean): String? {
@@ -1530,6 +1536,41 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
         } catch (e: Exception) { return e.message }
     }
     override fun onDestroy() { panel?.let { runCatching { wm.removeView(it) } }; bubble?.let { runCatching { wm.removeView(it) } }; super.onDestroy() }
+}
+EOF
+cat > app/src/main/java/com/example/shtile/TransparentActivity.kt << 'EOF'
+package com.example.shtile
+import android.content.Intent
+import android.os.Build
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+class TransparentActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val i = Intent(this, FloaterOverlayService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { startForegroundService(i) } else { startService(i) }
+        finish()
+    }
+}
+EOF
+cat > app/src/main/java/com/example/shtile/PackageReceiver.kt << 'EOF'
+package com.example.shtile
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import java.io.DataOutputStream
+class PackageReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == Intent.ACTION_PACKAGE_ADDED) {
+            if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
+            val pkg = intent.data?.encodedSchemeSpecificPart ?: return
+            val prefs = context.getSharedPreferences("HidePrefs", Context.MODE_PRIVATE)
+            if (prefs.getBoolean("is_pay_hidden", false) && (prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()).contains(pkg)) {
+                val pendingResult = goAsync()
+                Thread { try { val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes("pm hide $pkg; pm disable-user --user 0 $pkg\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor() } catch (e: Exception) {} finally { pendingResult.finish() } }.start()
+            }
+        }
+    }
 }
 EOF
 gradle assembleDebug
