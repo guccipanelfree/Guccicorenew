@@ -129,7 +129,7 @@
       "revoked": true,
       "expiresAt": 1796885636807,
       "allowInx": false,
-      "allowFloater": false,
+      "allowFloater": true,
       "allowKernel": false
     },
     "RONY": {
