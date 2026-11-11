@@ -5,7 +5,7 @@
         "114d3a4a7cd63b90"
       ],
       "maxDevices": 1,
-      "revoked": true,
+      "revoked": false,
       "expiresAt": 0,
       "allowInx": false,
       "allowFloater": false,
