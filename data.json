@@ -87,7 +87,7 @@
       "revoked": true,
       "expiresAt": 1796883001120,
       "allowInx": false,
-      "allowFloater": false,
+      "allowFloater": true,
       "allowKernel": false
     },
     "ANKIT": {
