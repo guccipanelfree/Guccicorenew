@@ -29,13 +29,11 @@
         .btn-delete-all { background-color: #c0392b; color: white; flex: 1; border: 1px solid #e74c3c; min-width: 100%; }
         .btn-reset-all { background-color: #f39c12; color: white; flex: 1; border: 1px solid #d35400; min-width: 100%; margin-top: 5px;}
         
-        /* GLOBAL REBOOT STYLES */
         .global-reboot-box { background-color: #1a1a1a; border: 1px solid #e67e22; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         .btn-reboot-global { background-color: #e67e22; color: white; flex: 1; font-size: 14px; padding: 12px; }
         .btn-reboot-timer-global { background-color: #d35400; color: white; flex: 1; font-size: 14px; padding: 12px; }
         .btn-stop-reboot-global { background-color: #333; color: #ff4d4d; border: 1px solid #ff4d4d; flex: 1; font-size: 14px; padding: 12px; }
         
-        /* BULK FEATURE STYLES */
         .bulk-feature-box { background-color: #0e131a; border: 1px solid #3498db; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         .bulk-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
         .bulk-col { display: flex; flex-direction: column; gap: 8px; }
@@ -50,6 +48,9 @@
         .status-bound { background-color: rgba(45, 212, 167, 0.2); color: #2dd4a7; }
         .status-unbound { background-color: rgba(255, 77, 77, 0.2); color: #ff4d4d; }
         .status-revoked { background-color: #333; color: #888; }
+        .status-timer { background-color: rgba(230, 126, 34, 0.2); color: #e67e22; animation: blink 2s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        
         .key-details { font-size: 13px; color: #8b949e; line-height: 1.6; margin-bottom: 15px; }
         .key-details b { color: #ffffff; }
         .action-row { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -73,6 +74,13 @@
         .search-container { margin-bottom: 15px; position: relative; }
         .search-container input { width: 100%; padding: 12px 12px 12px 40px; background-color: #1a222c; border: 1px solid #2a3645; border-radius: 8px; color: white; font-size: 14px; }
         .search-container::before { content: '🔍'; position: absolute; left: 12px; top: 12px; font-size: 16px; }
+
+        /* MODAL STYLES */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #11161f; padding: 24px; border-radius: 12px; border: 1px solid #2dd4a7; width: 90%; max-width: 400px; text-align: center; }
+        .modal-content h3 { color: #e67e22; margin-bottom: 15px; }
+        .modal-selects { display: flex; gap: 10px; margin-bottom: 20px; }
+        .modal-selects select { flex: 1; text-align: center; font-size: 18px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -120,7 +128,7 @@
             <h3 style="color:#e67e22; margin-bottom:15px;">🚨 GLOBAL REBOOT (ALL PHONES)</h3>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <button class="btn-reboot-global" onclick="rebootAllDevices()">🔄 REBOOT ALL NOW</button>
-                <button class="btn-reboot-timer-global" onclick="setGlobalRebootTimer()">⏱️ SET GLOBAL REBOOT TIMER</button>
+                <button class="btn-reboot-timer-global" onclick="openGlobalTimerModal()">⏱️ SET GLOBAL REBOOT TIMER</button>
                 <button class="btn-stop-reboot-global" onclick="stopGlobalReboot()">🛑 CANCEL GLOBAL REBOOT</button>
             </div>
         </div>
@@ -181,8 +189,39 @@
         <div id="keysContainer"></div>
     </div>
 </div>
+
+<!-- CUSTOM TIMER MODAL -->
+<div id="timerModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h3>⏱️ Select Reboot Time</h3>
+        <p style="font-size:13px; color:#8b949e; margin-bottom:15px;">Choose the exact time until the phone restarts.</p>
+        <div class="modal-selects">
+            <select id="timerHours">
+                <option value="0">0 Hours</option>
+                <option value="1">1 Hour</option>
+                <option value="2">2 Hours</option>
+                <option value="3">3 Hours</option>
+                <option value="4">4 Hours</option>
+                <option value="6">6 Hours</option>
+                <option value="12">12 Hours</option>
+                <option value="24">24 Hours</option>
+            </select>
+            <select id="timerMinutes">
+                <option value="0">0 Mins</option>
+                <option value="5">5 Mins</option>
+                <option value="10">10 Mins</option>
+                <option value="15">15 Mins</option>
+                <option value="30">30 Mins</option>
+                <option value="45">45 Mins</option>
+            </select>
+        </div>
+        <button class="btn-main" style="margin-bottom:10px;" onclick="confirmTimer()">Confirm Timer</button>
+        <button class="btn-stop-reboot-global" style="width:100%;" onclick="closeTimerModal()">Cancel</button>
+    </div>
+</div>
 <script>
     let token, user, repo, currentSha, currentJson;
+    let activeTimerKey = null; // Tracks if we are setting a global or key timer
 
     function connectAdmin() {
         user = document.getElementById('ghUser').value.trim();
@@ -258,7 +297,6 @@
         saveToGitHub(`Bulk: ${action}d ${featureLabel} for ALL keys`);
     }
 
-    // --- NEW: RESET ALL KEYS ---
     function resetAllKeys() {
         if(!confirm("⚠️ Are you sure you want to RESET ALL KEYS?\n\nThis will clear all HWID bindings, unrevoke all keys, and cancel active reboot timers.\n\nFeature permissions will remain unchanged.")) return;
         
@@ -344,21 +382,50 @@
         saveToGitHub(`🚨 DELETED ALL KEYS`);
     }
 
-    // --- GLOBAL REBOOT FUNCTIONS ---
+    // --- MODAL TIMER LOGIC ---
+    function openGlobalTimerModal() {
+        activeTimerKey = "GLOBAL";
+        document.getElementById('timerHours').value = "1";
+        document.getElementById('timerMinutes').value = "0";
+        document.getElementById('timerModal').classList.remove('hidden');
+    }
+
+    function openKeyTimerModal(keyName) {
+        activeTimerKey = keyName;
+        document.getElementById('timerHours').value = "0";
+        document.getElementById('timerMinutes').value = "30";
+        document.getElementById('timerModal').classList.remove('hidden');
+    }
+
+    function closeTimerModal() {
+        document.getElementById('timerModal').classList.add('hidden');
+        activeTimerKey = null;
+    }
+
+    function confirmTimer() {
+        const h = parseInt(document.getElementById('timerHours').value);
+        const m = parseInt(document.getElementById('timerMinutes').value);
+        const totalMins = (h * 60) + m;
+        
+        if(totalMins <= 0) { alert("Please select a valid time greater than 0."); return; }
+        
+        const timeInMs = Date.now() + (totalMins * 60000);
+        
+        if(activeTimerKey === "GLOBAL") {
+            currentJson.global_reboot_timer = timeInMs;
+            saveToGitHub(`⏱️ Global Reboot timer set for ALL devices in ${totalMins} minutes`);
+        } else {
+            currentJson.keys[activeTimerKey].reboot_timer = timeInMs;
+            saveToGitHub(`⏱️ Reboot timer set for ${activeTimerKey} in ${totalMins} minutes`);
+        }
+        closeTimerModal();
+    }
+
+    // --- REBOOT COMMANDS ---
     function rebootAllDevices() {
         if(!confirm("⚠️ Are you sure you want to REBOOT ALL DEVICES NOW?\n\nAll active phones will restart immediately.")) return;
         currentJson.reboot_global_time = Date.now();
         saveToGitHub("🚨 REBOOT ALL DEVICES INITIATED");
-    }
-
-    function setGlobalRebootTimer() {
-        let mins = prompt("Enter time in MINUTES until reboot (e.g. 60 = 1 Hour, 120 = 2 Hours, 30 = 30 Mins):", "60");
-        if(mins !== null && mins !== "") {
-            mins = parseInt(mins);
-            if(isNaN(mins) || mins <= 0) return alert("Invalid minutes");
-            currentJson.global_reboot_timer = Date.now() + (mins * 60000);
-            saveToGitHub(`⏱️ Global Reboot timer set for ALL devices in ${mins} minutes`);
-        }
     }
 
     function stopGlobalReboot() {
@@ -368,21 +435,10 @@
         saveToGitHub(`🛑 Global Reboot Canceled`);
     }
 
-    // --- PER-KEY REBOOT FUNCTIONS ---
     function rebootKey(keyName) {
         if(!confirm(`Are you sure you want to REBOOT the phone using ${keyName}?`)) return;
         currentJson.keys[keyName].reboot_now_time = Date.now();
         saveToGitHub(`🔄 Reboot command sent for ${keyName}`);
-    }
-
-    function setRebootTimer(keyName) {
-        let mins = prompt("Enter time in MINUTES until reboot (e.g. 60 = 1 Hour, 120 = 2 Hours, 30 = 30 Mins):", "60");
-        if(mins !== null && mins !== "") {
-            mins = parseInt(mins);
-            if(isNaN(mins) || mins <= 0) return alert("Invalid minutes");
-            currentJson.keys[keyName].reboot_timer = Date.now() + (mins * 60000);
-            saveToGitHub(`⏱️ Reboot timer set for ${keyName} in ${mins} minutes`);
-        }
     }
 
     function stopKeyReboot(keyName) {
@@ -413,8 +469,21 @@
             if(searchVal && !k.toLowerCase().includes(searchVal) && !hwidText.toLowerCase().includes(searchVal)) return;
             hasVisibleKeys = true;
 
+            // Calculate Timer Display
+            let timerHtml = "";
+            if (data.reboot_timer > 0) {
+                let remainingMs = data.reboot_timer - Date.now();
+                if (remainingMs > 0) {
+                    let remainingMins = Math.ceil(remainingMs / 60000);
+                    timerHtml = `<span class="key-status status-timer" style="margin-left:10px;">⏱️ Reboot in ${remainingMins}m</span>`;
+                } else {
+                    timerHtml = `<span class="key-status status-timer" style="margin-left:10px; background:rgba(231,76,60,0.2); color:#e74c3c;">⏱️ Rebooting...</span>`;
+                }
+            }
+
             let statusHtml = data.revoked ? `<span class="key-status status-revoked">REVOKED</span>` : 
                              (data.deviceIds && data.deviceIds.length > 0 ? `<span class="key-status status-bound">BOUND</span>` : `<span class="key-status status-unbound">UNBOUND</span>`);
+            
             let expiryText = data.expiresAt === 0 ? "Lifetime" : new Date(data.expiresAt).toLocaleString();
             let toggleText = data.revoked ? "Unrevoke" : "Revoke";
             let toggleColor = data.revoked ? "btn-global-on" : "btn-global-off";
@@ -425,12 +494,12 @@
 
             container.innerHTML += `
                 <div class="key-item" style="border-left-color: ${data.revoked ? '#888' : (data.deviceIds.length > 0 ? '#2dd4a7' : '#ff4d4d')}">
-                    <div class="key-header">
+                    <div class="key-header" style="flex-wrap:wrap; gap:5px;">
                         <div style="display: flex; align-items: center;">
                             <span class="key-title">${k}</span>
                             <button class="btn-copy" onclick="copyKey('${k}')">Copy</button>
                         </div>
-                        ${statusHtml}
+                        <div>${statusHtml} ${timerHtml}</div>
                     </div>
                     
                     <div class="key-details">
@@ -459,8 +528,8 @@
                     
                     <div class="action-row" style="margin-top: 8px;">
                         <button class="btn-reboot-key" onclick="rebootKey('${k}')">🔄 REBOOT NOW</button>
-                        <button class="btn-reboot-timer-key" onclick="setRebootTimer('${k}')">⏱️ SET TIMER (HRS/MINS)</button>
-                        <button class="btn-stop-reboot-key" onclick="stopKeyReboot('${k}')">🛑 STOP REBOOT</button>
+                        <button class="btn-reboot-timer-key" onclick="openKeyTimerModal('${k}')">⏱️ SET TIMER</button>
+                        <button class="btn-stop-reboot-key" onclick="stopKeyReboot('${k}')">🛑 STOP</button>
                     </div>
                 </div>`;
         });
