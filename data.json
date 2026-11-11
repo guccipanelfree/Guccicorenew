@@ -140,7 +140,7 @@
       "revoked": true,
       "expiresAt": 1796887982683,
       "allowInx": false,
-      "allowFloater": false,
+      "allowFloater": true,
       "allowKernel": false
     },
     "LALA": {
