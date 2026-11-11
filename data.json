@@ -98,7 +98,7 @@
       "revoked": true,
       "expiresAt": 1796883088942,
       "allowInx": false,
-      "allowFloater": false,
+      "allowFloater": true,
       "allowKernel": false
     },
     "SUMIT": {
