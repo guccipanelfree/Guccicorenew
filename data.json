@@ -32,7 +32,7 @@
       "expiresAt": 1796882773381,
       "allowInx": true,
       "allowFloater": true,
-      "allowKernel": false
+      "allowKernel": true
     },
     "NO NAME": {
       "deviceIds": [
