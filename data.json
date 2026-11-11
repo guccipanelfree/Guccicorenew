@@ -51,7 +51,9 @@
       "reboot_timer": 0
     },
     "WARTH": {
-      "deviceIds": [],
+      "deviceIds": [
+        "2357b7de90d76763"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796882832701,
