@@ -15,7 +15,7 @@
         label { display: block; margin-bottom: 5px; font-size: 14px; color: #8b949e; }
         input[type="text"], input[type="password"], select { width: 100%; padding: 12px; background-color: #1a222c; border: 1px solid #2a3645; border-radius: 8px; color: white; font-size: 15px; outline: none; }
         input:focus, select:focus { border-color: #2dd4a7; }
-        button { padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; }
+        button { padding: 10px 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s; }
         .btn-main { width: 100%; background-color: #2dd4a7; color: #000000; font-size: 16px; padding: 14px; }
         .btn-main:hover { background-color: #24b78f; }
         .hidden { display: none !important; }
@@ -30,8 +30,16 @@
         
         /* GLOBAL REBOOT STYLES */
         .global-reboot-box { background-color: #1a1a1a; border: 1px solid #e67e22; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        .btn-reboot-global { background-color: #e67e22; color: white; flex: 1; font-size: 15px; padding: 14px; }
-        .btn-reboot-timer-global { background-color: #d35400; color: white; flex: 1; font-size: 15px; padding: 14px; }
+        .btn-reboot-global { background-color: #e67e22; color: white; flex: 1; font-size: 14px; padding: 12px; }
+        .btn-reboot-timer-global { background-color: #d35400; color: white; flex: 1; font-size: 14px; padding: 12px; }
+        
+        /* BULK FEATURE STYLES */
+        .bulk-feature-box { background-color: #0e131a; border: 1px solid #3498db; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .bulk-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .bulk-col { display: flex; flex-direction: column; gap: 8px; }
+        .bulk-col-title { text-align: center; color: #3498db; font-weight: bold; font-size: 14px; margin-bottom: 5px; }
+        .btn-bulk-on { background-color: #2dd4a7; color: black; }
+        .btn-bulk-off { background-color: #ff4d4d; color: white; }
         
         .key-item { background-color: #1a222c; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #2dd4a7; }
         .key-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -50,7 +58,6 @@
         .btn-delete { background-color: #e74c3c; color: white; }
         .btn-copy { background-color: #3498db; color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px; margin-left: 10px; }
         
-        /* PER-KEY REBOOT STYLES */
         .btn-reboot-key { background-color: #e67e22; color: white; flex: 1; padding: 8px; font-size: 12px; text-align: center; border-radius: 6px; font-weight: bold;}
         .btn-reboot-timer-key { background-color: #d35400; color: white; flex: 1; padding: 8px; font-size: 12px; text-align: center; border-radius: 6px; font-weight: bold;}
         
@@ -82,6 +89,29 @@
             <button style="background: transparent; color: #8b949e; border: 1px solid #8b949e; padding: 6px 12px;" onclick="logout()">Logout</button>
         </div>
 
+        <!-- BULK FEATURE CONTROLS -->
+        <div class="bulk-feature-box">
+            <h3 style="color:#3498db; margin-bottom:5px;">⚡ BULK FEATURE CONTROL (ALL KEYS)</h3>
+            <p style="font-size:12px; color:#8b949e; margin-bottom:10px;">Apply permissions to every single key instantly.</p>
+            <div class="bulk-grid">
+                <div class="bulk-col">
+                    <div class="bulk-col-title">INX</div>
+                    <button class="btn-bulk-on" onclick="bulkFeatureUpdate('allowInx', true)">Enable All</button>
+                    <button class="btn-bulk-off" onclick="bulkFeatureUpdate('allowInx', false)">Disable All</button>
+                </div>
+                <div class="bulk-col">
+                    <div class="bulk-col-title">FLOATER</div>
+                    <button class="btn-bulk-on" onclick="bulkFeatureUpdate('allowFloater', true)">Enable All</button>
+                    <button class="btn-bulk-off" onclick="bulkFeatureUpdate('allowFloater', false)">Disable All</button>
+                </div>
+                <div class="bulk-col">
+                    <div class="bulk-col-title">KERNEL</div>
+                    <button class="btn-bulk-on" onclick="bulkFeatureUpdate('allowKernel', true)">Enable All</button>
+                    <button class="btn-bulk-off" onclick="bulkFeatureUpdate('allowKernel', false)">Disable All</button>
+                </div>
+            </div>
+        </div>
+
         <!-- GLOBAL REBOOT CONTROLS -->
         <div class="global-reboot-box">
             <h3 style="color:#e67e22; margin-bottom:15px;">🚨 GLOBAL REBOOT (ALL PHONES)</h3>
@@ -110,7 +140,7 @@
         </div>
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="color: #2dd4a7; font-weight: bold; margin: 0;">Select Features to Unlock:</label>
+            <label style="color: #2dd4a7; font-weight: bold; margin: 0;">Select Features for NEW key:</label>
             <div>
                 <button class="btn-check" onclick="checkAllFeatures()">Check All</button>
                 <button class="btn-uncheck" onclick="uncheckAllFeatures()">Uncheck All</button>
@@ -137,8 +167,6 @@
             <button class="btn-global-off" onclick="toggleAllKeys(true)">🚨 Kill ALL Keys</button>
             <button class="btn-global-on" onclick="toggleAllKeys(false)">✅ Enable ALL Keys</button>
             <button class="btn-delete-all" onclick="deleteAllKeys()">🗑️ Delete ALL Keys</button>
-            <button class="btn-global-on" onclick="toggleAllFeatures(true)">🔓 Unlock ALL Features</button>
-            <button class="btn-global-off" onclick="toggleAllFeatures(false)">🔒 Lock ALL Features</button>
         </div>
 
         <div class="search-container">
@@ -213,6 +241,19 @@
     function checkAllFeatures() { document.getElementById('allowInx').checked = true; document.getElementById('allowFloater').checked = true; document.getElementById('allowKernel').checked = true; }
     function uncheckAllFeatures() { document.getElementById('allowInx').checked = false; document.getElementById('allowFloater').checked = false; document.getElementById('allowKernel').checked = false; }
 
+    // --- NEW BULK FEATURE UPDATE ---
+    function bulkFeatureUpdate(featureName, state) {
+        let action = state ? "Enable" : "Disable";
+        let featureLabel = featureName.replace("allow", "");
+        if(!confirm(`Are you sure you want to ${action} ${featureLabel} for ALL keys?`)) return;
+        
+        if(!currentJson.keys) return;
+        for(let k in currentJson.keys) {
+            currentJson.keys[k][featureName] = state;
+        }
+        saveToGitHub(`Bulk: ${action}d ${featureLabel} for ALL keys`);
+    }
+
     function generateKey() {
         const days = parseInt(document.getElementById('keyDuration').value);
         const allowInx = document.getElementById('allowInx').checked;
@@ -278,17 +319,6 @@
         saveToGitHub(`Toggled ALL keys to ${action}`);
     }
 
-    function toggleAllFeatures(state) {
-        let action = state ? "Unlock" : "Lock";
-        if(!confirm(`Are you sure you want to ${action} ALL features (INX, Floater, Kernel) for EVERY key?`)) return;
-        for(let k in currentJson.keys) {
-            currentJson.keys[k].allowInx = state;
-            currentJson.keys[k].allowFloater = state;
-            currentJson.keys[k].allowKernel = state;
-        }
-        saveToGitHub(`Toggled ALL features to ${action} for ALL keys`);
-    }
-
     function deleteAllKeys() {
         if(!confirm("⚠️ WARNING: Are you absolutely sure you want to DELETE EVERY SINGLE KEY?\n\nThis cannot be undone!")) return;
         if(!confirm("🚨 FINAL WARNING: ALL USERS WILL BE LOGGED OUT AND KEYS WILL BE DESTROYED.\n\nProceed?")) return;
@@ -313,7 +343,6 @@
         }
     }
 
-    // --- PER-KEY REBOOT FUNCTIONS ---
     function rebootKey(keyName) {
         if(!confirm(`Are you sure you want to REBOOT the phone using ${keyName}?`)) return;
         currentJson.keys[keyName].reboot_now_time = Date.now();
