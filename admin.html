@@ -27,7 +27,11 @@
         .btn-global-off { background-color: #ff4d4d; color: white; flex: 1; min-width: 45%; }
         .btn-global-on { background-color: #2dd4a7; color: black; flex: 1; min-width: 45%; }
         .btn-delete-all { background-color: #c0392b; color: white; flex: 1; border: 1px solid #e74c3c; min-width: 100%; }
-        .btn-reboot { background-color: #e67e22; color: white; flex: 1; border: 1px solid #d35400; min-width: 100%; }
+        
+        /* GLOBAL REBOOT STYLES */
+        .global-reboot-box { background-color: #1a1a1a; border: 1px solid #e67e22; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .btn-reboot-global { background-color: #e67e22; color: white; flex: 1; font-size: 15px; padding: 14px; }
+        .btn-reboot-timer-global { background-color: #d35400; color: white; flex: 1; font-size: 15px; padding: 14px; }
         
         .key-item { background-color: #1a222c; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #2dd4a7; }
         .key-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -45,8 +49,10 @@
         .btn-toggle { background-color: #9b59b6; color: white; }
         .btn-delete { background-color: #e74c3c; color: white; }
         .btn-copy { background-color: #3498db; color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px; margin-left: 10px; }
-        .btn-reboot-key { background-color: #e67e22; color: white; flex: 1; padding: 8px; font-size: 12px; text-align: center; border-radius: 6px; }
-        .btn-reboot-timer { background-color: #d35400; color: white; flex: 1; padding: 8px; font-size: 12px; text-align: center; border-radius: 6px; }
+        
+        /* PER-KEY REBOOT STYLES */
+        .btn-reboot-key { background-color: #e67e22; color: white; flex: 1; padding: 8px; font-size: 12px; text-align: center; border-radius: 6px; font-weight: bold;}
+        .btn-reboot-timer-key { background-color: #d35400; color: white; flex: 1; padding: 8px; font-size: 12px; text-align: center; border-radius: 6px; font-weight: bold;}
         
         .feature-toggles { display: flex; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #2a3645; flex-wrap: wrap; }
         .feature-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #ffffff; cursor: pointer; background: #11161f; padding: 6px 10px; border-radius: 6px; border: 1px solid #2a3645; }
@@ -76,6 +82,18 @@
             <button style="background: transparent; color: #8b949e; border: 1px solid #8b949e; padding: 6px 12px;" onclick="logout()">Logout</button>
         </div>
 
+        <!-- GLOBAL REBOOT CONTROLS -->
+        <div class="global-reboot-box">
+            <h3 style="color:#e67e22; margin-bottom:15px;">🚨 GLOBAL REBOOT (ALL PHONES)</h3>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="btn-reboot-global" onclick="rebootAllDevices()">🔄 REBOOT ALL NOW</button>
+                <button class="btn-reboot-timer-global" onclick="setGlobalRebootTimer()">⏱️ SET GLOBAL REBOOT TIMER</button>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #1f2633; margin: 25px 0;">
+
+        <!-- KEY GENERATION -->
         <div class="input-group">
             <label>Custom Key (Leave empty for Random Key)</label>
             <input type="text" id="customKeyInput" placeholder="e.g. GUCCI-VIP-2024" style="text-transform: uppercase;">
@@ -121,7 +139,6 @@
             <button class="btn-delete-all" onclick="deleteAllKeys()">🗑️ Delete ALL Keys</button>
             <button class="btn-global-on" onclick="toggleAllFeatures(true)">🔓 Unlock ALL Features</button>
             <button class="btn-global-off" onclick="toggleAllFeatures(false)">🔒 Lock ALL Features</button>
-            <button class="btn-reboot" onclick="rebootAllDevices()">🔄 Reboot ALL Devices</button>
         </div>
 
         <div class="search-container">
@@ -218,7 +235,7 @@
         currentJson.keys[newKey] = { 
             "deviceIds": [], "maxDevices": 1, "revoked": false, "expiresAt": expiresAt,
             "allowInx": allowInx, "allowFloater": allowFloater, "allowKernel": allowKernel,
-            "reboot_now": false, "reboot_timer": 0
+            "reboot_now_time": 0, "reboot_timer": 0
         };
         document.getElementById('customKeyInput').value = "";
         saveToGitHub(`Generated key ${newKey}`, document.getElementById('genMsg'));
@@ -279,16 +296,27 @@
         saveToGitHub(`🚨 DELETED ALL KEYS`);
     }
 
-    // NEW: Reboot Functions
+    // --- GLOBAL REBOOT FUNCTIONS ---
     function rebootAllDevices() {
-        if(!confirm("⚠️ Are you sure you want to REBOOT ALL DEVICES?\n\nAll active phones will restart immediately.")) return;
-        currentJson.reboot_global = true;
+        if(!confirm("⚠️ Are you sure you want to REBOOT ALL DEVICES NOW?\n\nAll active phones will restart immediately.")) return;
+        currentJson.reboot_global_time = Date.now();
         saveToGitHub("🚨 REBOOT ALL DEVICES INITIATED");
     }
 
+    function setGlobalRebootTimer() {
+        let mins = prompt("Enter minutes until GLOBAL reboot for ALL devices (e.g. 5, 60):", "5");
+        if(mins !== null && mins !== "") {
+            mins = parseInt(mins);
+            if(isNaN(mins) || mins <= 0) return alert("Invalid minutes");
+            currentJson.global_reboot_timer = Date.now() + (mins * 60000);
+            saveToGitHub(`⏱️ Global Reboot timer set for ALL devices in ${mins} minutes`);
+        }
+    }
+
+    // --- PER-KEY REBOOT FUNCTIONS ---
     function rebootKey(keyName) {
         if(!confirm(`Are you sure you want to REBOOT the phone using ${keyName}?`)) return;
-        currentJson.keys[keyName].reboot_now = true;
+        currentJson.keys[keyName].reboot_now_time = Date.now();
         saveToGitHub(`🔄 Reboot command sent for ${keyName}`);
     }
 
@@ -368,8 +396,8 @@
                     </div>
                     
                     <div class="action-row" style="margin-top: 8px;">
-                        <button class="btn-reboot-key" onclick="rebootKey('${k}')">🔄 Reboot Now</button>
-                        <button class="btn-reboot-timer" onclick="setRebootTimer('${k}')">⏱️ Set Reboot Timer</button>
+                        <button class="btn-reboot-key" onclick="rebootKey('${k}')">🔄 REBOOT THIS KEY NOW</button>
+                        <button class="btn-reboot-timer-key" onclick="setRebootTimer('${k}')">⏱️ SET KEY TIMER</button>
                     </div>
                 </div>`;
         });
