@@ -109,7 +109,7 @@
       "revoked": true,
       "expiresAt": 1796884231932,
       "allowInx": false,
-      "allowFloater": false,
+      "allowFloater": true,
       "allowKernel": false
     },
     "FARHAN": {
