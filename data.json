@@ -9,7 +9,7 @@
       "expiresAt": 0,
       "allowInx": false,
       "allowFloater": true,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 1794381519985
     },
     "RYZEN": {
@@ -32,7 +32,7 @@
       "expiresAt": 1796882773381,
       "allowInx": false,
       "allowFloater": true,
-      "allowKernel": true
+      "allowKernel": false
     },
     "NO NAME": {
       "deviceIds": [
