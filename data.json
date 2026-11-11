@@ -8,8 +8,8 @@
       "revoked": false,
       "expiresAt": 0,
       "allowInx": true,
-      "allowFloater": false,
-      "allowKernel": false
+      "allowFloater": true,
+      "allowKernel": true
     },
     "RYZEN": {
       "deviceIds": [
