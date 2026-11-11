@@ -1,127 +1,125 @@
 {
   "keys": {
     "GUCCI": {
-      "deviceIds": [
-        "114d3a4a7cd63b90"
-      ],
+      "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 0,
       "allowInx": false,
       "allowFloater": true,
       "allowKernel": false,
-      "reboot_now_time": 1794381519985
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     },
     "RYZEN": {
-      "deviceIds": [
-        "a1238f9ae50d2992"
-      ],
+      "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796882606850,
       "allowInx": false,
       "allowFloater": true,
-      "allowKernel": false
+      "allowKernel": false,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     },
     "FAISAL": {
-      "deviceIds": [
-        "ee65b3b2f72e0d2c"
-      ],
+      "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796882773381,
       "allowInx": true,
       "allowFloater": true,
-      "allowKernel": true
+      "allowKernel": true,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     },
     "NO NAME": {
-      "deviceIds": [
-        "bf30076fea9a9067"
-      ],
+      "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796882824161,
       "allowInx": false,
       "allowFloater": true,
-      "allowKernel": false
+      "allowKernel": false,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     },
     "WARTH": {
-      "deviceIds": [
-        "f452d8df40645a8d"
-      ],
+      "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796882832701,
       "allowInx": false,
       "allowFloater": true,
       "allowKernel": false,
-      "reboot_now_time": 1794384654193
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     },
     "ZARA": {
-      "deviceIds": [
-        "2883781af51f4236"
-      ],
+      "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796882838727,
       "allowInx": false,
       "allowFloater": true,
-      "allowKernel": false
+      "allowKernel": false,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     },
     "WOTA": {
-      "deviceIds": [
-        "46ee4cbc0580ef66"
-      ],
+      "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796882862298,
       "allowInx": false,
       "allowFloater": true,
-      "allowKernel": false
+      "allowKernel": false,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     },
     "RITIK": {
-      "deviceIds": [
-        "bb63cdc37a916a8c"
-      ],
+      "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796883001120,
       "allowInx": false,
       "allowFloater": true,
-      "allowKernel": false
+      "allowKernel": false,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     },
     "ANKIT": {
-      "deviceIds": [
-        "88731dedcabac8f2"
-      ],
+      "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796883088942,
       "allowInx": false,
       "allowFloater": true,
-      "allowKernel": false
+      "allowKernel": false,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     },
     "SUMIT": {
-      "deviceIds": [
-        "4582325e581a0586"
-      ],
+      "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796884231932,
       "allowInx": false,
       "allowFloater": true,
-      "allowKernel": false
+      "allowKernel": false,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     },
     "FARHAN": {
-      "deviceIds": [
-        "501e3798bde188c7"
-      ],
+      "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796885078464,
       "allowInx": false,
       "allowFloater": true,
-      "allowKernel": false
+      "allowKernel": false,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     },
     "ROY": {
       "deviceIds": [],
@@ -130,29 +128,31 @@
       "expiresAt": 1796885636807,
       "allowInx": false,
       "allowFloater": true,
-      "allowKernel": false
+      "allowKernel": false,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     },
     "RONY": {
-      "deviceIds": [
-        "9aeb11f84b5858b0"
-      ],
+      "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796887982683,
       "allowInx": false,
       "allowFloater": true,
-      "allowKernel": false
+      "allowKernel": false,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     },
     "LALA": {
-      "deviceIds": [
-        "80556be6a544ecd3"
-      ],
+      "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796919771015,
       "allowInx": false,
       "allowFloater": true,
-      "allowKernel": false
+      "allowKernel": false,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     }
   }
 }
