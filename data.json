@@ -71,7 +71,9 @@
       "reboot_timer": 0
     },
     "WOTA": {
-      "deviceIds": [],
+      "deviceIds": [
+        "46ee4cbc0580ef66"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796882862298,
