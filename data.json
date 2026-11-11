@@ -17,7 +17,7 @@
         "a1238f9ae50d2992"
       ],
       "maxDevices": 1,
-      "revoked": true,
+      "revoked": false,
       "expiresAt": 1796882606850,
       "allowInx": false,
       "allowFloater": true,
@@ -28,7 +28,7 @@
         "ee65b3b2f72e0d2c"
       ],
       "maxDevices": 1,
-      "revoked": true,
+      "revoked": false,
       "expiresAt": 1796882773381,
       "allowInx": true,
       "allowFloater": true,
@@ -39,7 +39,7 @@
         "bf30076fea9a9067"
       ],
       "maxDevices": 1,
-      "revoked": true,
+      "revoked": false,
       "expiresAt": 1796882824161,
       "allowInx": false,
       "allowFloater": true,
@@ -62,7 +62,7 @@
         "2883781af51f4236"
       ],
       "maxDevices": 1,
-      "revoked": true,
+      "revoked": false,
       "expiresAt": 1796882838727,
       "allowInx": false,
       "allowFloater": true,
@@ -73,7 +73,7 @@
         "46ee4cbc0580ef66"
       ],
       "maxDevices": 1,
-      "revoked": true,
+      "revoked": false,
       "expiresAt": 1796882862298,
       "allowInx": false,
       "allowFloater": true,
@@ -84,7 +84,7 @@
         "bb63cdc37a916a8c"
       ],
       "maxDevices": 1,
-      "revoked": true,
+      "revoked": false,
       "expiresAt": 1796883001120,
       "allowInx": false,
       "allowFloater": true,
@@ -95,7 +95,7 @@
         "88731dedcabac8f2"
       ],
       "maxDevices": 1,
-      "revoked": true,
+      "revoked": false,
       "expiresAt": 1796883088942,
       "allowInx": false,
       "allowFloater": true,
@@ -106,7 +106,7 @@
         "4582325e581a0586"
       ],
       "maxDevices": 1,
-      "revoked": true,
+      "revoked": false,
       "expiresAt": 1796884231932,
       "allowInx": true,
       "allowFloater": false,
@@ -117,7 +117,7 @@
         "501e3798bde188c7"
       ],
       "maxDevices": 1,
-      "revoked": true,
+      "revoked": false,
       "expiresAt": 1796885078464,
       "allowInx": false,
       "allowFloater": true,
@@ -126,7 +126,7 @@
     "ROY": {
       "deviceIds": [],
       "maxDevices": 1,
-      "revoked": true,
+      "revoked": false,
       "expiresAt": 1796885636807,
       "allowInx": false,
       "allowFloater": true,
@@ -137,7 +137,7 @@
         "9aeb11f84b5858b0"
       ],
       "maxDevices": 1,
-      "revoked": true,
+      "revoked": false,
       "expiresAt": 1796887982683,
       "allowInx": false,
       "allowFloater": true,
@@ -148,7 +148,7 @@
         "71daced2b5e2395e"
       ],
       "maxDevices": 1,
-      "revoked": true,
+      "revoked": false,
       "expiresAt": 1796919771015,
       "allowInx": false,
       "allowFloater": true,
