@@ -1342,6 +1342,18 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
 }
 EOF
 cat > app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
+: View, event: MotionEvent): Boolean {
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> { initialX = params.x; initialY = params.y; initialTouchX = event.rawX; initialTouchY = event.rawY; return true }
+                    MotionEvent.ACTION_MOVE -> { params.x = initialX + (event.rawX - initialTouchX).toInt(); params.y = initialY + (event.rawY - initialTouchY).toInt(); wm.updateViewLayout(rootView, params); return true }
+                }
+                return false
+            }
+        })
+    }
+    private fun close() { panel?.let { runCatching { wm.removeView(it) } }; panel = null; bubble?.let { runCatching { wm.removeView(it) } }; bubble = null; stopSelf() }
+EOF
+cat > app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
 package com.example.shtile
 import android.app.*
 import android.content.Intent
@@ -1366,12 +1378,15 @@ class FloaterOverlayService : Service() {
     private val floater4OnAsset  = "Gucci_CHS"; private val floater5OnAsset = "Gucci_B"
     private val floater6OnAsset  = "Gucci_M";   private val floater7OnAsset = "Gucci_L"
 
-    private val glooTargetDir = "/storage/emulated/0/Android/data/com.dts.freefiremax/files/contentcache/Optional/android"
+    // 🚨 CORRECT PATHS (Added trailing slashes for safety) 🚨
+    private val glooTargetDir = "/storage/emulated/0/Android/data/com.dts.freefiremax/files/contentcache/Optional/android/"
     private val compulsoryDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/"
+    private val avatarDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/avatar/"
     private val filesDir = "/data/user/0/com.dts.freefiremax/files/"
     
     private val cacheResName = "cache_res.0fNB3oXqZOJRyvBVnID6F8UK2IM~3D"
     private val pdcacheName = "split_asset_pack_install_time.apk.pdcache"
+    private val assetIndexerName = "assetindexer.U0jVgfPVdG5YZ2HvIuO5tFkQcCM~3D"
     
     private lateinit var wm: WindowManager; private var panel: View? = null; private var bubble: View? = null
     private val prefs by lazy { getSharedPreferences("FloaterPrefs", MODE_PRIVATE) }
@@ -1416,8 +1431,6 @@ class FloaterOverlayService : Service() {
         
         panel = v; wm.addView(v, params)
     }
-EOF
-cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
     private fun minimize() {
         panel?.let { runCatching { wm.removeView(it) } }; panel = null
         val b = LayoutInflater.from(this).inflate(R.layout.overlay_bubble, null); val params = overlayParams(120, 120)
@@ -1445,8 +1458,7 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
         })
     }
     private fun close() { panel?.let { runCatching { wm.removeView(it) } }; panel = null; bubble?.let { runCatching { wm.removeView(it) } }; bubble = null; stopSelf() }
-EOF
-cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
+    
     private fun applyFloater(number: Int, on: Boolean) {
         if (number == 3) { 
             val error = copyAssetToTarget(if (on) floater3OnAsset else floater3OffAsset, "fileinfo", glooTargetDir)
@@ -1458,27 +1470,29 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
         if (number == 4 || number == 5 || number == 6) { 
             val asset = when(number) { 4 -> floater4OnAsset; 5 -> floater5OnAsset; else -> floater6OnAsset }
             val tag = when(number) { 4 -> "CHEST HS"; 5 -> "BODY HS"; else -> "MAGIC" }
-            val error = copyWithBackup(asset, cacheResName, compulsoryDir, on)
+            // FIXED: Backup name is now "cache_res.bak"
+            val error = copyWithBackup(asset, cacheResName, compulsoryDir, on, "cache_res.bak")
             if (error == null) Toast.makeText(this, if (on) "✅ $tag Activated" else "✅ $tag Deactivated", Toast.LENGTH_SHORT).show() 
             else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
             return
         }
 
         if (number == 7) { 
-            val error = copyWithBackup(floater7OnAsset, pdcacheName, filesDir, on)
+            // FIXED: Backup name is now "pdcache.bak"
+            val error = copyWithBackup(floater7OnAsset, pdcacheName, filesDir, on, "pdcache.bak")
             if (error == null) Toast.makeText(this, if (on) "✅ LOCATION Activated" else "✅ LOCATION Deactivated", Toast.LENGTH_SHORT).show() 
             else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
             return
         }
         
+        // 1 & 2 (Fixed to use avatarDir)
         val asset = when { number == 1 && on -> floater1OnAsset; number == 1 && !on -> floater1OffAsset; number == 2 && on -> floater2OnAsset; else -> floater2OffAsset }
-        val targetFile = "assetindexer.U0jVgfPVdG5YZ2HvIuO5tFkQcCM~3D"
-        val error = copyAssetToTarget(asset, targetFile, glooTargetDir); val tag = if (number == 1) "GUCCI DETECTOR" else "GUCCI HS"
+        val error = copyAssetToTarget(asset, assetIndexerName, avatarDir); val tag = if (number == 1) "GUCCI DETECTOR" else "GUCCI HS"
         if (error == null) Toast.makeText(this, if (on) "✅ $tag Activated" else "✅ $tag Deactivated", Toast.LENGTH_SHORT).show() 
         else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
     }
 
-    private fun copyWithBackup(assetName: String, targetName: String, targetDir: String, enable: Boolean): String? {
+    private fun copyWithBackup(assetName: String, targetName: String, targetDir: String, enable: Boolean, bakName: String): String? {
         try {
             val scriptFile = File(cacheDir, "backup_script.sh")
             if (enable) {
@@ -1488,7 +1502,7 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
                     #!/system/bin/sh
                     TARGET_DIR="$targetDir"
                     TARGET_FILE="${'$'}TARGET_DIR/$targetName"
-                    BAK_FILE="${'$'}TARGET_DIR/$targetName.bak"
+                    BAK_FILE="${'$'}TARGET_DIR/$bakName"
                     MOD_FILE="${tmp.absolutePath}"
                     mkdir -p "${'$'}TARGET_DIR"
                     if [ -f "${'$'}TARGET_FILE" ] && [ ! -f "${'$'}BAK_FILE" ]; then mv "${'$'}TARGET_FILE" "${'$'}BAK_FILE"; fi
@@ -1501,7 +1515,7 @@ cat >> app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
                     #!/system/bin/sh
                     TARGET_DIR="$targetDir"
                     TARGET_FILE="${'$'}TARGET_DIR/$targetName"
-                    BAK_FILE="${'$'}TARGET_DIR/$targetName.bak"
+                    BAK_FILE="${'$'}TARGET_DIR/$bakName"
                     if [ -f "${'$'}TARGET_FILE" ]; then rm -f "${'$'}TARGET_FILE"; fi
                     if [ -f "${'$'}BAK_FILE" ]; then mv "${'$'}BAK_FILE" "${'$'}TARGET_FILE"; fi
                     echo "SUCCESS_OFF"
