@@ -114,7 +114,9 @@
       "reboot_timer": 0
     },
     "SUMIT": {
-      "deviceIds": [],
+      "deviceIds": [
+        "4582325e581a0586"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796884231932,
