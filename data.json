@@ -184,6 +184,17 @@
       "allowKernel": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
+    },
+    "TONDE": {
+      "deviceIds": [],
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1797067442032,
+      "allowInx": false,
+      "allowFloater": true,
+      "allowKernel": false,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     }
   },
   "reboot_global_time": 0,
