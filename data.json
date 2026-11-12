@@ -186,7 +186,9 @@
       "reboot_timer": 0
     },
     "TONDE": {
-      "deviceIds": [],
+      "deviceIds": [
+        "7191c21b7322d1ae"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1797067442032,
