@@ -27,7 +27,9 @@
       "reboot_timer": 0
     },
     "FAISAL": {
-      "deviceIds": [],
+      "deviceIds": [
+        "ee65b3b2f72e0d2c"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796882773381,
