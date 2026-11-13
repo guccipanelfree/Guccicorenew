@@ -1063,6 +1063,7 @@ class DriverLoaderActivity : AppCompatActivity() {
     private lateinit var spinnerDriver: Spinner
     private var fullKernelVersion = "Unknown"
     private var majorKernelVersion = "Unknown"
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_driver_loader)
@@ -1072,14 +1073,53 @@ class DriverLoaderActivity : AppCompatActivity() {
         tvLogs = findViewById(R.id.tvLogs)
         btnLoad = findViewById(R.id.btnLoadDriver)
         spinnerDriver = findViewById(R.id.spinnerDriver)
-        val drivers = arrayOf("Paradise", "QX", "RT", "RTDev", "RTProc")
-        spinnerDriver.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, drivers)
+
+        // 🚨 DYNAMIC DRIVER DETECTION 🚨
+        val availableDrivers = ArrayList<String>()
+        try {
+            // List everything inside the "drivers" folder of the APK assets
+            val driverFolders = assets.list("drivers")
+            if (driverFolders != null) {
+                for (folder in driverFolders) {
+                    // Verify it is a folder by checking if it contains files
+                    val filesInFolder = assets.list("drivers/$folder")
+                    if (filesInFolder != null && filesInFolder.isNotEmpty()) {
+                        availableDrivers.add(folder)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        // Fallback if no folders are found
+        if (availableDrivers.isEmpty()) {
+            availableDrivers.add("No Drivers Found")
+        }
+        
+        // Sort the drivers alphabetically for a clean look
+        availableDrivers.sort()
+        
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, availableDrivers)
+        spinnerDriver.adapter = adapter
+
         val hwid = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
         tvHwid.text = "HWID: $hwid"
         detectDeviceInfo()
-        btnLoad.setOnClickListener { btnLoad.isEnabled = false; btnLoad.text = "SEARCHING..."; findAndSelectDriver() }
+        
+        btnLoad.setOnClickListener { 
+            if (spinnerDriver.selectedItem.toString() == "No Drivers Found") {
+                Toast.makeText(this, "No drivers available!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            btnLoad.isEnabled = false
+            btnLoad.text = "SEARCHING..."
+            findAndSelectDriver() 
+        }
     }
+    
     private fun appendLog(msg: String) { Handler(Looper.getMainLooper()).post { tvLogs.append("$msg\n") } }
+    
     private fun detectDeviceInfo() {
         Thread {
             try {
@@ -1100,18 +1140,33 @@ class DriverLoaderActivity : AppCompatActivity() {
             } catch (e: Exception) { Handler(Looper.getMainLooper()).post { tvKernel.text = "Kernel: Error"; appendLog("❌ Failed to read kernel: ${e.message}") } }
         }.start()
     }
-EOF
-cat >> app/src/main/java/com/example/shtile/DriverLoaderActivity.kt << 'EOF'
+    
     private fun findAndSelectDriver() {
         Thread {
             try {
                 val selectedFolder = spinnerDriver.selectedItem.toString()
                 appendLog("\n[START] Scanning folder: $selectedFolder...")
                 val filesInFolder = assets.list("drivers/$selectedFolder")
-                if (filesInFolder.isNullOrEmpty()) { appendLog("❌ ERROR: Folder $selectedFolder is empty or missing."); resetButton(); return@Thread }
+                
+                if (filesInFolder.isNullOrEmpty()) { 
+                    appendLog("❌ ERROR: Folder $selectedFolder is empty or missing."); 
+                    resetButton(); 
+                    return@Thread 
+                }
+                
                 val matchingFiles = ArrayList<String>()
-                for (file in filesInFolder) { if (file.endsWith(".sh") && (file.startsWith(fullKernelVersion) || file.startsWith(majorKernelVersion))) { matchingFiles.add(file) } }
-                if (matchingFiles.isEmpty()) { appendLog("❌ ERROR: No driver found for kernel $majorKernelVersion in $selectedFolder!"); resetButton(); return@Thread }
+                for (file in filesInFolder) { 
+                    if (file.endsWith(".sh") && (file.startsWith(fullKernelVersion) || file.startsWith(majorKernelVersion))) { 
+                        matchingFiles.add(file) 
+                    } 
+                }
+                
+                if (matchingFiles.isEmpty()) { 
+                    appendLog("❌ ERROR: No driver found for kernel $majorKernelVersion in $selectedFolder!"); 
+                    resetButton(); 
+                    return@Thread 
+                }
+                
                 if (matchingFiles.size == 1) {
                     loadDriverFile(matchingFiles[0], selectedFolder)
                 } else {
@@ -1120,6 +1175,7 @@ cat >> app/src/main/java/com/example/shtile/DriverLoaderActivity.kt << 'EOF'
                         val container = dialogView.findViewById<LinearLayout>(R.id.driverListContainer)
                         val btnCancel = dialogView.findViewById<MaterialButton>(R.id.btnCancelDialog)
                         val dialog = AlertDialog.Builder(this, R.style.AppTheme).setView(dialogView).setCancelable(false).create()
+                        
                         for (file in matchingFiles) {
                             val tv = TextView(this)
                             tv.text = file; tv.textSize = 16f; tv.setTextColor(Color.WHITE); tv.gravity = Gravity.CENTER; tv.setPadding(20, 20, 20, 20); tv.background = getDrawable(R.drawable.bg_box_dark)
@@ -1134,6 +1190,7 @@ cat >> app/src/main/java/com/example/shtile/DriverLoaderActivity.kt << 'EOF'
             } catch (e: Exception) { appendLog("❌ CRITICAL ERROR: ${e.message}"); resetButton() }
         }.start()
     }
+    
     private fun loadDriverFile(foundFile: String, folder: String) {
         Thread {
             try {
@@ -1141,75 +1198,32 @@ cat >> app/src/main/java/com/example/shtile/DriverLoaderActivity.kt << 'EOF'
                 appendLog("📂 Extracting to cache...")
                 val cacheFile = File(cacheDir, foundFile)
                 assets.open("drivers/$folder/$foundFile").use { input -> FileOutputStream(cacheFile).use { output -> input.copyTo(output) } }
+                
                 appendLog("🚀 Moving to /data/local/tmp/ with root...")
                 val destPath = "/data/local/tmp/$foundFile"
                 ProcessBuilder("su", "-c", "cp ${cacheFile.absolutePath} $destPath && chmod 777 $destPath").start().waitFor()
                 cacheFile.delete()
+                
                 appendLog("🔐 Setting Root Permissions...")
                 ProcessBuilder("su", "-c", "chmod 777 $destPath").start().waitFor()
+                
                 appendLog("🚀 Injecting Driver...")
                 val runProc = ProcessBuilder("su", "-c", "sh $destPath").redirectErrorStream(true).start()
                 val output = runProc.inputStream.bufferedReader().readText().trim()
                 val exitCode = runProc.waitFor()
+                
                 if (exitCode == 0) {
                     appendLog("✅ SUCCESS: Driver loaded successfully!")
                     if (output.isNotEmpty()) appendLog("Output:\n$output")
                     Handler(Looper.getMainLooper()).post { Toast.makeText(this@DriverLoaderActivity, "Driver Loaded Successfully!", Toast.LENGTH_LONG).show(); btnLoad.text = "✅ LOADED" }
-                } else { appendLog("❌ FAILED: Script returned error code $exitCode"); appendLog("Output:\n$output"); resetButton() }
+                } else { 
+                    appendLog("❌ FAILED: Script returned error code $exitCode"); appendLog("Output:\n$output"); resetButton() 
+                }
             } catch (e: Exception) { appendLog("❌ CRITICAL ERROR: ${e.message}"); resetButton() }
         }.start()
     }
+    
     private fun resetButton() { Handler(Looper.getMainLooper()).post { btnLoad.isEnabled = true; btnLoad.text = "⚡ LOAD SELECTED DRIVER" } }
-}
-EOF
-cat > app/src/main/java/com/example/shtile/TerminalActivity.kt << 'EOF'
-package com.example.shtile
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.widget.EditText
-import android.widget.RadioGroup
-import android.widget.ScrollView
-import android.widget.TextView
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.button.MaterialButton
-import java.io.DataOutputStream
-import rikka.shizuku.Shizuku
-class TerminalActivity : AppCompatActivity() {
-    override fun onCreate(s: Bundle?) {
-        super.onCreate(s); setContentView(R.layout.activity_terminal)
-        val modeGroup = findViewById<RadioGroup>(R.id.modeGroup); val pkgInput = findViewById<EditText>(R.id.pkgInput)
-        val btnHide = findViewById<MaterialButton>(R.id.btnHide); val btnUnhide = findViewById<MaterialButton>(R.id.btnUnhide)
-        val btnFreeze = findViewById<MaterialButton>(R.id.btnFreeze); val btnDeepFreeze = findViewById<MaterialButton>(R.id.btnDeepFreeze)
-        val btnUnfreeze = findViewById<MaterialButton>(R.id.btnUnfreeze); val btnDelete = findViewById<MaterialButton>(R.id.btnDelete)
-        val terminalInput = findViewById<EditText>(R.id.terminalInput); val btnRunCmd = findViewById<MaterialButton>(R.id.btnRunCmd); val terminalOutput = findViewById<TextView>(R.id.terminalOutput)
-        btnHide.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Hiding $pkg...\n"; executeCommand("pm hide $pkg; pm disable-user --user 0 $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Enter package name", Toast.LENGTH_SHORT).show() } }
-        btnUnhide.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Unhiding $pkg...\n"; executeCommand("pm unhide $pkg; pm enable $pkg; pm unsuspend $pkg; cmd package install-existing --user 0 $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Enter package name", Toast.LENGTH_SHORT).show() } }
-        btnFreeze.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Freezing $pkg...\n"; executeCommand("am force-stop $pkg; pm suspend $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Enter package name", Toast.LENGTH_SHORT).show() } }
-        btnDeepFreeze.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Deep Freezing $pkg...\n"; executeCommand("am force-stop $pkg; pm suspend $pkg; pm disable-user --user 0 $pkg; pm hide $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Enter package name", Toast.LENGTH_SHORT).show() } }
-        btnUnfreeze.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Unfreezing $pkg...\n"; executeCommand("pm unsuspend $pkg; pm enable $pkg; pm unhide $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Enter package name", Toast.LENGTH_SHORT).show() } }
-        btnDelete.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Deleting $pkg...\n"; executeCommand("pm uninstall --user 0 $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Enter package name", Toast.LENGTH_SHORT).show() } }
-        btnRunCmd.setOnClickListener { val cmd = terminalInput.text.toString().trim(); if (cmd.isNotEmpty()) { terminalOutput.append("Running: $cmd\n\n"); executeCommand(cmd, modeGroup, terminalOutput); terminalInput.text.clear() } }
-    }
-    private fun executeCommand(cmd: String, modeGroup: RadioGroup, outputView: TextView) {
-        Thread {
-            try {
-                val isRootMode = modeGroup.checkedRadioButtonId == R.id.radioRoot
-                val process: Process? = if (isRootMode) { Runtime.getRuntime().exec("su") } else {
-                    try { val method = Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java); method.isAccessible = true; method.invoke(null, arrayOf("sh", "-c", cmd), null, null) as Process } catch (e: Exception) { Handler(Looper.getMainLooper()).post { outputView.append("Shizuku Error: ${e.message}\n") }; return@Thread }
-                }
-                if (isRootMode && process != null) { val os = DataOutputStream(process.outputStream); os.writeBytes("$cmd\n"); os.writeBytes("exit\n"); os.flush(); os.close() }
-                if (process != null) {
-                    val reader = process.inputStream.bufferedReader(); val output = StringBuilder(); var line: String?
-                    while (reader.readLine().also { line = it } != null) { output.append(line).append("\n") }
-                    val errorReader = process.errorStream.bufferedReader(); while (errorReader.readLine().also { line = it } != null) { output.append(line).append("\n") }
-                    process.waitFor()
-                    Handler(Looper.getMainLooper()).post { if (output.isEmpty()) outputView.append("Done (No output)\n\n") else outputView.append(output.toString() + "\n"); val scrollView = outputView.parent as ScrollView; scrollView.post { scrollView.fullScroll(ScrollView.FOCUS_DOWN) } }
-                }
-            } catch (e: Exception) { Handler(Looper.getMainLooper()).post { outputView.append("Error: ${e.message}\n\n") } }
-        }.start()
-    }
 }
 EOF
 cat > app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
@@ -1342,18 +1356,6 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
 }
 EOF
 cat > app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
-: View, event: MotionEvent): Boolean {
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN -> { initialX = params.x; initialY = params.y; initialTouchX = event.rawX; initialTouchY = event.rawY; return true }
-                    MotionEvent.ACTION_MOVE -> { params.x = initialX + (event.rawX - initialTouchX).toInt(); params.y = initialY + (event.rawY - initialTouchY).toInt(); wm.updateViewLayout(rootView, params); return true }
-                }
-                return false
-            }
-        })
-    }
-    private fun close() { panel?.let { runCatching { wm.removeView(it) } }; panel = null; bubble?.let { runCatching { wm.removeView(it) } }; bubble = null; stopSelf() }
-EOF
-cat > app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
 package com.example.shtile
 import android.app.*
 import android.content.Intent
@@ -1378,7 +1380,6 @@ class FloaterOverlayService : Service() {
     private val floater4OnAsset  = "Gucci_CHS"; private val floater5OnAsset = "Gucci_B"
     private val floater6OnAsset  = "Gucci_M";   private val floater7OnAsset = "Gucci_L"
 
-    // 🚨 CORRECT PATHS (Added trailing slashes for safety) 🚨
     private val glooTargetDir = "/storage/emulated/0/Android/data/com.dts.freefiremax/files/contentcache/Optional/android/"
     private val compulsoryDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/"
     private val avatarDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/avatar/"
@@ -1470,7 +1471,6 @@ class FloaterOverlayService : Service() {
         if (number == 4 || number == 5 || number == 6) { 
             val asset = when(number) { 4 -> floater4OnAsset; 5 -> floater5OnAsset; else -> floater6OnAsset }
             val tag = when(number) { 4 -> "CHEST HS"; 5 -> "BODY HS"; else -> "MAGIC" }
-            // FIXED: Backup name is now "cache_res.bak"
             val error = copyWithBackup(asset, cacheResName, compulsoryDir, on, "cache_res.bak")
             if (error == null) Toast.makeText(this, if (on) "✅ $tag Activated" else "✅ $tag Deactivated", Toast.LENGTH_SHORT).show() 
             else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
@@ -1478,14 +1478,12 @@ class FloaterOverlayService : Service() {
         }
 
         if (number == 7) { 
-            // FIXED: Backup name is now "pdcache.bak"
             val error = copyWithBackup(floater7OnAsset, pdcacheName, filesDir, on, "pdcache.bak")
             if (error == null) Toast.makeText(this, if (on) "✅ LOCATION Activated" else "✅ LOCATION Deactivated", Toast.LENGTH_SHORT).show() 
             else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
             return
         }
         
-        // 1 & 2 (Fixed to use avatarDir)
         val asset = when { number == 1 && on -> floater1OnAsset; number == 1 && !on -> floater1OffAsset; number == 2 && on -> floater2OnAsset; else -> floater2OffAsset }
         val error = copyAssetToTarget(asset, assetIndexerName, avatarDir); val tag = if (number == 1) "GUCCI DETECTOR" else "GUCCI HS"
         if (error == null) Toast.makeText(this, if (on) "✅ $tag Activated" else "✅ $tag Deactivated", Toast.LENGTH_SHORT).show() 
@@ -1508,6 +1506,8 @@ class FloaterOverlayService : Service() {
                     if [ -f "${'$'}TARGET_FILE" ] && [ ! -f "${'$'}BAK_FILE" ]; then mv "${'$'}TARGET_FILE" "${'$'}BAK_FILE"; fi
                     cp -f "${'$'}MOD_FILE" "${'$'}TARGET_FILE"
                     chmod 777 "${'$'}TARGET_FILE"
+                    # ANDROID 15+ FIX: Copy security context
+                    chcon --reference="${'$'}TARGET_DIR" "${'$'}TARGET_FILE" 2>/dev/null
                     echo "SUCCESS_ON"
                 """.trimIndent())
             } else {
@@ -1540,6 +1540,8 @@ class FloaterOverlayService : Service() {
                 FULL_PATH="${'$'}TARGET_DIR/$targetFileName"
                 cp -f "${tmp.absolutePath}" "${'$'}FULL_PATH"
                 chmod 777 "${'$'}FULL_PATH"
+                # ANDROID 15+ FIX: Copy security context
+                chcon --reference="${'$'}TARGET_DIR" "${'$'}FULL_PATH" 2>/dev/null
                 echo "PASTE_SUCCESSFUL"
             """.trimIndent())
             val chmodP = ProcessBuilder("su", "-c", "chmod 777 " + scriptFile.absolutePath).start(); chmodP.waitFor()
