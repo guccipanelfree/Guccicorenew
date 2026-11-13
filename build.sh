@@ -658,13 +658,11 @@ class ClearReportActivity : AppCompatActivity() {
         val btnSafe = findViewById<MaterialButton>(R.id.btnSafeClear)
         val btnDeep = findViewById<MaterialButton>(R.id.btnDeepClear)
 
-        // SAFE CLEAR
         btnSafe.setOnClickListener {
             Toast.makeText(this, "Clearing safe reports...", Toast.LENGTH_SHORT).show()
             executeClearScript(false)
         }
 
-        // DEEP CLEAR
         btnDeep.setOnClickListener {
             AlertDialog.Builder(this)
                 .setTitle("⚠️ WARNING: DEEP CLEAN")
@@ -680,7 +678,6 @@ class ClearReportActivity : AppCompatActivity() {
     private fun executeClearScript(isDeep: Boolean) {
         Thread {
             try {
-                // Use the exact same logic as the Floater: create a script, use su -mm
                 val scriptFile = File(cacheDir, "clear_report.sh")
                 val targetPath = if (isDeep) "/data/user/0/com.dts.freefiremax/" else "/data/user/0/com.dts.freefiremax/files/"
                 
@@ -695,11 +692,9 @@ class ClearReportActivity : AppCompatActivity() {
                     fi
                 """.trimIndent())
                 
-                // Grant execute permission to the script
                 val chmodP = ProcessBuilder("su", "-c", "chmod 777 " + scriptFile.absolutePath).start()
                 chmodP.waitFor()
                 
-                // Execute with -mm (Master Mount) to bypass namespace restrictions
                 val p = ProcessBuilder("su", "-mm", "-c", "sh " + scriptFile.absolutePath).redirectErrorStream(true).start()
                 val output = p.inputStream.bufferedReader().readText()
                 val code = p.waitFor()
@@ -1221,6 +1216,56 @@ class DriverLoaderActivity : AppCompatActivity() {
     private fun resetButton() { Handler(Looper.getMainLooper()).post { btnLoad.isEnabled = true; btnLoad.text = "⚡ LOAD SELECTED DRIVER" } }
 }
 EOF
+cat > app/src/main/java/com/example/shtile/TerminalActivity.kt << 'EOF'
+package com.example.shtile
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.widget.EditText
+import android.widget.RadioGroup
+import android.widget.ScrollView
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.button.MaterialButton
+import java.io.DataOutputStream
+import rikka.shizuku.Shizuku
+class TerminalActivity : AppCompatActivity() {
+    override fun onCreate(s: Bundle?) {
+        super.onCreate(s); setContentView(R.layout.activity_terminal)
+        val modeGroup = findViewById<RadioGroup>(R.id.modeGroup); val pkgInput = findViewById<EditText>(R.id.pkgInput)
+        val btnHide = findViewById<MaterialButton>(R.id.btnHide); val btnUnhide = findViewById<MaterialButton>(R.id.btnUnhide)
+        val btnFreeze = findViewById<MaterialButton>(R.id.btnFreeze); val btnDeepFreeze = findViewById<MaterialButton>(R.id.btnDeepFreeze)
+        val btnUnfreeze = findViewById<MaterialButton>(R.id.btnUnfreeze); val btnDelete = findViewById<MaterialButton>(R.id.btnDelete)
+        val terminalInput = findViewById<EditText>(R.id.terminalInput); val btnRunCmd = findViewById<MaterialButton>(R.id.btnRunCmd); val terminalOutput = findViewById<TextView>(R.id.terminalOutput)
+        btnHide.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Hiding $pkg...\n"; executeCommand("pm hide $pkg; pm disable-user --user 0 $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Enter package name", Toast.LENGTH_SHORT).show() } }
+        btnUnhide.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Unhiding $pkg...\n"; executeCommand("pm unhide $pkg; pm enable $pkg; pm unsuspend $pkg; cmd package install-existing --user 0 $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Enter package name", Toast.LENGTH_SHORT).show() } }
+        btnFreeze.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Freezing $pkg...\n"; executeCommand("am force-stop $pkg; pm suspend $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Enter package name", Toast.LENGTH_SHORT).show() } }
+        btnDeepFreeze.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Deep Freezing $pkg...\n"; executeCommand("am force-stop $pkg; pm suspend $pkg; pm disable-user --user 0 $pkg; pm hide $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Enter package name", Toast.LENGTH_SHORT).show() } }
+        btnUnfreeze.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Unfreezing $pkg...\n"; executeCommand("pm unsuspend $pkg; pm enable $pkg; pm unhide $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Enter package name", Toast.LENGTH_SHORT).show() } }
+        btnDelete.setOnClickListener { val pkg = pkgInput.text.toString().trim(); if (pkg.isNotEmpty()) { terminalOutput.text = "Deleting $pkg...\n"; executeCommand("pm uninstall --user 0 $pkg", modeGroup, terminalOutput) } else { Toast.makeText(this@TerminalActivity, "Enter package name", Toast.LENGTH_SHORT).show() } }
+        btnRunCmd.setOnClickListener { val cmd = terminalInput.text.toString().trim(); if (cmd.isNotEmpty()) { terminalOutput.append("Running: $cmd\n\n"); executeCommand(cmd, modeGroup, terminalOutput); terminalInput.text.clear() } }
+    }
+    private fun executeCommand(cmd: String, modeGroup: RadioGroup, outputView: TextView) {
+        Thread {
+            try {
+                val isRootMode = modeGroup.checkedRadioButtonId == R.id.radioRoot
+                val process: Process? = if (isRootMode) { Runtime.getRuntime().exec("su") } else {
+                    try { val method = Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java); method.isAccessible = true; method.invoke(null, arrayOf("sh", "-c", cmd), null, null) as Process } catch (e: Exception) { Handler(Looper.getMainLooper()).post { outputView.append("Shizuku Error: ${e.message}\n") }; return@Thread }
+                }
+                if (isRootMode && process != null) { val os = DataOutputStream(process.outputStream); os.writeBytes("$cmd\n"); os.writeBytes("exit\n"); os.flush(); os.close() }
+                if (process != null) {
+                    val reader = process.inputStream.bufferedReader(); val output = StringBuilder(); var line: String?
+                    while (reader.readLine().also { line = it } != null) { output.append(line).append("\n") }
+                    val errorReader = process.errorStream.bufferedReader(); while (errorReader.readLine().also { line = it } != null) { output.append(line).append("\n") }
+                    process.waitFor()
+                    Handler(Looper.getMainLooper()).post { if (output.isEmpty()) outputView.append("Done (No output)\n\n") else outputView.append(output.toString() + "\n"); val scrollView = outputView.parent as ScrollView; scrollView.post { scrollView.fullScroll(ScrollView.FOCUS_DOWN) } }
+                }
+            } catch (e: Exception) { Handler(Looper.getMainLooper()).post { outputView.append("Error: ${e.message}\n\n") } }
+        }.start()
+    }
+}
+EOF
 cat > app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
 package com.example.shtile
 import android.content.Context
@@ -1270,8 +1315,6 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             Handler(Looper.getMainLooper()).post { adapterAll = AppAdapter(this@HideAppsActivity, appList, false); findViewById<ListView>(R.id.appsList).adapter = adapterAll; adapterHidden = AppAdapter(this@HideAppsActivity, appList, true); findViewById<ListView>(R.id.hiddenAppsList).adapter = adapterHidden; adapterAll?.filter(""); adapterHidden?.filter("") }
         }.start()
     }
-EOF
-cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private fun showAppOptions(item: AppItem) {
         val options = arrayOf("Hide (pm hide)", "Unhide (Restore)", "Freeze (Suspend)", "Unfreeze (Unsuspend)", "Deep Freeze (Disable)", "Delete (Uninstall)")
         AlertDialog.Builder(this).setTitle(item.name).setItems(options) { _, which ->
