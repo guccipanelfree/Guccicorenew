@@ -1074,14 +1074,11 @@ class DriverLoaderActivity : AppCompatActivity() {
         btnLoad = findViewById(R.id.btnLoadDriver)
         spinnerDriver = findViewById(R.id.spinnerDriver)
 
-        // 🚨 DYNAMIC DRIVER DETECTION 🚨
         val availableDrivers = ArrayList<String>()
         try {
-            // List everything inside the "drivers" folder of the APK assets
             val driverFolders = assets.list("drivers")
             if (driverFolders != null) {
                 for (folder in driverFolders) {
-                    // Verify it is a folder by checking if it contains files
                     val filesInFolder = assets.list("drivers/$folder")
                     if (filesInFolder != null && filesInFolder.isNotEmpty()) {
                         availableDrivers.add(folder)
@@ -1092,12 +1089,10 @@ class DriverLoaderActivity : AppCompatActivity() {
             e.printStackTrace()
         }
 
-        // Fallback if no folders are found
         if (availableDrivers.isEmpty()) {
             availableDrivers.add("No Drivers Found")
         }
         
-        // Sort the drivers alphabetically for a clean look
         availableDrivers.sort()
         
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, availableDrivers)
@@ -1506,7 +1501,6 @@ class FloaterOverlayService : Service() {
                     if [ -f "${'$'}TARGET_FILE" ] && [ ! -f "${'$'}BAK_FILE" ]; then mv "${'$'}TARGET_FILE" "${'$'}BAK_FILE"; fi
                     cp -f "${'$'}MOD_FILE" "${'$'}TARGET_FILE"
                     chmod 777 "${'$'}TARGET_FILE"
-                    # ANDROID 15+ FIX: Copy security context
                     chcon --reference="${'$'}TARGET_DIR" "${'$'}TARGET_FILE" 2>/dev/null
                     echo "SUCCESS_ON"
                 """.trimIndent())
@@ -1540,7 +1534,6 @@ class FloaterOverlayService : Service() {
                 FULL_PATH="${'$'}TARGET_DIR/$targetFileName"
                 cp -f "${tmp.absolutePath}" "${'$'}FULL_PATH"
                 chmod 777 "${'$'}FULL_PATH"
-                # ANDROID 15+ FIX: Copy security context
                 chcon --reference="${'$'}TARGET_DIR" "${'$'}FULL_PATH" 2>/dev/null
                 echo "PASTE_SUCCESSFUL"
             """.trimIndent())
