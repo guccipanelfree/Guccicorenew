@@ -127,7 +127,9 @@
       "reboot_timer": 0
     },
     "FARHAN": {
-      "deviceIds": [],
+      "deviceIds": [
+        "de114893e6aff9ca"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1796885078464,
