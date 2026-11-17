@@ -1,4 +1,3 @@
-# ========== PART 1 of 17 ==========
 wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip; unzip -q gradle-8.2-bin.zip; export PATH="$PWD/gradle-8.2/bin:$PATH"
 rm -rf app *.gradle *.properties; mkdir -p app/src/main/java/com/example/shtile app/src/main/res/drawable app/src/main/res/layout app/src/main/res/values app/src/main/assets
 
@@ -42,7 +41,6 @@ dependencies {
     implementation 'dev.rikka.shizuku:provider:13.1.5'
 }
 EOF
-# ========== PART 2 of 17 ==========
 cat > app/src/main/AndroidManifest.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -91,7 +89,6 @@ EOF
 cat > app/src/main/res/values/strings.xml << 'EOF'
 <resources><string name="app_name">GUCCI LOADER</string></resources>
 EOF
-# ========== PART 3 of 17 ==========
 cat > app/src/main/res/drawable/ic_app_icon.xml << 'EOF'
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#00E5A0" android:pathData="M12,2l3,6h6l-5,4 2,7 -6,-4 -6,4 2,-7 -5,-4h6z"/></vector>
 EOF
@@ -128,7 +125,6 @@ EOF
 cat > app/src/main/res/drawable/ic_tile_pay.xml << 'EOF'
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M12,1L3,5v6c0,5.55 3.84,10.74 9,12 5.16,-1.26 9,-6.45 9,-12V5l-9,-4zm-2,16l-4,-4 1.41,-1.41L10,14.17l6.59,-6.59L18,9l-8,8z"/></vector>
 EOF
-# ========== PART 4 of 17 ==========
 cat > app/src/main/res/layout/dialog_root.xml << 'EOF'
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="24dp">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="32dp" android:gravity="center">
@@ -167,7 +163,6 @@ cat > app/src/main/res/layout/list_item_app.xml << 'EOF'
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
 EOF
-# ========== PART 5 of 17 ==========
 cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/bg_main" android:fillViewport="true">
 <LinearLayout android:orientation="vertical" android:padding="24dp" android:layout_width="match_parent" android:layout_height="wrap_content">
@@ -202,7 +197,6 @@ cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 </LinearLayout>
 </ScrollView>
 EOF
-# ========== PART 6 of 17 ==========
 cat > app/src/main/res/layout/activity_driver_loader.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
@@ -278,7 +272,6 @@ cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
 </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
 EOF
-# ========== PART 7 of 17 ==========
 cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
 <com.google.android.material.tabs.TabLayout android:id="@+id/tabLayout" android:layout_width="match_parent" android:layout_height="wrap_content" app:tabIndicatorColor="@color/accent_green" app:tabTextColor="@color/text_secondary" app:tabSelectedTextColor="@color/text_primary" app:tabIndicatorFullWidth="true" android:layout_marginBottom="16dp">
@@ -328,7 +321,6 @@ cat > app/src/main/res/layout/activity_clear_report.xml << 'EOF'
 </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
 EOF
-# ========== PART 8 of 17 ==========
 cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="280dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0B0F17" app:cardCornerRadius="20dp" app:cardElevation="15dp" app:strokeColor="#1F2633" app:strokeWidth="1dp">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
@@ -454,7 +446,6 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
 EOF
-# ========== PART 9 of 17 ==========
 cat > app/src/main/java/com/example/shtile/Installer.kt << 'EOF'
 package com.example.shtile
 import android.content.Context
@@ -526,7 +517,6 @@ class TimerService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 }
 EOF
-# ========== PART 10 of 17 ==========
 cat > app/src/main/java/com/example/shtile/RebootService.kt << 'EOF'
 package com.example.shtile
 import android.app.*
@@ -712,7 +702,6 @@ class PayTileService : TileService() {
     private fun updateState(forceState: Boolean? = null) { val isHidden = forceState ?: getSharedPreferences("HidePrefs", MODE_PRIVATE).getBoolean("is_pay_hidden", false); qsTile?.apply { label = "Payment Protection"; state = if (isHidden) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE; updateTile() } }
 }
 EOF
-# ========== PART 11 of 17 ==========
 cat > app/src/main/java/com/example/shtile/ClearReportActivity.kt << 'EOF'
 package com.example.shtile
 import android.os.Bundle
@@ -907,7 +896,6 @@ class LoginActivity : AppCompatActivity() {
     private fun showError(m: String) = Toast.makeText(this, m, Toast.LENGTH_LONG).show()
 }
 EOF
-# ========== PART 12 of 17 ==========
 cat > app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
 package com.example.shtile
 import android.Manifest
@@ -1009,7 +997,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 EOF
-# ========== PART 13 of 17 ==========
 cat >> app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
         val openTg = { try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/Gucci8240"))) } catch (e: Exception) { Toast.makeText(this@MainActivity, "Telegram not installed", Toast.LENGTH_SHORT).show() } }
         title.setOnClickListener { openTg() }; sub.setOnClickListener { openTg() }; ca.setOnClickListener { openTg() }
@@ -1100,7 +1087,6 @@ cat >> app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
     override fun onDestroy() { Shizuku.removeRequestPermissionResultListener(shizukuListener); super.onDestroy() }
 }
 EOF
-# ========== PART 14 of 17 ==========
 cat > app/src/main/java/com/example/shtile/DriverLoaderActivity.kt << 'EOF'
 package com.example.shtile
 import android.graphics.Color
@@ -1326,7 +1312,6 @@ class TerminalActivity : AppCompatActivity() {
     }
 }
 EOF
-# ========== PART 15 of 17 ==========
 cat > app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
 package com.example.shtile
 import android.content.Context
@@ -1363,7 +1348,6 @@ class HideAppsActivity : AppCompatActivity() {
         emergencyBtn.setOnClickListener { Toast.makeText(this@HideAppsActivity, "Emergency Restoring ALL Apps...", Toast.LENGTH_SHORT).show(); Thread { try { val hidden = prefs.getStringSet("hidden_history", emptySet()) ?: emptySet(); val frozen = prefs.getStringSet("frozen_history", emptySet()) ?: emptySet(); val deepFrozen = prefs.getStringSet("deep_frozen_history", emptySet()) ?: emptySet(); val safe = prefs.getStringSet("safe_apps", emptySet()) ?: emptySet(); val allApps = hidden + frozen + deepFrozen + safe; if (allApps.isEmpty()) return@Thread; val cmd = StringBuilder(); for (pkg in allApps) { cmd.append("pm unhide $pkg; pm enable $pkg; pm unsuspend $pkg; cmd package install-existing --user 0 $pkg; ") }; val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor(); prefs.edit().remove("hidden_history").remove("frozen_history").remove("deep_frozen_history").putBoolean("is_pay_hidden", false).apply(); Handler(Looper.getMainLooper()).post { Toast.makeText(this@HideAppsActivity, "All Apps Restored!", Toast.LENGTH_LONG).show(); loadApps() } } catch (e: Exception) {} }.start() }
     }
 EOF
-# ========== PART 16 of 17 ==========
 cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private fun loadApps() {
         Thread {
@@ -1624,7 +1608,6 @@ class FloaterOverlayService : Service() {
     override fun onDestroy() { panel?.let { runCatching { wm.removeView(it) } }; bubble?.let { runCatching { wm.removeView(it) } }; super.onDestroy() }
 }
 EOF
-# ========== PART 17 of 17 ==========
 cat > app/src/main/java/com/example/shtile/GucciVoiceActivity.kt << 'EOF'
 package com.example.shtile
 import android.content.Intent
