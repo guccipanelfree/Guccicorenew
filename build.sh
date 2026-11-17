@@ -1,7 +1,8 @@
+# ========== PART 1 of 17 ==========
 wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip; unzip -q gradle-8.2-bin.zip; export PATH="$PWD/gradle-8.2/bin:$PATH"
 rm -rf app *.gradle *.properties; mkdir -p app/src/main/java/com/example/shtile app/src/main/res/drawable app/src/main/res/layout app/src/main/res/values app/src/main/assets
 
-# CRITICAL ASSETS (Includes all 11 files)
+# CRITICAL ASSETS
 for file in Gucci_core Gucci_brutal Gucci_Ch Gucci_h Gucci_O Gucci_G Gucci_GO Gucci_CHS Gucci_B Gucci_M Gucci_L; do
     if [ -f "$file" ]; then cp "$file" app/src/main/assets/; fi
 done
@@ -41,6 +42,7 @@ dependencies {
     implementation 'dev.rikka.shizuku:provider:13.1.5'
 }
 EOF
+# ========== PART 2 of 17 ==========
 cat > app/src/main/AndroidManifest.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -48,6 +50,7 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -59,12 +62,14 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <activity android:name=".TerminalActivity" android:exported="false"/>
 <activity android:name=".DriverLoaderActivity" android:exported="false"/>
 <activity android:name=".ClearReportActivity" android:exported="false"/>
+<activity android:name=".GucciVoiceActivity" android:exported="false"/>
 <activity android:name=".TransparentActivity" android:exported="false" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:excludeFromRecents="true" android:taskAffinity="" android:noHistory="true"/>
 <activity-alias android:name=".MainActivityAlias" android:targetActivity=".LoginActivity" android:exported="true" android:enabled="true" android:icon="@drawable/ic_app_icon"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
 <service android:name=".RunnerService" android:exported="false" android:foregroundServiceType="dataSync"/>
 <service android:name=".RebootService" android:exported="false" android:foregroundServiceType="dataSync"/>
 <service android:name=".TimerService" android:exported="false" android:foregroundServiceType="dataSync"/>
 <service android:name=".FloaterOverlayService" android:exported="false" android:foregroundServiceType="specialUse"><property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Overlay for Game Mods" /></service>
+<service android:name=".GucciVoiceService" android:exported="false" android:foregroundServiceType="mediaPlayback" />
 <service android:name=".SafeTileService" android:exported="true" android:icon="@drawable/ic_tile_normal" android:label="Boost" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
 <service android:name=".BrutalTileService" android:exported="true" android:icon="@drawable/ic_tile_brutal" android:label="Turbo Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
 <service android:name=".FocusTileService" android:exported="true" android:icon="@drawable/ic_tile_focus" android:label="Focus Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
@@ -86,6 +91,7 @@ EOF
 cat > app/src/main/res/values/strings.xml << 'EOF'
 <resources><string name="app_name">GUCCI LOADER</string></resources>
 EOF
+# ========== PART 3 of 17 ==========
 cat > app/src/main/res/drawable/ic_app_icon.xml << 'EOF'
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#00E5A0" android:pathData="M12,2l3,6h6l-5,4 2,7 -6,-4 -6,4 2,-7 -5,-4h6z"/></vector>
 EOF
@@ -122,6 +128,7 @@ EOF
 cat > app/src/main/res/drawable/ic_tile_pay.xml << 'EOF'
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M12,1L3,5v6c0,5.55 3.84,10.74 9,12 5.16,-1.26 9,-6.45 9,-12V5l-9,-4zm-2,16l-4,-4 1.41,-1.41L10,14.17l6.59,-6.59L18,9l-8,8z"/></vector>
 EOF
+# ========== PART 4 of 17 ==========
 cat > app/src/main/res/layout/dialog_root.xml << 'EOF'
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="24dp">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="32dp" android:gravity="center">
@@ -160,6 +167,7 @@ cat > app/src/main/res/layout/list_item_app.xml << 'EOF'
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
 EOF
+# ========== PART 5 of 17 ==========
 cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/bg_main" android:fillViewport="true">
 <LinearLayout android:orientation="vertical" android:padding="24dp" android:layout_width="match_parent" android:layout_height="wrap_content">
@@ -188,11 +196,13 @@ cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 <TextView android:id="@+id/contactAdminText" android:paddingTop="16dp" android:gravity="center" android:text="Contact Admin for Help" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold" android:layout_width="match_parent" android:layout_height="wrap_content"/>
 <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="32dp" android:paddingBottom="24dp" android:gravity="center">
 <ImageButton android:id="@+id/hideAppsIcon" android:layout_width="60dp" android:layout_height="60dp" android:padding="16dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_hide" app:tint="@color/accent_green" android:layout_marginEnd="16dp"/>
-<ImageButton android:id="@+id/terminalIcon" android:layout_width="60dp" android:layout_height="60dp" android:padding="16dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_terminal" app:tint="@color/accent_green"/>
+<ImageButton android:id="@+id/terminalIcon" android:layout_width="60dp" android:layout_height="60dp" android:padding="16dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_terminal" app:tint="@color/accent_green" android:layout_marginEnd="16dp"/>
+<ImageButton android:id="@+id/voiceIcon" android:layout_width="60dp" android:layout_height="60dp" android:padding="16dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@android:drawable/ic_btn_speak_now" app:tint="@color/accent_green"/>
 </LinearLayout>
 </LinearLayout>
 </ScrollView>
 EOF
+# ========== PART 6 of 17 ==========
 cat > app/src/main/res/layout/activity_driver_loader.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
@@ -268,6 +278,7 @@ cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
 </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
 EOF
+# ========== PART 7 of 17 ==========
 cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
 <com.google.android.material.tabs.TabLayout android:id="@+id/tabLayout" android:layout_width="match_parent" android:layout_height="wrap_content" app:tabIndicatorColor="@color/accent_green" app:tabTextColor="@color/text_secondary" app:tabSelectedTextColor="@color/text_primary" app:tabIndicatorFullWidth="true" android:layout_marginBottom="16dp">
@@ -317,6 +328,7 @@ cat > app/src/main/res/layout/activity_clear_report.xml << 'EOF'
 </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
 EOF
+# ========== PART 8 of 17 ==========
 cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="280dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0B0F17" app:cardCornerRadius="20dp" app:cardElevation="15dp" app:strokeColor="#1F2633" app:strokeWidth="1dp">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
@@ -378,6 +390,71 @@ cat > app/src/main/res/layout/overlay_bubble.xml << 'EOF'
 <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp" android:src="@drawable/ic_tile_floater" app:tint="@color/accent_green"/>
 </FrameLayout>
 EOF
+cat > app/src/main/res/layout/activity_gucci_voice.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#07090C" android:fillViewport="true">
+<LinearLayout android:orientation="vertical" android:padding="16dp" android:layout_width="match_parent" android:layout_height="wrap_content">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="16dp">
+        <ImageView android:layout_width="60dp" android:layout_height="60dp" android:src="@drawable/ic_app_icon" android:layout_marginEnd="12dp"/>
+        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="IS FF VOICE" android:textColor="#4FC3F7" android:textSize="22sp" android:textStyle="bold" android:fontFamily="sans-serif-black" android:fontStyle="italic"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="👑 Gaming Voice Soundboard" android:textColor="#8B949E" android:textSize="12sp"/>
+        </LinearLayout>
+    </LinearLayout>
+    <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="16dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp" android:layout_marginBottom="16dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="🔑 License Validity" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="16sp"/>
+            </LinearLayout>
+            <TextView android:id="@+id/tvVoiceValidity" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⏳ Left 24h 00m" android:textColor="#4FC3F7" android:textSize="12sp" android:layout_marginBottom="12dp"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnGetTextCoupon" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="🎟️ Get Coupon" android:textColor="#FFFFFF" app:backgroundTint="#8B5CF6" app:cornerRadius="8dp" android:textSize="12sp" android:layout_marginEnd="8dp"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnExtendValidity" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="⏳ Extend Validity" android:textColor="#FFFFFF" app:backgroundTint="#3B82F6" app:cornerRadius="8dp" android:textSize="12sp"/>
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <EditText android:id="@+id/etCoupon" android:layout_width="0dp" android:layout_weight="1" android:layout_height="45dp" android:hint="🎟️ Paste coupon code here" android:textColor="#FFFFFF" android:textColorHint="#8B949E" android:background="#12161F" android:padding="10dp" android:layout_marginEnd="8dp"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnRedeemCoupon" android:layout_width="wrap_content" android:layout_height="45dp" android:text="Redeem" android:textColor="#FFFFFF" app:backgroundTint="#10B981" app:cornerRadius="8dp"/>
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+    <com.google.android.material.button.MaterialButton android:id="@+id/btnTurnOverlayOn" android:layout_width="match_parent" android:layout_height="55dp" android:text="🎮 Turn overlay on" android:textColor="#000000" app:backgroundTint="#00E5A0" app:cornerRadius="12dp" android:textStyle="bold" android:layout_marginBottom="12dp"/>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="16dp">
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnMaxVolume" android:layout_width="0dp" android:layout_weight="1" android:layout_height="50dp" android:text="🔊 Max volume" android:textColor="#FFFFFF" app:backgroundTint="#8B5CF6" app:cornerRadius="12dp" android:layout_marginEnd="8dp"/>
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnStopAll" android:layout_width="0dp" android:layout_weight="1" android:layout_height="50dp" android:text="⏹️ Stop all" android:textColor="#FFFFFF" app:backgroundTint="#EF4444" app:cornerRadius="12dp"/>
+    </LinearLayout>
+    <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="16dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp" android:layout_marginBottom="16dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🗣️ Text → Voice" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginBottom="12dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="45dp" android:text="🗣️ Voice: OmorOnFire ▼" android:textColor="#4FC3F7" android:background="@drawable/bg_box_dark" android:gravity="center_vertical" android:padding="10dp" android:layout_marginBottom="8dp"/>
+            <EditText android:id="@+id/etVoiceText" android:layout_width="match_parent" android:layout_height="80dp" android:gravity="top|start" android:hint="Type here, press Send and it plays as voice..." android:textColor="#FFFFFF" android:textColorHint="#8B949E" android:background="#12161F" android:padding="10dp" android:layout_marginBottom="12dp"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnSendText" android:layout_width="0dp" android:layout_weight="1" android:layout_height="45dp" android:text="▶️ Send" android:textColor="#FFFFFF" app:backgroundTint="#00E5A0" app:cornerRadius="8dp" android:textStyle="bold" android:layout_marginEnd="8dp"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnSaveText" android:layout_width="0dp" android:layout_weight="1" android:layout_height="45dp" android:text="💾 Save card" android:textColor="#FFFFFF" app:backgroundTint="#8B5CF6" app:cornerRadius="8dp" android:layout_marginEnd="8dp"/>
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+</LinearLayout>
+</ScrollView>
+EOF
+cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="220dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="16dp" app:cardElevation="15dp" app:strokeColor="#1F4E79" app:strokeWidth="1.5dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="8dp">
+    <LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp">
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="👑 IS VOICE" android:textColor="#4FC3F7" android:textStyle="bold" android:textSize="12sp" android:fontFamily="sans-serif-black"/>
+        <ImageButton android:id="@+id/btnClose" android:layout_width="24dp" android:layout_height="24dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="6dp">
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayStop" android:layout_width="match_parent" android:layout_height="32dp" android:text="⏹ STOP" android:textColor="#FFFFFF" app:backgroundTint="#FF4D4D" app:cornerRadius="6dp" android:textSize="10sp" android:insetTop="0dp" android:insetBottom="0dp"/>
+    </LinearLayout>
+    <ListView android:id="@+id/lvVoices" android:layout_width="match_parent" android:layout_height="150dp" android:divider="@null" android:dividerHeight="4dp" android:layout_marginBottom="6dp"/>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnAddVoice" android:layout_width="0dp" android:layout_weight="1" android:layout_height="32dp" android:text="➕ Add" android:textColor="#000000" app:backgroundTint="#00E5A0" app:cornerRadius="6dp" android:textSize="10sp" android:insetTop="0dp" android:insetBottom="0dp" android:layout_marginEnd="4dp"/>
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnExtractVideo" android:layout_width="0dp" android:layout_weight="1" android:layout_height="32dp" android:text="🎬 Extract" android:textColor="#FFFFFF" app:backgroundTint="#8B5CF6" app:cornerRadius="6dp" android:textSize="10sp" android:insetTop="0dp" android:insetBottom="0dp"/>
+    </LinearLayout>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+EOF
+# ========== PART 9 of 17 ==========
 cat > app/src/main/java/com/example/shtile/Installer.kt << 'EOF'
 package com.example.shtile
 import android.content.Context
@@ -449,6 +526,7 @@ class TimerService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 }
 EOF
+# ========== PART 10 of 17 ==========
 cat > app/src/main/java/com/example/shtile/RebootService.kt << 'EOF'
 package com.example.shtile
 import android.app.*
@@ -517,10 +595,7 @@ class RebootService : Service() {
         }
         return START_STICKY
     }
-    override fun onDestroy() {
-        scope.cancel()
-        super.onDestroy()
-    }
+    override fun onDestroy() { scope.cancel(); super.onDestroy() }
     override fun onBind(intent: Intent?): IBinder? = null
 }
 EOF
@@ -537,7 +612,6 @@ class SafeTileService : TileService() {
         val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
         if (!prefs.getBoolean("has_valid_license", false)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
         if (!prefs.getBoolean("allow_inx", true)) { Toast.makeText(this, "🔒 INX (Boost) locked by Admin", Toast.LENGTH_SHORT).show(); return }
-        
         val i = Intent(this, RunnerService::class.java).apply { action = "NORMAL" }; 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i) 
     } 
@@ -556,7 +630,6 @@ class BrutalTileService : TileService() {
         val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
         if (!prefs.getBoolean("has_valid_license", false)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
         if (!prefs.getBoolean("allow_inx", true)) { Toast.makeText(this, "🔒 INX (Turbo) locked by Admin", Toast.LENGTH_SHORT).show(); return }
-        
         val i = Intent(this, RunnerService::class.java).apply { action = "BRUTAL" }; 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i) 
     } 
@@ -639,6 +712,7 @@ class PayTileService : TileService() {
     private fun updateState(forceState: Boolean? = null) { val isHidden = forceState ?: getSharedPreferences("HidePrefs", MODE_PRIVATE).getBoolean("is_pay_hidden", false); qsTile?.apply { label = "Payment Protection"; state = if (isHidden) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE; updateTile() } }
 }
 EOF
+# ========== PART 11 of 17 ==========
 cat > app/src/main/java/com/example/shtile/ClearReportActivity.kt << 'EOF'
 package com.example.shtile
 import android.os.Bundle
@@ -649,38 +723,22 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import java.io.File
-
 class ClearReportActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_clear_report)
-        
         val btnSafe = findViewById<MaterialButton>(R.id.btnSafeClear)
         val btnDeep = findViewById<MaterialButton>(R.id.btnDeepClear)
-
-        btnSafe.setOnClickListener {
-            Toast.makeText(this, "Clearing safe reports...", Toast.LENGTH_SHORT).show()
-            executeClearScript(false)
-        }
-
+        btnSafe.setOnClickListener { Toast.makeText(this, "Clearing safe reports...", Toast.LENGTH_SHORT).show(); executeClearScript(false) }
         btnDeep.setOnClickListener {
-            AlertDialog.Builder(this)
-                .setTitle("⚠️ WARNING: DEEP CLEAN")
-                .setMessage("Are you absolutely sure?\n\nThis will delete EVERYTHING inside the Free Fire folder (/data/user/0/com.dts.freefiremax/).\n\nIt MAY delete your game settings, logins, or data. This cannot be undone.")
-                .setPositiveButton("YES, DELETE EVERYTHING") { _, _ ->
-                    Toast.makeText(this, "Deep cleaning...", Toast.LENGTH_SHORT).show()
-                    executeClearScript(true)
-                }
-                .setNegativeButton("CANCEL", null).show()
+            AlertDialog.Builder(this).setTitle("⚠️ WARNING: DEEP CLEAN").setMessage("Are you absolutely sure?\n\nThis will delete EVERYTHING inside the Free Fire folder (/data/user/0/com.dts.freefiremax/).\n\nIt MAY delete your game settings, logins, or data. This cannot be undone.").setPositiveButton("YES, DELETE EVERYTHING") { _, _ -> Toast.makeText(this, "Deep cleaning...", Toast.LENGTH_SHORT).show(); executeClearScript(true) }.setNegativeButton("CANCEL", null).show()
         }
     }
-
     private fun executeClearScript(isDeep: Boolean) {
         Thread {
             try {
                 val scriptFile = File(cacheDir, "clear_report.sh")
                 val targetPath = if (isDeep) "/data/user/0/com.dts.freefiremax/" else "/data/user/0/com.dts.freefiremax/files/"
-                
                 scriptFile.writeText("""
                     #!/system/bin/sh
                     TARGET_DIR="$targetPath"
@@ -691,15 +749,12 @@ class ClearReportActivity : AppCompatActivity() {
                         echo "FOLDER_NOT_FOUND"
                     fi
                 """.trimIndent())
-                
                 val chmodP = ProcessBuilder("su", "-c", "chmod 777 " + scriptFile.absolutePath).start()
                 chmodP.waitFor()
-                
                 val p = ProcessBuilder("su", "-mm", "-c", "sh " + scriptFile.absolutePath).redirectErrorStream(true).start()
                 val output = p.inputStream.bufferedReader().readText()
                 val code = p.waitFor()
                 scriptFile.delete()
-                
                 Handler(Looper.getMainLooper()).post {
                     if (output.contains("SUCCESS") && code == 0) {
                         val msg = if (isDeep) "🚨 Deep Report Cleared!" else "✅ Safe Reports Cleared!"
@@ -710,11 +765,7 @@ class ClearReportActivity : AppCompatActivity() {
                         Toast.makeText(this, "❌ Failed (Check Root).\nOutput: $output", Toast.LENGTH_LONG).show()
                     }
                 }
-            } catch (e: Exception) {
-                Handler(Looper.getMainLooper()).post { 
-                    Toast.makeText(this, "❌ Error: ${e.message}", Toast.LENGTH_LONG).show() 
-                }
-            }
+            } catch (e: Exception) { Handler(Looper.getMainLooper()).post { Toast.makeText(this, "❌ Error: ${e.message}", Toast.LENGTH_LONG).show() } }
         }.start()
     }
 }
@@ -769,7 +820,6 @@ class LoginActivity : AppCompatActivity() {
     private fun verifyKey(userKey: String, hwid: String) {
         val btn = findViewById<MaterialButton>(R.id.loginBtn)
         btn.isEnabled = false; btn.text = "Checking HWID..."
-        
         lifecycleScope.launch {
             try {
                 val readResult = withContext(Dispatchers.IO) { readDataJson() }
@@ -848,6 +898,7 @@ class LoginActivity : AppCompatActivity() {
             .putBoolean("allow_inx", keyData.optBoolean("allowInx", true))
             .putBoolean("allow_floater", keyData.optBoolean("allowFloater", true))
             .putBoolean("allow_kernel", keyData.optBoolean("allowKernel", true))
+            .putBoolean("allow_voice", keyData.optBoolean("allowVoice", true))
             .apply()
         Toast.makeText(this, "Login Successful!\nHWID Locked.", Toast.LENGTH_SHORT).show()
         startActivity(Intent(this, MainActivity::class.java)); finish()
@@ -856,6 +907,7 @@ class LoginActivity : AppCompatActivity() {
     private fun showError(m: String) = Toast.makeText(this, m, Toast.LENGTH_LONG).show()
 }
 EOF
+# ========== PART 12 of 17 ==========
 cat > app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
 package com.example.shtile
 import android.Manifest
@@ -919,11 +971,10 @@ class MainActivity : AppCompatActivity() {
         val allowInx = p.getBoolean("allow_inx", true)
         val allowFloater = p.getBoolean("allow_floater", true)
         val allowKernel = p.getBoolean("allow_kernel", true)
+        val allowVoice = p.getBoolean("allow_voice", true)
         
         if (!allowInx) {
-            Thread {
-                try { Runtime.getRuntime().exec(arrayOf("su", "-c", "rm -f /data/local/tmp/Gucci_core /data/local/tmp/Gucci_brutal")).waitFor() } catch (e: Exception) {}
-            }.start()
+            Thread { try { Runtime.getRuntime().exec(arrayOf("su", "-c", "rm -f /data/local/tmp/Gucci_core /data/local/tmp/Gucci_brutal")).waitFor() } catch (e: Exception) {} }.start()
         }
         
         keyInput.setText(p.getString("game_key", ""))
@@ -958,6 +1009,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 EOF
+# ========== PART 13 of 17 ==========
 cat >> app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
         val openTg = { try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/Gucci8240"))) } catch (e: Exception) { Toast.makeText(this@MainActivity, "Telegram not installed", Toast.LENGTH_SHORT).show() } }
         title.setOnClickListener { openTg() }; sub.setOnClickListener { openTg() }; ca.setOnClickListener { openTg() }
@@ -1002,6 +1054,23 @@ cat >> app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
         findViewById<Button>(R.id.clearReportBtn)?.setOnClickListener { startActivity(Intent(this, ClearReportActivity::class.java)) }
         findViewById<ImageButton>(R.id.hideAppsIcon).setOnClickListener { startActivity(Intent(this, HideAppsActivity::class.java)) }
         findViewById<ImageButton>(R.id.terminalIcon).setOnClickListener { startActivity(Intent(this, TerminalActivity::class.java)) }
+        
+        val voiceIcon = findViewById<ImageButton>(R.id.voiceIcon)
+        if (!allowVoice) {
+            voiceIcon.alpha = 0.5f
+            voiceIcon.setOnClickListener {
+                Toast.makeText(this@MainActivity, "🔒 Voice feature locked by Admin", Toast.LENGTH_SHORT).show()
+                stopService(Intent(this@MainActivity, GucciVoiceService::class.java))
+            }
+        } else {
+            voiceIcon.alpha = 1.0f
+            voiceIcon.setOnClickListener { startActivity(Intent(this@MainActivity, GucciVoiceActivity::class.java)) }
+            voiceIcon.setOnLongClickListener {
+                stopService(Intent(this@MainActivity, GucciVoiceService::class.java))
+                Toast.makeText(this@MainActivity, "⏹️ Voice Floater Stopped from Dashboard", Toast.LENGTH_SHORT).show()
+                true
+            }
+        }
     }
 
     private fun checkAccess() {
@@ -1031,6 +1100,7 @@ cat >> app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
     override fun onDestroy() { Shizuku.removeRequestPermissionResultListener(shizukuListener); super.onDestroy() }
 }
 EOF
+# ========== PART 14 of 17 ==========
 cat > app/src/main/java/com/example/shtile/DriverLoaderActivity.kt << 'EOF'
 package com.example.shtile
 import android.graphics.Color
@@ -1080,13 +1150,9 @@ class DriverLoaderActivity : AppCompatActivity() {
                     }
                 }
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        } catch (e: Exception) { e.printStackTrace() }
 
-        if (availableDrivers.isEmpty()) {
-            availableDrivers.add("No Drivers Found")
-        }
+        if (availableDrivers.isEmpty()) { availableDrivers.add("No Drivers Found") }
         
         availableDrivers.sort()
         
@@ -1139,22 +1205,16 @@ class DriverLoaderActivity : AppCompatActivity() {
                 val filesInFolder = assets.list("drivers/$selectedFolder")
                 
                 if (filesInFolder.isNullOrEmpty()) { 
-                    appendLog("❌ ERROR: Folder $selectedFolder is empty or missing."); 
-                    resetButton(); 
-                    return@Thread 
+                    appendLog("❌ ERROR: Folder $selectedFolder is empty or missing."); resetButton(); return@Thread 
                 }
                 
                 val matchingFiles = ArrayList<String>()
                 for (file in filesInFolder) { 
-                    if (file.endsWith(".sh") && (file.startsWith(fullKernelVersion) || file.startsWith(majorKernelVersion))) { 
-                        matchingFiles.add(file) 
-                    } 
+                    if (file.endsWith(".sh") && (file.startsWith(fullKernelVersion) || file.startsWith(majorKernelVersion))) { matchingFiles.add(file) } 
                 }
                 
                 if (matchingFiles.isEmpty()) { 
-                    appendLog("❌ ERROR: No driver found for kernel $majorKernelVersion in $selectedFolder!"); 
-                    resetButton(); 
-                    return@Thread 
+                    appendLog("❌ ERROR: No driver found for kernel $majorKernelVersion in $selectedFolder!"); resetButton(); return@Thread 
                 }
                 
                 if (matchingFiles.size == 1) {
@@ -1266,6 +1326,7 @@ class TerminalActivity : AppCompatActivity() {
     }
 }
 EOF
+# ========== PART 15 of 17 ==========
 cat > app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
 package com.example.shtile
 import android.content.Context
@@ -1302,6 +1363,7 @@ class HideAppsActivity : AppCompatActivity() {
         emergencyBtn.setOnClickListener { Toast.makeText(this@HideAppsActivity, "Emergency Restoring ALL Apps...", Toast.LENGTH_SHORT).show(); Thread { try { val hidden = prefs.getStringSet("hidden_history", emptySet()) ?: emptySet(); val frozen = prefs.getStringSet("frozen_history", emptySet()) ?: emptySet(); val deepFrozen = prefs.getStringSet("deep_frozen_history", emptySet()) ?: emptySet(); val safe = prefs.getStringSet("safe_apps", emptySet()) ?: emptySet(); val allApps = hidden + frozen + deepFrozen + safe; if (allApps.isEmpty()) return@Thread; val cmd = StringBuilder(); for (pkg in allApps) { cmd.append("pm unhide $pkg; pm enable $pkg; pm unsuspend $pkg; cmd package install-existing --user 0 $pkg; ") }; val p = Runtime.getRuntime().exec("su"); val os = DataOutputStream(p.outputStream); os.writeBytes(cmd.toString() + "\n"); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor(); prefs.edit().remove("hidden_history").remove("frozen_history").remove("deep_frozen_history").putBoolean("is_pay_hidden", false).apply(); Handler(Looper.getMainLooper()).post { Toast.makeText(this@HideAppsActivity, "All Apps Restored!", Toast.LENGTH_LONG).show(); loadApps() } } catch (e: Exception) {} }.start() }
     }
 EOF
+# ========== PART 16 of 17 ==========
 cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
     private fun loadApps() {
         Thread {
@@ -1321,15 +1383,7 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
             if (which == 5 && item.safetyLevel == 2) {
                 AlertDialog.Builder(this).setTitle("⚠️ CRITICAL SYSTEM APP").setMessage("WARNING: ${item.name} is a core system app!\n\nDeleting this WILL break your device and may cause a bootloop.\n\nAre you absolutely sure?").setPositiveButton("DELETE ANYWAY") { _, _ -> executeAction("pm uninstall --user 0 ${item.pkg}", which, item) }.setNegativeButton("CANCEL", null).show()
             } else {
-                val cmd = when (which) { 
-                    0 -> "pm hide ${item.pkg}; pm disable-user --user 0 ${item.pkg}"
-                    1 -> "pm unhide ${item.pkg}; pm enable ${item.pkg}; pm unsuspend ${item.pkg}; cmd package install-existing --user 0 ${item.pkg}"
-                    2 -> "am force-stop ${item.pkg}; pm suspend ${item.pkg}"
-                    3 -> "pm unsuspend ${item.pkg}; pm enable ${item.pkg}"
-                    4 -> "am force-stop ${item.pkg}; pm suspend ${item.pkg}; pm disable-user --user 0 ${item.pkg}; pm hide ${item.pkg}"
-                    5 -> "pm uninstall --user 0 ${item.pkg}"
-                    else -> ""
-                }
+                val cmd = when (which) { 0 -> "pm hide ${item.pkg}; pm disable-user --user 0 ${item.pkg}"; 1 -> "pm unhide ${item.pkg}; pm enable ${item.pkg}; pm unsuspend ${item.pkg}; cmd package install-existing --user 0 ${item.pkg}"; 2 -> "am force-stop ${item.pkg}; pm suspend ${item.pkg}"; 3 -> "pm unsuspend ${item.pkg}; pm enable ${item.pkg}"; 4 -> "am force-stop ${item.pkg}; pm suspend ${item.pkg}; pm disable-user --user 0 ${item.pkg}; pm hide ${item.pkg}"; 5 -> "pm uninstall --user 0 ${item.pkg}"; else -> "" }
                 executeAction(cmd, which, item)
             }
         }.show()
@@ -1343,14 +1397,7 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
                 val hidden = prefs.getStringSet("hidden_history", emptySet())?.toMutableSet() ?: mutableSetOf()
                 val frozen = prefs.getStringSet("frozen_history", emptySet())?.toMutableSet() ?: mutableSetOf()
                 val deepFrozen = prefs.getStringSet("deep_frozen_history", emptySet())?.toMutableSet() ?: mutableSetOf()
-                when (actionType) {
-                    0 -> { hidden.add(item.pkg); item.isHidden = true }
-                    1 -> { hidden.remove(item.pkg); item.isHidden = false }
-                    2 -> { frozen.add(item.pkg); item.isFrozen = true }
-                    3 -> { frozen.remove(item.pkg); item.isFrozen = false }
-                    4 -> { deepFrozen.add(item.pkg); item.isDeepFrozen = true }
-                    5 -> { hidden.remove(item.pkg); frozen.remove(item.pkg); deepFrozen.remove(item.pkg) }
-                }
+                when (actionType) { 0 -> { hidden.add(item.pkg); item.isHidden = true }; 1 -> { hidden.remove(item.pkg); item.isHidden = false }; 2 -> { frozen.add(item.pkg); item.isFrozen = true }; 3 -> { frozen.remove(item.pkg); item.isFrozen = false }; 4 -> { deepFrozen.add(item.pkg); item.isDeepFrozen = true }; 5 -> { hidden.remove(item.pkg); frozen.remove(item.pkg); deepFrozen.remove(item.pkg) } }
                 prefs.edit().putStringSet("hidden_history", hidden).putStringSet("frozen_history", frozen).putStringSet("deep_frozen_history", deepFrozen).apply()
                 Handler(Looper.getMainLooper()).post { Toast.makeText(this@HideAppsActivity, "Action Completed", Toast.LENGTH_SHORT).show(); loadApps() }
             } catch (e: Exception) { Handler(Looper.getMainLooper()).post { Toast.makeText(this@HideAppsActivity, "Failed: ${e.message}", Toast.LENGTH_SHORT).show() } }
@@ -1362,15 +1409,10 @@ cat >> app/src/main/java/com/example/shtile/HideAppsActivity.kt << 'EOF'
         override fun getView(position: Int, convertView: android.view.View?, parent: android.view.ViewGroup): android.view.View {
             val v = convertView ?: inflater.inflate(R.layout.list_item_app, parent, false); val item = filteredItems[position]
             var status = ""
-            if (item.isDeepFrozen) status = " [DEEP FREEZE]"
-            else if (item.isHidden) status = " [HIDDEN]"
-            else if (item.isFrozen) status = " [FROZEN]"
+            if (item.isDeepFrozen) status = " [DEEP FREEZE]" else if (item.isHidden) status = " [HIDDEN]" else if (item.isFrozen) status = " [FROZEN]"
             val textView = v.findViewById<TextView>(R.id.appName)
             textView.text = "${item.name}$status"
-            if (item.isDeepFrozen) textView.setTextColor(Color.parseColor("#9B59B6"))
-            else if (item.isHidden) textView.setTextColor(Color.parseColor("#FF4D4D"))
-            else if (item.isFrozen) textView.setTextColor(Color.parseColor("#F39C12"))
-            else textView.setTextColor(Color.WHITE)
+            if (item.isDeepFrozen) textView.setTextColor(Color.parseColor("#9B59B6")) else if (item.isHidden) textView.setTextColor(Color.parseColor("#FF4D4D")) else if (item.isFrozen) textView.setTextColor(Color.parseColor("#F39C12")) else textView.setTextColor(Color.WHITE)
             val dot = v.findViewById<View>(R.id.safetyDot)
             when (item.safetyLevel) { 2 -> dot.setBackgroundColor(Color.parseColor("#FF4D4D")); 1 -> dot.setBackgroundColor(Color.parseColor("#9B59B6")); else -> dot.setBackgroundColor(Color.parseColor("#00E5A0")) }
             v.findViewById<TextView>(R.id.appPkg).text = item.pkg
@@ -1412,21 +1454,18 @@ import androidx.appcompat.view.ContextThemeWrapper
 import com.google.android.material.materialswitch.MaterialSwitch
 import java.io.File
 class FloaterOverlayService : Service() {
-    private val floater1OnAsset  = "Gucci_Ch"; private val floater1OffAsset = "Gucci_O"
-    private val floater2OnAsset  = "Gucci_h";  private val floater2OffAsset = "Gucci_O"
-    private val floater3OnAsset  = "Gucci_G";  private val floater3OffAsset = "Gucci_GO"
-    private val floater4OnAsset  = "Gucci_CHS"; private val floater5OnAsset = "Gucci_B"
-    private val floater6OnAsset  = "Gucci_M";   private val floater7OnAsset = "Gucci_L"
-
+    private val floater1OnAsset = "Gucci_Ch"; private val floater1OffAsset = "Gucci_O"
+    private val floater2OnAsset = "Gucci_h"; private val floater2OffAsset = "Gucci_O"
+    private val floater3OnAsset = "Gucci_G"; private val floater3OffAsset = "Gucci_GO"
+    private val floater4OnAsset = "Gucci_CHS"; private val floater5OnAsset = "Gucci_B"
+    private val floater6OnAsset = "Gucci_M"; private val floater7OnAsset = "Gucci_L"
     private val glooTargetDir = "/storage/emulated/0/Android/data/com.dts.freefiremax/files/contentcache/Optional/android/"
     private val compulsoryDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/"
     private val avatarDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/avatar/"
     private val filesDir = "/data/user/0/com.dts.freefiremax/files/"
-    
     private val cacheResName = "cache_res.0fNB3oXqZOJRyvBVnID6F8UK2IM~3D"
     private val pdcacheName = "split_asset_pack_install_time.apk.pdcache"
     private val assetIndexerName = "assetindexer.U0jVgfPVdG5YZ2HvIuO5tFkQcCM~3D"
-    
     private lateinit var wm: WindowManager; private var panel: View? = null; private var bubble: View? = null
     private val prefs by lazy { getSharedPreferences("FloaterPrefs", MODE_PRIVATE) }
     override fun onBind(intent: Intent?): IBinder? = null
@@ -1505,7 +1544,6 @@ class FloaterOverlayService : Service() {
             else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
             return
         }
-        
         if (number == 4 || number == 5 || number == 6) { 
             val asset = when(number) { 4 -> floater4OnAsset; 5 -> floater5OnAsset; else -> floater6OnAsset }
             val tag = when(number) { 4 -> "CHEST HS"; 5 -> "BODY HS"; else -> "MAGIC" }
@@ -1514,20 +1552,17 @@ class FloaterOverlayService : Service() {
             else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
             return
         }
-
         if (number == 7) { 
             val error = copyWithBackup(floater7OnAsset, pdcacheName, filesDir, on, "pdcache.bak")
             if (error == null) Toast.makeText(this, if (on) "✅ LOCATION Activated" else "✅ LOCATION Deactivated", Toast.LENGTH_SHORT).show() 
             else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
             return
         }
-        
         val asset = when { number == 1 && on -> floater1OnAsset; number == 1 && !on -> floater1OffAsset; number == 2 && on -> floater2OnAsset; else -> floater2OffAsset }
         val error = copyAssetToTarget(asset, assetIndexerName, avatarDir); val tag = if (number == 1) "GUCCI DETECTOR" else "GUCCI HS"
         if (error == null) Toast.makeText(this, if (on) "✅ $tag Activated" else "✅ $tag Deactivated", Toast.LENGTH_SHORT).show() 
         else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
     }
-
     private fun copyWithBackup(assetName: String, targetName: String, targetDir: String, enable: Boolean, bakName: String): String? {
         try {
             val scriptFile = File(cacheDir, "backup_script.sh")
@@ -1565,13 +1600,12 @@ class FloaterOverlayService : Service() {
             return if (output.contains("SUCCESS_") && code == 0) null else { "Check Root. Output: $output" }
         } catch (e: Exception) { return e.message }
     }
-
     private fun copyAssetToTarget(name: String, targetFileName: String, targetDir: String): String? {
         try {
             val tmp = File(cacheDir, name); assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
             val scriptFile = File(cacheDir, "paste.sh")
             scriptFile.writeText("""
-                #!/system/bin/sh
+                #!/bin/sh
                 TARGET_DIR="$targetDir"
                 mkdir -p "${'$'}TARGET_DIR"
                 FULL_PATH="${'$'}TARGET_DIR/$targetFileName"
@@ -1588,6 +1622,185 @@ class FloaterOverlayService : Service() {
         } catch (e: Exception) { return e.message }
     }
     override fun onDestroy() { panel?.let { runCatching { wm.removeView(it) } }; bubble?.let { runCatching { wm.removeView(it) } }; super.onDestroy() }
+}
+EOF
+# ========== PART 17 of 17 ==========
+cat > app/src/main/java/com/example/shtile/GucciVoiceActivity.kt << 'EOF'
+package com.example.shtile
+import android.content.Intent
+import android.media.MediaPlayer
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.os.Environment
+import android.provider.Settings
+import android.speech.tts.TextToSpeech
+import android.widget.EditText
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.button.MaterialButton
+import java.io.File
+import java.util.Locale
+import java.util.concurrent.TimeUnit
+class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
+    private lateinit var tts: TextToSpeech
+    private var isTtsReady = false
+    private var mediaPlayer: MediaPlayer? = null
+    private val prefs by lazy { getSharedPreferences("GucciPrefs", MODE_PRIVATE) }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_gucci_voice)
+        tts = TextToSpeech(this, this)
+        val etVoiceText = findViewById<EditText>(R.id.etVoiceText)
+        val etCoupon = findViewById<EditText>(R.id.etCoupon)
+        val tvValidity = findViewById<TextView>(R.id.tvVoiceValidity)
+        updateValidityUI(tvValidity)
+        findViewById<MaterialButton>(R.id.btnRedeemCoupon).setOnClickListener {
+            val code = etCoupon.text.toString().trim().uppercase()
+            val currentExpiry = prefs.getLong("voice_expiry", System.currentTimeMillis())
+            val newExpiry: Long = when(code) {
+                "GUCCI7" -> currentExpiry + TimeUnit.DAYS.toMillis(7)
+                "GUCCI30" -> currentExpiry + TimeUnit.DAYS.toMillis(30)
+                "GUCCI100" -> currentExpiry + TimeUnit.DAYS.toMillis(100)
+                else -> { Toast.makeText(this, "❌ Invalid or Expired Coupon!", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
+            }
+            prefs.edit().putLong("voice_expiry", newExpiry).apply()
+            etCoupon.setText("")
+            Toast.makeText(this, "✅ Coupon Redeemed! Added Days.", Toast.LENGTH_SHORT).show()
+            updateValidityUI(tvValidity)
+        }
+        findViewById<MaterialButton>(R.id.btnSendText).setOnClickListener {
+            val text = etVoiceText.text.toString()
+            if (text.isNotEmpty() && isTtsReady) { generateVoice(text) } else { Toast.makeText(this, "Type something first!", Toast.LENGTH_SHORT).show() }
+        }
+        findViewById<MaterialButton>(R.id.btnSaveText).setOnClickListener { Toast.makeText(this, "💾 Voice Saved to My Voices!", Toast.LENGTH_SHORT).show() }
+        findViewById<MaterialButton>(R.id.btnMaxVolume).setOnClickListener { Toast.makeText(this, "🔊 Volume Maxed!", Toast.LENGTH_SHORT).show() }
+        findViewById<MaterialButton>(R.id.btnStopAll).setOnClickListener { mediaPlayer?.let { if(it.isPlaying) { it.stop(); it.release() } }; Toast.makeText(this, "⏹️ Stopped", Toast.LENGTH_SHORT).show() }
+        findViewById<MaterialButton>(R.id.btnTurnOverlayOn).setOnClickListener {
+            if (!Settings.canDrawOverlays(this)) {
+                val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
+                startActivity(intent)
+                Toast.makeText(this, "Please grant 'Display over other apps'", Toast.LENGTH_LONG).show()
+            } else {
+                val intent = Intent(this, GucciVoiceService::class.java)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent) else startService(intent)
+                Toast.makeText(this, "Floater Launched!", Toast.LENGTH_SHORT).show()
+                moveTaskToBack(true)
+            }
+        }
+    }
+    private fun updateValidityUI(tv: TextView) {
+        val expiry = prefs.getLong("voice_expiry", System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1))
+        val diff = expiry - System.currentTimeMillis()
+        if (diff > 0) {
+            val days = TimeUnit.MILLISECONDS.toDays(diff)
+            val hours = TimeUnit.MILLISECONDS.toHours(diff) % 24
+            val mins = TimeUnit.MILLISECONDS.toMinutes(diff) % 60
+            tv.text = "⏳ Left ${days}d ${hours}h ${mins}m"
+            tv.setTextColor(android.graphics.Color.parseColor("#4FC3F7"))
+        } else {
+            tv.text = "❌ Expired! Redeem coupon."
+            tv.setTextColor(android.graphics.Color.parseColor("#FF4D4D"))
+        }
+    }
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) { tts.language = Locale.US; isTtsReady = true; tts.setPitch(0.9f); tts.setSpeechRate(1.1f) }
+    }
+    private fun generateVoice(text: String) {
+        val file = File(getExternalFilesDir(Environment.DIRECTORY_MUSIC), "gucci_voice.wav")
+        val result = tts.synthesizeToFile(text, null, file, "GucciTTS")
+        if (result == TextToSpeech.SUCCESS) {
+            Toast.makeText(this, "Voice Generated!", Toast.LENGTH_SHORT).show()
+            mediaPlayer?.release()
+            mediaPlayer = MediaPlayer().apply { setDataSource(file.absolutePath); prepare(); start() }
+        }
+    }
+    override fun onDestroy() { tts.stop(); tts.shutdown(); mediaPlayer?.release(); super.onDestroy() }
+}
+EOF
+cat > app/src/main/java/com/example/shtile/GucciVoiceService.kt << 'EOF'
+package com.example.shtile
+import android.app.*
+import android.content.Intent
+import android.graphics.PixelFormat
+import android.media.MediaPlayer
+import android.os.Build
+import android.os.Environment
+import android.os.IBinder
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.WindowManager
+import android.widget.*
+import androidx.appcompat.view.ContextThemeWrapper
+import com.google.android.material.button.MaterialButton
+import java.io.File
+class GucciVoiceService : Service() {
+    private lateinit var windowManager: WindowManager
+    private lateinit var overlayView: View
+    private var mediaPlayer: MediaPlayer? = null
+    private var voiceList = ArrayList<String>()
+    private var adapter: ArrayAdapter<String>? = null
+    override fun onCreate() {
+        super.onCreate()
+        val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
+        if (!prefs.getBoolean("allow_voice", true)) { stopSelf(); return }
+        val channelId = "gucci_voice_channel"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(channelId, "Gucci Voice", NotificationManager.IMPORTANCE_MIN)
+            getSystemService(NOTIFICATION_SERVICE).createNotificationChannel(channel)
+            val notification = Notification.Builder(this, channelId).setContentTitle("Gucci Voice Active").setSmallIcon(android.R.drawable.ic_btn_speak_now).build()
+            startForeground(1, notification)
+        }
+        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        val themedContext = ContextThemeWrapper(this, R.style.AppTheme)
+        overlayView = LayoutInflater.from(themedContext).inflate(R.layout.overlay_gucci_voice, null)
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT
+        )
+        params.gravity = Gravity.TOP or Gravity.START
+        params.x = 100; params.y = 200
+        windowManager.addView(overlayView, params)
+        setupDrag(overlayView.findViewById(R.id.dragHandleTop), params)
+        val lvVoices = overlayView.findViewById<ListView>(R.id.lvVoices)
+        adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, voiceList)
+        lvVoices.adapter = adapter
+        loadVoices()
+        lvVoices.setOnItemClickListener { _, _, position, _ -> playVoice(voiceList[position]) }
+        overlayView.findViewById<MaterialButton>(R.id.btnOverlayStop).setOnClickListener { mediaPlayer?.let { if (it.isPlaying) { it.stop(); it.release() } } }
+        overlayView.findViewById<MaterialButton>(R.id.btnAddVoice).setOnClickListener { Toast.makeText(this, "Open App > Add Voice from Phone!", Toast.LENGTH_SHORT).show() }
+        overlayView.findViewById<MaterialButton>(R.id.btnExtractVideo).setOnClickListener { Toast.makeText(this, "Open App > Extract from Video!", Toast.LENGTH_SHORT).show() }
+        overlayView.findViewById<ImageButton>(R.id.btnClose).setOnClickListener { stopSelf() }
+    }
+    private fun loadVoices() {
+        val dir = getExternalFilesDir(Environment.DIRECTORY_MUSIC)
+        if (dir != null && dir.exists()) {
+            val files = dir.listFiles { file -> file.extension in listOf("wav", "mp3", "m4a") }
+            voiceList.clear(); files?.forEach { voiceList.add(it.name) }; adapter?.notifyDataSetChanged()
+        }
+    }
+    private fun playVoice(fileName: String) {
+        val file = File(getExternalFilesDir(Environment.DIRECTORY_MUSIC), fileName)
+        if (file.exists()) { mediaPlayer?.release(); mediaPlayer = MediaPlayer().apply { setDataSource(file.absolutePath); prepare(); start() } }
+    }
+    private fun setupDrag(handle: View, params: WindowManager.LayoutParams) {
+        handle.setOnTouchListener(object : View.OnTouchListener {
+            var initialX = 0; var initialY = 0; var initialTouchX = 0f; var initialTouchY = 0f
+            override fun onTouch(v: View, event: MotionEvent): Boolean {
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> { initialX = params.x; initialY = params.y; initialTouchX = event.rawX; initialTouchY = event.rawY; return true }
+                    MotionEvent.ACTION_MOVE -> { params.x = initialX + (event.rawX - initialTouchX).toInt(); params.y = initialY + (event.rawY - initialTouchY).toInt(); windowManager.updateViewLayout(overlayView, params); return true }
+                }
+                return false
+            }
+        })
+    }
+    override fun onDestroy() { super.onDestroy(); mediaPlayer?.release(); if (::overlayView.isInitialized) windowManager.removeView(overlayView) }
+    override fun onBind(intent: Intent?): IBinder? = null
 }
 EOF
 cat > app/src/main/java/com/example/shtile/TransparentActivity.kt << 'EOF'
