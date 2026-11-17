@@ -1283,7 +1283,6 @@ class HideAppsActivity : AppCompatActivity() {
             Handler(Looper.getMainLooper()).post { adapterAll = AppAdapter(this@HideAppsActivity, appList, false); findViewById<ListView>(R.id.appsList).adapter = adapterAll; adapterHidden = AppAdapter(this@HideAppsActivity, appList, true); findViewById<ListView>(R.id.hiddenAppsList).adapter = adapterHidden; adapterAll?.filter(""); adapterHidden?.filter("") }
         }.start()
     }
-EOF
     private fun showAppOptions(item: AppItem) {
         val options = arrayOf("Hide (pm hide)", "Unhide (Restore)", "Freeze (Suspend)", "Unfreeze (Unsuspend)", "Deep Freeze (Disable)", "Delete (Uninstall)")
         AlertDialog.Builder(this).setTitle(item.name).setItems(options) { _, which ->
@@ -1325,7 +1324,6 @@ EOF
     }
 }
 EOF
-
 cat > app/src/main/java/com/example/shtile/FloaterOverlayService.kt << 'EOF'
 package com.example.shtile
 import android.app.*
@@ -1424,3 +1422,4 @@ class FloaterOverlayService : Service() {
 }
 EOF
 gradle assembleDebug
+cp app/build/outputs/apk/debug/app-debug.apk ~/GucciVoices-APK.apk
