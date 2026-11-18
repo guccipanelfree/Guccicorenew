@@ -9,7 +9,7 @@
       "expiresAt": 0,
       "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
@@ -22,7 +22,7 @@
       "expiresAt": 1796882606850,
       "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 1794838537860,
       "reboot_timer": 0
     },
@@ -35,7 +35,7 @@
       "expiresAt": 1796882773381,
       "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
@@ -48,7 +48,7 @@
       "expiresAt": 1796882824161,
       "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 1794396784175,
       "reboot_timer": 0
     },
@@ -61,7 +61,7 @@
       "expiresAt": 1796882832701,
       "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
@@ -72,7 +72,7 @@
       "expiresAt": 1796882838727,
       "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
@@ -85,7 +85,7 @@
       "expiresAt": 1796882862298,
       "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
@@ -98,7 +98,7 @@
       "expiresAt": 1796883001120,
       "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
@@ -109,7 +109,7 @@
       "expiresAt": 1796883088942,
       "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
@@ -122,7 +122,7 @@
       "expiresAt": 1796884231932,
       "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
@@ -135,7 +135,7 @@
       "expiresAt": 1796885078464,
       "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
@@ -146,7 +146,7 @@
       "expiresAt": 1796885636807,
       "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
@@ -157,7 +157,7 @@
       "expiresAt": 1796887982683,
       "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
@@ -170,7 +170,7 @@
       "expiresAt": 1796919771015,
       "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
@@ -183,7 +183,7 @@
       "expiresAt": 1797003107097,
       "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
@@ -196,7 +196,7 @@
       "expiresAt": 1797067442032,
       "allowInx": false,
       "allowFloater": false,
-      "allowKernel": true,
+      "allowKernel": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
     }
