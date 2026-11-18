@@ -217,7 +217,9 @@
       "allowVoice": false
     },
     "BILLU": {
-      "deviceIds": [],
+      "deviceIds": [
+        "c149c2d3108077f5"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1797601477744,
