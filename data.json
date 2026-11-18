@@ -240,7 +240,7 @@
       "allowInx": true,
       "allowFloater": true,
       "allowKernel": true,
-      "allowVoice": true,
+      "allowVoice": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
     }
