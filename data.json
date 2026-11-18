@@ -25,7 +25,8 @@
       "allowFloater": true,
       "allowKernel": false,
       "reboot_now_time": 1794838537860,
-      "reboot_timer": 0
+      "reboot_timer": 0,
+      "allowVoice": false
     },
     "FAISAL": {
       "deviceIds": [
@@ -38,7 +39,8 @@
       "allowFloater": true,
       "allowKernel": false,
       "reboot_now_time": 0,
-      "reboot_timer": 0
+      "reboot_timer": 0,
+      "allowVoice": false
     },
     "NO NAME": {
       "deviceIds": [
@@ -51,7 +53,8 @@
       "allowFloater": true,
       "allowKernel": false,
       "reboot_now_time": 1794396784175,
-      "reboot_timer": 0
+      "reboot_timer": 0,
+      "allowVoice": false
     },
     "WARTH": {
       "deviceIds": [
@@ -64,7 +67,8 @@
       "allowFloater": true,
       "allowKernel": false,
       "reboot_now_time": 0,
-      "reboot_timer": 0
+      "reboot_timer": 0,
+      "allowVoice": false
     },
     "ZARA": {
       "deviceIds": [],
@@ -75,7 +79,8 @@
       "allowFloater": true,
       "allowKernel": false,
       "reboot_now_time": 0,
-      "reboot_timer": 0
+      "reboot_timer": 0,
+      "allowVoice": false
     },
     "WOTA": {
       "deviceIds": [
@@ -88,7 +93,8 @@
       "allowFloater": true,
       "allowKernel": false,
       "reboot_now_time": 0,
-      "reboot_timer": 0
+      "reboot_timer": 0,
+      "allowVoice": false
     },
     "RITIK": {
       "deviceIds": [
@@ -101,7 +107,8 @@
       "allowFloater": true,
       "allowKernel": false,
       "reboot_now_time": 0,
-      "reboot_timer": 0
+      "reboot_timer": 0,
+      "allowVoice": false
     },
     "ANKIT": {
       "deviceIds": [],
@@ -112,7 +119,8 @@
       "allowFloater": true,
       "allowKernel": false,
       "reboot_now_time": 0,
-      "reboot_timer": 0
+      "reboot_timer": 0,
+      "allowVoice": false
     },
     "SUMIT": {
       "deviceIds": [
@@ -125,7 +133,8 @@
       "allowFloater": true,
       "allowKernel": false,
       "reboot_now_time": 0,
-      "reboot_timer": 0
+      "reboot_timer": 0,
+      "allowVoice": false
     },
     "FARHAN": {
       "deviceIds": [
@@ -138,7 +147,8 @@
       "allowFloater": true,
       "allowKernel": false,
       "reboot_now_time": 0,
-      "reboot_timer": 0
+      "reboot_timer": 0,
+      "allowVoice": false
     },
     "ROY": {
       "deviceIds": [],
@@ -149,7 +159,8 @@
       "allowFloater": true,
       "allowKernel": false,
       "reboot_now_time": 0,
-      "reboot_timer": 0
+      "reboot_timer": 0,
+      "allowVoice": false
     },
     "RONY": {
       "deviceIds": [],
@@ -160,7 +171,8 @@
       "allowFloater": true,
       "allowKernel": false,
       "reboot_now_time": 0,
-      "reboot_timer": 0
+      "reboot_timer": 0,
+      "allowVoice": false
     },
     "LALA": {
       "deviceIds": [
@@ -173,7 +185,8 @@
       "allowFloater": true,
       "allowKernel": false,
       "reboot_now_time": 0,
-      "reboot_timer": 0
+      "reboot_timer": 0,
+      "allowVoice": false
     },
     "KRISHNA": {
       "deviceIds": [
@@ -186,7 +199,8 @@
       "allowFloater": true,
       "allowKernel": false,
       "reboot_now_time": 0,
-      "reboot_timer": 0
+      "reboot_timer": 0,
+      "allowVoice": false
     },
     "TONDE": {
       "deviceIds": [
@@ -199,7 +213,8 @@
       "allowFloater": true,
       "allowKernel": false,
       "reboot_now_time": 0,
-      "reboot_timer": 0
+      "reboot_timer": 0,
+      "allowVoice": false
     }
   },
   "reboot_global_time": 1794973968604,
