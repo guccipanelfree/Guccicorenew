@@ -288,7 +288,7 @@ cat > app/src/main/res/layout/overlay_voice.xml << 'EOF'
         </LinearLayout>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="12dp">
             <com.google.android.material.button.MaterialButton android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="🎵 Sound cards" app:backgroundTint="#2dd4a7" android:textColor="#000000" android:textSize="10sp" android:layout_marginEnd="4dp" app:cornerRadius="8dp"/>
-            <com.google.android.material.button.MaterialButton style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="🗣️ Type & send" app:strokeColor="#A855F7" android:textColor="#A855F7" android:textSize="10sp" app:cornerRadius="8dp"/>
+            <com.google.android.material.button.MaterialButton style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="🗣️ Type &amp; send" app:strokeColor="#A855F7" android:textColor="#A855F7" android:textSize="10sp" app:cornerRadius="8dp"/>
         </LinearLayout>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
