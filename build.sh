@@ -1,6 +1,7 @@
 wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip; unzip -q gradle-8.2-bin.zip; export PATH="$PWD/gradle-8.2/bin:$PATH"
 rm -rf app *.gradle *.properties; mkdir -p app/src/main/java/com/example/shtile app/src/main/res/drawable app/src/main/res/layout app/src/main/res/values app/src/main/assets
 
+# CRITICAL ASSETS
 for file in Gucci_core Gucci_brutal Gucci_Ch Gucci_h Gucci_O Gucci_G Gucci_GO Gucci_CHS Gucci_B Gucci_M Gucci_L; do
     if [ -f "$file" ]; then cp "$file" app/src/main/assets/; fi
 done
@@ -1709,6 +1710,7 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 EOF
 cat > app/src/main/java/com/example/shtile/GucciVoiceService.kt << 'EOF'
 package com.example.shtile
+
 import android.app.*
 import android.content.Intent
 import android.graphics.PixelFormat
@@ -1725,26 +1727,34 @@ import android.widget.*
 import androidx.appcompat.view.ContextThemeWrapper
 import com.google.android.material.button.MaterialButton
 import java.io.File
+
 class GucciVoiceService : Service() {
     private lateinit var windowManager: WindowManager
     private lateinit var overlayView: View
     private var mediaPlayer: MediaPlayer? = null
     private var voiceList = ArrayList<String>()
     private var adapter: ArrayAdapter<String>? = null
+
     override fun onCreate() {
         super.onCreate()
         val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
         if (!prefs.getBoolean("allow_voice", true)) { stopSelf(); return }
+        
         val channelId = "gucci_voice_channel"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // 🔥 YE LINE FIX KI HAI (Cast to NotificationManager)
+            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             val channel = NotificationChannel(channelId, "Gucci Voice", NotificationManager.IMPORTANCE_MIN)
-            getSystemService(NOTIFICATION_SERVICE).createNotificationChannel(channel)
+            nm.createNotificationChannel(channel)
+            
             val notification = Notification.Builder(this, channelId).setContentTitle("Gucci Voice Active").setSmallIcon(android.R.drawable.ic_btn_speak_now).build()
             startForeground(1, notification)
         }
+        
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         val themedContext = ContextThemeWrapper(this, R.style.AppTheme)
         overlayView = LayoutInflater.from(themedContext).inflate(R.layout.overlay_gucci_voice, null)
+        
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE,
@@ -1752,18 +1762,22 @@ class GucciVoiceService : Service() {
         )
         params.gravity = Gravity.TOP or Gravity.START
         params.x = 100; params.y = 200
+        
         windowManager.addView(overlayView, params)
         setupDrag(overlayView.findViewById(R.id.dragHandleTop), params)
+        
         val lvVoices = overlayView.findViewById<ListView>(R.id.lvVoices)
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, voiceList)
         lvVoices.adapter = adapter
         loadVoices()
+        
         lvVoices.setOnItemClickListener { _, _, position, _ -> playVoice(voiceList[position]) }
         overlayView.findViewById<MaterialButton>(R.id.btnOverlayStop).setOnClickListener { mediaPlayer?.let { if (it.isPlaying) { it.stop(); it.release() } } }
         overlayView.findViewById<MaterialButton>(R.id.btnAddVoice).setOnClickListener { Toast.makeText(this, "Open App > Add Voice from Phone!", Toast.LENGTH_SHORT).show() }
         overlayView.findViewById<MaterialButton>(R.id.btnExtractVideo).setOnClickListener { Toast.makeText(this, "Open App > Extract from Video!", Toast.LENGTH_SHORT).show() }
         overlayView.findViewById<ImageButton>(R.id.btnClose).setOnClickListener { stopSelf() }
     }
+
     private fun loadVoices() {
         val dir = getExternalFilesDir(Environment.DIRECTORY_MUSIC)
         if (dir != null && dir.exists()) {
@@ -1771,10 +1785,19 @@ class GucciVoiceService : Service() {
             voiceList.clear(); files?.forEach { voiceList.add(it.name) }; adapter?.notifyDataSetChanged()
         }
     }
+
     private fun playVoice(fileName: String) {
         val file = File(getExternalFilesDir(Environment.DIRECTORY_MUSIC), fileName)
-        if (file.exists()) { mediaPlayer?.release(); mediaPlayer = MediaPlayer().apply { setDataSource(file.absolutePath); prepare(); start() } }
+        if (file.exists()) { 
+            mediaPlayer?.release()
+            mediaPlayer = MediaPlayer().apply { 
+                setDataSource(file.absolutePath)
+                prepare()
+                start() 
+            } 
+        }
     }
+
     private fun setupDrag(handle: View, params: WindowManager.LayoutParams) {
         handle.setOnTouchListener(object : View.OnTouchListener {
             var initialX = 0; var initialY = 0; var initialTouchX = 0f; var initialTouchY = 0f
@@ -1787,7 +1810,13 @@ class GucciVoiceService : Service() {
             }
         })
     }
-    override fun onDestroy() { super.onDestroy(); mediaPlayer?.release(); if (::overlayView.isInitialized) windowManager.removeView(overlayView) }
+
+    override fun onDestroy() { 
+        super.onDestroy()
+        mediaPlayer?.release()
+        if (::overlayView.isInitialized) windowManager.removeView(overlayView) 
+    }
+    
     override fun onBind(intent: Intent?): IBinder? = null
 }
 EOF
