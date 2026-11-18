@@ -223,7 +223,7 @@
       "expiresAt": 1797601477744,
       "allowInx": true,
       "allowFloater": true,
-      "allowKernel": true,
+      "allowKernel": false,
       "allowVoice": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
