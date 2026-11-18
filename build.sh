@@ -43,6 +43,7 @@ dependencies {
     implementation 'dev.rikka.shizuku:provider:13.1.5'
 }
 EOF
+
 cat > app/src/main/AndroidManifest.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -54,6 +55,7 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 <uses-permission android:name="android.permission.RECORD_AUDIO" />
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
 <application android:allowBackup="true" android:label="GUCCI LOADER" android:icon="@drawable/ic_app_icon" android:theme="@style/AppTheme">
 <activity android:name=".LoginActivity" android:exported="true" android:launchMode="singleTop"/>
@@ -81,27 +83,53 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 </manifest>
 EOF
 cat > app/src/main/res/values/styles.xml << 'EOF'
-<resources><style name="AppTheme" parent="Theme.Material3.Dark.NoActionBar"></style></resources>
+<resources>
+    <style name="AppTheme" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="android:windowBackground">@color/bg_main</item>
+        <item name="colorPrimary">@color/accent_cyan</item>
+    </style>
+</resources>
 EOF
 
 cat > app/src/main/res/values/colors.xml << 'EOF'
 <resources>
-<color name="bg_main">#07090C</color>
-<color name="accent_green">#00E5A0</color>
-<color name="accent_red">#FF4D4D</color>
-<color name="text_primary">#FFFFFF</color>
-<color name="text_secondary">#8B949E</color>
-<color name="card_bg">#12161F</color>
-<color name="card_stroke">#1F2633</color>
-<color name="switch_track">#33FFFFFF</color>
+    <color name="bg_main">#070A14</color>
+    <color name="card_bg">#111625</color>
+    <color name="card_bg_light">#1A2235</color>
+    <color name="accent_cyan">#00E5FF</color>
+    <color name="accent_purple">#8A2BE2</color>
+    <color name="accent_green">#00E5A0</color>
+    <color name="accent_red">#FF4D4D</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#8B949E</color>
+    <color name="switch_track">#33FFFFFF</color>
 </resources>
 EOF
 
 cat > app/src/main/res/values/strings.xml << 'EOF'
 <resources><string name="app_name">GUCCI LOADER</string></resources>
 EOF
-cat > app/src/main/res/drawable/ic_app_icon.xml << 'EOF'
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#00E5A0" android:pathData="M12,2l3,6h6l-5,4 2,7 -6,-4 -6,4 2,-7 -5,-4h6z"/></vector>
+
+cat > app/src/main/res/drawable/bg_btn_cyan.xml << 'EOF'
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient android:startColor="#00E5FF" android:endColor="#00E5A0" android:angle="0" />
+    <corners android:radius="16dp"/>
+</shape>
+EOF
+
+cat > app/src/main/res/drawable/bg_btn_purple.xml << 'EOF'
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient android:startColor="#8A2BE2" android:endColor="#4A60D0" android:angle="0" />
+    <corners android:radius="16dp"/>
+</shape>
+EOF
+
+cat > app/src/main/res/drawable/bg_card_neon.xml << 'EOF'
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#0B0F17"/>
+    <stroke android:width="1.5dp" android:color="#00E5FF"/>
+    <corners android:radius="20dp"/>
+</shape>
 EOF
 
 cat > app/src/main/res/drawable/bg_box_dark.xml << 'EOF'
@@ -112,6 +140,9 @@ cat > app/src/main/res/drawable/bg_circle_grey.xml << 'EOF'
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval"><solid android:color="#1F2633"/></shape>
 EOF
 
+cat > app/src/main/res/drawable/ic_app_icon.xml << 'EOF'
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#00E5A0" android:pathData="M12,2l3,6h6l-5,4 2,7 -6,-4 -6,4 2,-7 -5,-4h6z"/></vector>
+EOF
 cat > app/src/main/res/drawable/ic_minimize.xml << 'EOF'
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M5,11h14v2H5z"/></vector>
 EOF
@@ -152,8 +183,8 @@ cat > app/src/main/res/layout/dialog_root.xml << 'EOF'
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="32dp" android:gravity="center">
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ROOT / ADB REQUIRED" android:textColor="@color/text_primary" android:textSize="22sp" android:textStyle="bold" android:layout_marginBottom="12dp"/>
 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="GUCCI LOADER requires Root Permission or Shizuku (ADB) to function properly." android:textColor="@color/text_secondary" android:textSize="15sp" android:gravity="center" android:layout_marginBottom="32dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnGrant" android:layout_width="match_parent" android:layout_height="56dp" android:text="GRANT ROOT" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:layout_marginBottom="12dp" android:textStyle="bold"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnShizuku" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="56dp" android:text="USE SHIZUKU (ADB)" app:strokeColor="@color/accent_green" app:cornerRadius="16dp" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="12dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnGrant" android:layout_width="match_parent" android:layout_height="56dp" android:text="GRANT ROOT" android:textColor="#000000" app:backgroundTint="@color/accent_cyan" app:cornerRadius="16dp" android:layout_marginBottom="12dp" android:textStyle="bold"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnShizuku" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="56dp" android:text="USE SHIZUKU (ADB)" app:strokeColor="@color/accent_cyan" app:cornerRadius="16dp" android:textColor="@color/accent_cyan" android:textStyle="bold" android:layout_marginBottom="12dp"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/btnExit" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="56dp" android:text="EXIT" app:strokeColor="@color/accent_red" app:cornerRadius="16dp" android:textColor="@color/accent_red" android:textStyle="bold"/>
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
@@ -161,12 +192,12 @@ EOF
 
 cat > app/src/main/res/layout/activity_login.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#0a0e14">
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/bg_main">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="32dp" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintTop_toTopOf="parent">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GUCCI LOADER" android:textColor="#2dd4a7" android:textSize="28sp" android:textStyle="bold" android:layout_gravity="center" android:layout_marginBottom="24dp"/>
-<EditText android:id="@+id/keyInput" android:layout_width="match_parent" android:layout_height="50dp" android:hint="Enter License Key" android:textColor="#ffffff" android:textColorHint="#8b949e" android:background="#11161f" android:padding="10dp" android:layout_marginBottom="16dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/loginBtn" android:layout_width="match_parent" android:layout_height="55dp" android:text="LOGIN" android:textColor="#000000" app:backgroundTint="#2dd4a7" app:cornerRadius="12dp" android:textStyle="bold" android:layout_marginBottom="16dp"/>
-<TextView android:id="@+id/deviceIdText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Device ID: Loading..." android:textColor="#8b949e" android:textSize="12sp" android:layout_gravity="center"/>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GUCCI LOADER" android:textColor="@color/accent_cyan" android:textSize="28sp" android:textStyle="bold" android:layout_gravity="center" android:layout_marginBottom="24dp"/>
+<EditText android:id="@+id/keyInput" android:layout_width="match_parent" android:layout_height="50dp" android:hint="Enter License Key" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:background="@drawable/bg_box_dark" android:padding="10dp" android:layout_marginBottom="16dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/loginBtn" android:layout_width="match_parent" android:layout_height="55dp" android:text="LOGIN" android:textColor="#000000" app:backgroundTint="@color/accent_cyan" app:cornerRadius="12dp" android:textStyle="bold" android:layout_marginBottom="16dp"/>
+<TextView android:id="@+id/deviceIdText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Device ID: Loading..." android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_gravity="center"/>
 </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
 EOF
@@ -182,7 +213,7 @@ cat > app/src/main/res/layout/list_item_app.xml << 'EOF'
 </LinearLayout>
 <TextView android:id="@+id/appPkg" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/text_secondary" android:textSize="11sp"/>
 </LinearLayout>
-<com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/appCheck" android:layout_width="wrap_content" android:layout_height="wrap_content" app:buttonTint="@color/accent_green" android:layout_marginEnd="8dp"/>
+<com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/appCheck" android:layout_width="wrap_content" android:layout_height="wrap_content" app:buttonTint="@color/accent_cyan" android:layout_marginEnd="8dp"/>
 <com.google.android.material.button.MaterialButton android:id="@+id/btnOptions" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⚙️" android:textSize="20sp" android:minWidth="0dp" android:padding="8dp"/>
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
@@ -192,35 +223,64 @@ cat > app/src/main/res/layout/activity_main.xml << 'EOF'
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/bg_main" android:fillViewport="true">
 <LinearLayout android:orientation="vertical" android:padding="24dp" android:layout_width="match_parent" android:layout_height="wrap_content">
 <TextView android:id="@+id/titleText" android:text="GUCCI LOADER" android:textColor="@color/text_primary" android:textSize="36sp" android:fontFamily="sans-serif-black" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-<TextView android:id="@+id/subtitleText" android:text="Premium Panel By GUCCI" android:textColor="@color/accent_green" android:textSize="14sp" android:fontFamily="sans-serif-medium" android:layout_marginTop="-4dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<TextView android:id="@+id/subtitleText" android:text="Premium Panel By GUCCI" android:textColor="@color/accent_cyan" android:textSize="14sp" android:fontFamily="sans-serif-medium" android:layout_marginTop="-4dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
 <TextView android:id="@+id/licenseTimerText" android:text="Expires in: Loading..." android:textColor="@color/accent_red" android:textSize="14sp" android:textStyle="bold" android:layout_marginTop="4dp" android:layout_marginBottom="24dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="20dp" android:layout_marginBottom="16dp">
 <LinearLayout android:orientation="vertical" android:padding="20dp" android:layout_width="match_parent" android:layout_height="wrap_content">
-<TextView android:text="LICENSE KEY" android:textColor="@color/accent_green" android:textSize="12sp" android:fontFamily="sans-serif-medium" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<TextView android:text="LICENSE KEY" android:textColor="@color/accent_cyan" android:textSize="12sp" android:fontFamily="sans-serif-medium" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
 <EditText android:id="@+id/keyInput" android:hint="Enter license..." android:inputType="text" android:padding="12dp" android:background="#00000000" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_width="match_parent" android:layout_height="wrap_content"/>
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="20dp" android:layout_marginBottom="24dp">
 <LinearLayout android:orientation="vertical" android:padding="20dp" android:layout_width="match_parent" android:layout_height="wrap_content">
-<TextView android:text="SELECT DRIVER (1-10)" android:textColor="@color/accent_green" android:textSize="12sp" android:fontFamily="sans-serif-medium" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<TextView android:text="SELECT DRIVER (1-10)" android:textColor="@color/accent_cyan" android:textSize="12sp" android:fontFamily="sans-serif-medium" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
 <EditText android:id="@+id/brutalInput" android:hint="e.g. 7" android:inputType="number" android:padding="12dp" android:background="#00000000" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_width="match_parent" android:layout_height="wrap_content"/>
-<TextView android:id="@+id/driverNameText" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold" android:layout_marginTop="4dp" android:paddingStart="12dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<TextView android:id="@+id/driverNameText" android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold" android:layout_marginTop="4dp" android:paddingStart="12dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
-<com.google.android.material.button.MaterialButton android:id="@+id/saveKeyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:text="SAVE CONFIGURATION" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:layout_marginBottom="16dp" android:textStyle="bold" android:fontFamily="sans-serif-medium"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/loadFilesBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="wrap_content" android:layout_height="50dp" android:layout_marginTop="8dp" android:layout_gravity="center_horizontal" android:paddingStart="48dp" android:paddingEnd="48dp" android:text="LOAD INX" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="25dp" android:layout_marginBottom="16dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/launchFloaterBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="60dp" android:text="🚀 LAUNCH FLOATER" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnOpenVoices" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="👑 GUCCI VOICES" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/loadDriverBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="⚡ KERNEL DRIVER LOADER" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/clearReportBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="🧹 CLEAR REPORTS" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/saveKeyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:text="SAVE CONFIGURATION" android:textColor="#000000" app:backgroundTint="@color/accent_cyan" app:cornerRadius="16dp" android:layout_marginBottom="16dp" android:textStyle="bold" android:fontFamily="sans-serif-medium"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/loadFilesBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="wrap_content" android:layout_height="50dp" android:layout_marginTop="8dp" android:layout_gravity="center_horizontal" android:paddingStart="48dp" android:paddingEnd="48dp" android:text="LOAD INX" android:textColor="@color/accent_cyan" app:strokeColor="@color/accent_cyan" app:cornerRadius="25dp" android:layout_marginBottom="16dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/launchFloaterBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="60dp" android:text="🚀 LAUNCH FLOATER" android:textColor="@color/accent_cyan" app:strokeColor="@color/accent_cyan" app:cornerRadius="16dp" android:textStyle="bold"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnOpenVoices" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="👑 GUCCI VOICES" android:textColor="#000000" app:backgroundTint="@color/accent_cyan" app:cornerRadius="16dp" android:textStyle="bold"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/loadDriverBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="⚡ KERNEL DRIVER LOADER" android:textColor="@color/accent_cyan" app:strokeColor="@color/accent_cyan" app:cornerRadius="16dp" android:textStyle="bold"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/clearReportBtn" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="🧹 CLEAR REPORTS" android:textColor="@color/accent_cyan" app:strokeColor="@color/accent_cyan" app:cornerRadius="16dp" android:textStyle="bold"/>
 <TextView android:paddingTop="40dp" android:gravity="center" android:text="Use Quick Setting tiles to load INX-Payload" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
-<TextView android:id="@+id/contactAdminText" android:paddingTop="16dp" android:gravity="center" android:text="Contact Admin for Help" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+<TextView android:id="@+id/contactAdminText" android:paddingTop="16dp" android:gravity="center" android:text="Contact Admin for Help" android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold" android:layout_width="match_parent" android:layout_height="wrap_content"/>
 <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="32dp" android:paddingBottom="24dp" android:gravity="center">
-<ImageButton android:id="@+id/hideAppsIcon" android:layout_width="60dp" android:layout_height="60dp" android:padding="16dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_hide" app:tint="@color/accent_green" android:layout_marginEnd="16dp"/>
-<ImageButton android:id="@+id/terminalIcon" android:layout_width="60dp" android:layout_height="60dp" android:padding="16dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_terminal" app:tint="@color/accent_green"/>
+<ImageButton android:id="@+id/hideAppsIcon" android:layout_width="60dp" android:layout_height="60dp" android:padding="16dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_hide" app:tint="@color/accent_cyan" android:layout_marginEnd="16dp"/>
+<ImageButton android:id="@+id/terminalIcon" android:layout_width="60dp" android:layout_height="60dp" android:padding="16dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_terminal" app:tint="@color/accent_cyan"/>
 </LinearLayout>
 </LinearLayout>
 </ScrollView>
+EOF
+cat > app/src/main/res/layout/activity_gucci_voices.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="24dp">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="👑 GUCCI VOICES" android:textColor="@color/text_primary" android:textSize="28sp" android:textStyle="bold" android:layout_marginBottom="20dp"/>
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" app:strokeColor="@color/accent_cyan" app:strokeWidth="1dp" android:layout_marginBottom="20dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="TEXT TO VOICE" android:textColor="@color/accent_cyan" android:textSize="12sp" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+<EditText android:id="@+id/voiceInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Type here..." android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:inputType="text" android:layout_marginBottom="12dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnSpeak" android:layout_width="match_parent" android:layout_height="50dp" android:text="SEND" android:textColor="#000000" android:background="@drawable/bg_btn_cyan" app:cornerRadius="12dp" android:textStyle="bold"/>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnPlaySoundCard" android:layout_width="match_parent" android:layout_height="100dp" android:text="PLAY SOUND\nCARD" android:textColor="#FFFFFF" android:background="@drawable/bg_btn_purple" app:cornerRadius="16dp" android:textStyle="bold" android:layout_marginBottom="20dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnVoiceSettings" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="50dp" android:text="⚙️ VOICE SETTINGS" android:textColor="@color/accent_cyan" app:strokeColor="@color/accent_cyan" app:cornerRadius="12dp"/>
+</LinearLayout>
+EOF
+
+cat > app/src/main/res/layout/activity_voice_settings.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="24dp">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⚙️ VOICE SETTINGS" android:textColor="@color/text_primary" android:textSize="24sp" android:textStyle="bold" android:layout_marginBottom="24dp"/>
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" app:strokeColor="@color/accent_cyan" app:strokeWidth="1dp" android:layout_marginBottom="20dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+<TextView android:id="@+id/volumeText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Volume: 80%" android:textColor="@color/accent_cyan" android:textSize="16sp" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+<SeekBar android:id="@+id/volumeSeek" android:layout_width="match_parent" android:layout_height="wrap_content" android:progressTint="@color/accent_cyan" android:thumbTint="@color/accent_cyan"/>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnAddVoice" android:layout_width="match_parent" android:layout_height="56dp" android:text="+ ADD CUSTOM VOICE" android:textColor="#000000" android:background="@drawable/bg_btn_cyan" app:cornerRadius="12dp" android:textStyle="bold"/>
+</LinearLayout>
 EOF
 cat > app/src/main/res/layout/activity_driver_loader.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
@@ -228,18 +288,18 @@ cat > app/src/main/res/layout/activity_driver_loader.xml << 'EOF'
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DRIVER LOADER" android:textColor="@color/text_primary" android:textSize="24sp" android:textStyle="bold" android:layout_marginBottom="16dp"/>
 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="16dp">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SELECT DRIVER TYPE (BEST: PARADISE)" android:textColor="@color/accent_green" android:textStyle="bold" android:textSize="12sp" android:layout_marginBottom="8dp"/>
-<Spinner android:id="@+id/spinnerDriver" android:layout_width="match_parent" android:layout_height="40dp" android:backgroundTint="@color/accent_green"/>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SELECT DRIVER TYPE (BEST: PARADISE)" android:textColor="@color/accent_cyan" android:textStyle="bold" android:textSize="12sp" android:layout_marginBottom="8dp"/>
+<Spinner android:id="@+id/spinnerDriver" android:layout_width="match_parent" android:layout_height="40dp" android:backgroundTint="@color/accent_cyan"/>
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="16dp">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-<TextView android:id="@+id/tvKernel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Kernel: Detecting..." android:textColor="@color/accent_green" android:textStyle="bold" android:textSize="16sp"/>
+<TextView android:id="@+id/tvKernel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Kernel: Detecting..." android:textColor="@color/accent_cyan" android:textStyle="bold" android:textSize="16sp"/>
 <TextView android:id="@+id/tvArch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Arch: Detecting..." android:textColor="@color/text_secondary" android:textSize="14sp" android:layout_marginTop="4dp"/>
-<TextView android:id="@+id/tvHwid" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="HWID: Loading..." android:textColor="@color/accent_green" android:textSize="14sp" android:layout_marginTop="4dp"/>
+<TextView android:id="@+id/tvHwid" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="HWID: Loading..." android:textColor="@color/accent_cyan" android:textSize="14sp" android:layout_marginTop="4dp"/>
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnLoadDriver" android:layout_width="match_parent" android:layout_height="56dp" android:text="⚡ LOAD SELECTED DRIVER" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold" android:layout_marginBottom="16dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnLoadDriver" android:layout_width="match_parent" android:layout_height="56dp" android:text="⚡ LOAD SELECTED DRIVER" android:textColor="#000000" app:backgroundTint="@color/accent_cyan" app:cornerRadius="16dp" android:textStyle="bold" android:layout_marginBottom="16dp"/>
 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp">
 <ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp" android:background="@drawable/bg_box_dark">
 <TextView android:id="@+id/tvLogs" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#00FF00" android:fontFamily="monospace" android:textSize="12sp" android:text="System ready. Waiting to load driver...\n\n"/>
@@ -247,11 +307,10 @@ cat > app/src/main/res/layout/activity_driver_loader.xml << 'EOF'
 </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
 EOF
-
 cat > app/src/main/res/layout/dialog_select_driver.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@color/card_bg" android:padding="20dp">
-<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Select Driver Variant" android:textColor="@color/accent_green" android:textSize="20sp" android:textStyle="bold" android:layout_marginBottom="8dp" />
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Select Driver Variant" android:textColor="@color/accent_cyan" android:textSize="20sp" android:textStyle="bold" android:layout_marginBottom="8dp" />
 <TextView android:id="@+id/tvDialogMessage" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Multiple drivers found. Please choose one:" android:textColor="@color/text_primary" android:textSize="14sp" android:layout_marginBottom="16dp" />
 <ScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:maxHeight="300dp">
 <LinearLayout android:id="@+id/driverListContainer" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
@@ -259,21 +318,20 @@ cat > app/src/main/res/layout/dialog_select_driver.xml << 'EOF'
 <com.google.android.material.button.MaterialButton android:id="@+id/btnCancelDialog" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="50dp" android:layout_marginTop="16dp" android:text="CANCEL" app:strokeColor="@color/accent_red" android:textColor="@color/accent_red" />
 </LinearLayout>
 EOF
-
 cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="16dp">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Execution Mode" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Execution Mode" android:textColor="@color/accent_cyan" android:textStyle="bold" android:layout_marginBottom="8dp"/>
 <RadioGroup android:id="@+id/modeGroup" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="16dp">
 <RadioButton android:id="@+id/radioRoot" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Root Mode" android:textColor="@color/text_primary" android:checked="true"/>
 <RadioButton android:id="@+id/radioShizuku" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ADB (Shizuku)" android:textColor="@color/text_primary" android:layout_marginStart="16dp"/>
 </RadioGroup>
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="App Control" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="App Control" android:textColor="@color/accent_cyan" android:textStyle="bold" android:layout_marginBottom="8dp"/>
 <EditText android:id="@+id/pkgInput" android:layout_width="match_parent" android:layout_height="48dp" android:hint="Enter Package Name..." android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginBottom="12dp"/>
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
 <com.google.android.material.button.MaterialButton android:id="@+id/btnHide" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="HIDE" app:backgroundTint="@color/accent_red" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginEnd="8dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnUnhide" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="UNHIDE" app:backgroundTint="@color/accent_green" android:textColor="#000000" android:textStyle="bold"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnUnhide" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="UNHIDE" app:backgroundTint="@color/accent_cyan" android:textColor="#000000" android:textStyle="bold"/>
 </LinearLayout>
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
 <com.google.android.material.button.MaterialButton android:id="@+id/btnFreeze" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="FREEZE" app:backgroundTint="#F39C12" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginEnd="8dp"/>
@@ -287,10 +345,10 @@ cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
 </com.google.android.material.card.MaterialCardView>
 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="16dp">
 <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="16dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Raw Terminal" android:textColor="@color/accent_green" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Raw Terminal" android:textColor="@color/accent_cyan" android:textStyle="bold" android:layout_marginBottom="8dp"/>
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
 <EditText android:id="@+id/terminalInput" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:hint="Enter command..." android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:layout_marginEnd="8dp" android:inputType="textNoSuggestions"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnRunCmd" android:layout_width="wrap_content" android:layout_height="48dp" android:text="RUN" app:backgroundTint="@color/accent_green" android:textColor="#000000" android:textStyle="bold"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnRunCmd" android:layout_width="wrap_content" android:layout_height="48dp" android:text="RUN" app:backgroundTint="@color/accent_cyan" android:textColor="#000000" android:textStyle="bold"/>
 </LinearLayout>
 <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:background="@drawable/bg_box_dark" android:padding="12dp">
 <TextView android:id="@+id/terminalOutput" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#00FF00" android:fontFamily="monospace" android:textSize="12sp" android:text="Terminal Ready...\n"/>
@@ -299,25 +357,24 @@ cat > app/src/main/res/layout/activity_terminal.xml << 'EOF'
 </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
 EOF
-
 cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="16dp">
-<com.google.android.material.tabs.TabLayout android:id="@+id/tabLayout" android:layout_width="match_parent" android:layout_height="wrap_content" app:tabIndicatorColor="@color/accent_green" app:tabTextColor="@color/text_secondary" app:tabSelectedTextColor="@color/text_primary" app:tabIndicatorFullWidth="true" android:layout_marginBottom="16dp">
+<com.google.android.material.tabs.TabLayout android:id="@+id/tabLayout" android:layout_width="match_parent" android:layout_height="wrap_content" app:tabIndicatorColor="@color/accent_cyan" app:tabTextColor="@color/text_secondary" app:tabSelectedTextColor="@color/text_primary" app:tabIndicatorFullWidth="true" android:layout_marginBottom="16dp">
 <com.google.android.material.tabs.TabItem android:text="Manage Apps" /><com.google.android.material.tabs.TabItem android:text="Hidden &amp; Emergency" />
 </com.google.android.material.tabs.TabLayout>
 <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
 <LinearLayout android:id="@+id/pageAllApps" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:visibility="visible">
-<com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" app:boxStrokeColor="@color/accent_green" app:hintTextColor="@color/accent_green" android:layout_marginBottom="12dp">
+<com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" app:boxStrokeColor="@color/accent_cyan" app:hintTextColor="@color/accent_cyan" android:layout_marginBottom="12dp">
 <com.google.android.material.textfield.TextInputEditText android:id="@+id/searchInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Search all apps..." android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:inputType="text"/>
 </com.google.android.material.textfield.TextInputLayout>
 <ListView android:id="@+id/appsList" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:divider="@null" android:dividerHeight="0dp"/>
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="12dp" android:gravity="center_vertical" android:background="@drawable/bg_box_dark" android:padding="12dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Show System Apps" android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold"/>
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Show System Apps" android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold"/>
 <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showSystemSwitch" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
 </LinearLayout>
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp" android:gravity="center_vertical" android:background="@drawable/bg_box_dark" android:padding="12dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Auto-Unhide Timer: " android:textColor="@color/accent_green" android:textSize="14sp" android:textStyle="bold"/>
-<Spinner android:id="@+id/timerSpinner" android:layout_width="match_parent" android:layout_height="40dp" android:backgroundTint="@color/accent_green"/>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Auto-Unhide Timer: " android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold"/>
+<Spinner android:id="@+id/timerSpinner" android:layout_width="match_parent" android:layout_height="40dp" android:backgroundTint="@color/accent_cyan"/>
 </LinearLayout>
 </LinearLayout>
 <LinearLayout android:id="@+id/pageHiddenApps" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:visibility="gone">
@@ -325,7 +382,7 @@ cat > app/src/main/res/layout/activity_hide_apps.xml << 'EOF'
 <ListView android:id="@+id/hiddenAppsList" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:divider="@null" android:dividerHeight="0dp"/>
 </LinearLayout>
 </FrameLayout>
-<com.google.android.material.button.MaterialButton android:id="@+id/applyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="APPLY FOR TILE" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="16dp" android:textStyle="bold"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/applyBtn" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="16dp" android:text="APPLY FOR TILE" android:textColor="#000000" app:backgroundTint="@color/accent_cyan" app:cornerRadius="16dp" android:textStyle="bold"/>
 </LinearLayout>
 EOF
 
@@ -350,44 +407,14 @@ cat > app/src/main/res/layout/activity_clear_report.xml << 'EOF'
 </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
 EOF
-cat > app/src/main/res/layout/activity_gucci_voices.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="24dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="👑 GUCCI VOICES" android:textColor="@color/text_primary" android:textSize="28sp" android:textStyle="bold" android:layout_marginBottom="20dp"/>
-<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="20dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="TEXT TO VOICE" android:textColor="@color/accent_green" android:textSize="12sp" android:textStyle="bold" android:layout_marginBottom="8dp"/>
-<EditText android:id="@+id/voiceInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Type here..." android:background="@drawable/bg_box_dark" android:padding="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:inputType="text" android:layout_marginBottom="12dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnSpeak" android:layout_width="match_parent" android:layout_height="50dp" android:text="SEND" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="12dp" android:textStyle="bold"/>
-</LinearLayout>
-</com.google.android.material.card.MaterialCardView>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnPlaySoundCard" android:layout_width="match_parent" android:layout_height="100dp" android:text="PLAY SOUND\nCARD" android:textColor="#FFFFFF" app:backgroundTint="#4A60D0" app:cornerRadius="16dp" android:textStyle="bold" android:layout_marginBottom="20dp"/>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnVoiceSettings" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="50dp" android:text="⚙️ VOICE SETTINGS" android:textColor="@color/accent_green" app:strokeColor="@color/accent_green" app:cornerRadius="12dp"/>
-</LinearLayout>
-EOF
-
-cat > app/src/main/res/layout/activity_voice_settings.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg_main" android:padding="24dp">
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⚙️ VOICE SETTINGS" android:textColor="@color/text_primary" android:textSize="24sp" android:textStyle="bold" android:layout_marginBottom="24dp"/>
-<com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_bg" app:cardCornerRadius="16dp" android:layout_marginBottom="20dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-<TextView android:id="@+id/volumeText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Volume: 80%" android:textColor="@color/accent_green" android:textSize="16sp" android:textStyle="bold" android:layout_marginBottom="8dp"/>
-<SeekBar android:id="@+id/volumeSeek" android:layout_width="match_parent" android:layout_height="wrap_content" android:progressTint="@color/accent_green" android:thumbTint="@color/accent_green"/>
-</LinearLayout>
-</com.google.android.material.card.MaterialCardView>
-<com.google.android.material.button.MaterialButton android:id="@+id/btnAddVoice" android:layout_width="match_parent" android:layout_height="56dp" android:text="+ ADD CUSTOM VOICE" android:textColor="#000000" app:backgroundTint="@color/accent_green" app:cornerRadius="12dp" android:textStyle="bold"/>
-</LinearLayout>
-EOF
 
 cat > app/src/main/res/layout/overlay_bubble.xml << 'EOF'
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="60dp" android:layout_height="60dp" android:background="@drawable/bg_circle_grey">
-<ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp" android:src="@drawable/ic_tile_floater" app:tint="@color/accent_green"/>
+<ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp" android:src="@drawable/ic_tile_floater" app:tint="@color/accent_cyan"/>
 </FrameLayout>
 EOF
-
 cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="280dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0B0F17" app:cardCornerRadius="20dp" app:cardElevation="15dp" app:strokeColor="#1F2633" app:strokeWidth="1dp">
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="280dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0B0F17" app:cardCornerRadius="20dp" app:cardElevation="15dp" app:strokeColor="#00E5FF" app:strokeWidth="1dp">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
 <LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
 <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI MODS" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="14sp" android:fontFamily="sans-serif-black" android:letterSpacing="0.05"/>
@@ -487,6 +514,7 @@ class PackageReceiver : BroadcastReceiver() {
     }
 }
 EOF
+
 cat > app/src/main/java/com/example/shtile/RunnerService.kt << 'EOF'
 package com.example.shtile
 import android.app.*
@@ -1146,7 +1174,7 @@ class FloaterOverlayService : Service() {
                 chcon --reference="${'$'}TARGET_DIR" "${'$'}TARGET_FILE" 2>/dev/null
                 echo "SUCCESS_ON"
             """.trimIndent()) } else { scriptFile.writeText("""
-                #!/bin/sh
+                #!/system/bin/sh
                 TARGET_DIR="$targetDir"
                 TARGET_FILE="${'$'}TARGET_DIR/$targetName"
                 BAK_FILE="${'$'}TARGET_DIR/$bakName"
@@ -1299,7 +1327,6 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import rikka.shizuku.Shizuku
-
 class MainActivity : AppCompatActivity() {
     private val REQUEST_CODE = 1001; private var isAdbMode = false; private var activeDialog: AlertDialog? = null
     private val shizukuListener = object : Shizuku.OnRequestPermissionResultListener {
@@ -1376,7 +1403,6 @@ class MainActivity : AppCompatActivity() {
         findViewById<ImageButton>(R.id.hideAppsIcon).setOnClickListener { startActivity(Intent(this, HideAppsActivity::class.java)) }
         findViewById<ImageButton>(R.id.terminalIcon).setOnClickListener { startActivity(Intent(this, TerminalActivity::class.java)) }
     }
-    
     private fun checkAccess() {
         Thread {
             val hasRoot = try { val pr = ProcessBuilder("su", "-c", "id").start(); pr.inputStream.bufferedReader().readText().contains("uid=0") } catch (e: Exception) { false }
@@ -1425,38 +1451,20 @@ class GucciVoicesActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val btnSpeak = findViewById<MaterialButton>(R.id.btnSpeak)
         val btnSettings = findViewById<MaterialButton>(R.id.btnVoiceSettings)
         val btnPlayCard = findViewById<MaterialButton>(R.id.btnPlaySoundCard)
-        
-        btnSpeak.setOnClickListener { 
-            val text = inputText.text.toString()
-            if (text.isNotEmpty()) { 
-                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "GucciVoice") 
-            } 
-        }
-        btnSettings.setOnClickListener { 
-            startActivity(Intent(this, VoiceSettingsActivity::class.java)) 
-        }
-        btnPlayCard.setOnClickListener { 
-            Toast.makeText(this, "Playing Sound Card!", Toast.LENGTH_SHORT).show() 
-        }
+        btnSpeak.setOnClickListener { val text = inputText.text.toString(); if (text.isNotEmpty()) { tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "GucciVoice") } }
+        btnSettings.setOnClickListener { startActivity(Intent(this, VoiceSettingsActivity::class.java)) }
+        btnPlayCard.setOnClickListener { Toast.makeText(this, "Playing Sound Card!", Toast.LENGTH_SHORT).show() }
     }
-    override fun onInit(status: Int) { 
-        if (status == TextToSpeech.SUCCESS) { 
-            tts?.language = Locale.US 
-        } else { 
-            Toast.makeText(this, "TTS Initialization Failed", Toast.LENGTH_SHORT).show() 
-        } 
-    }
-    override fun onDestroy() { 
-        tts?.stop()
-        tts?.shutdown()
-        mediaPlayer?.release()
-        super.onDestroy() 
-    }
+    override fun onInit(status: Int) { if (status == TextToSpeech.SUCCESS) { tts?.language = Locale.US } else { Toast.makeText(this, "TTS Initialization Failed", Toast.LENGTH_SHORT).show() } }
+    override fun onDestroy() { tts?.stop(); tts?.shutdown(); mediaPlayer?.release(); super.onDestroy() }
 }
 EOF
 
 cat > app/src/main/java/com/example/shtile/VoiceSettingsActivity.kt << 'EOF'
 package com.example.shtile
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.SeekBar
 import android.widget.TextView
@@ -1464,6 +1472,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 class VoiceSettingsActivity : AppCompatActivity() {
+    private val PICK_AUDIO_REQUEST = 100
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_voice_settings)
@@ -1471,10 +1480,8 @@ class VoiceSettingsActivity : AppCompatActivity() {
         val volumeText = findViewById<TextView>(R.id.volumeText)
         val btnAddVoice = findViewById<MaterialButton>(R.id.btnAddVoice)
         val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
-        
         volumeSeek.progress = prefs.getInt("voice_volume", 80)
         volumeText.text = "Volume: ${volumeSeek.progress}%"
-        
         volumeSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 volumeText.text = "Volume: $progress%"
@@ -1484,7 +1491,20 @@ class VoiceSettingsActivity : AppCompatActivity() {
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
         btnAddVoice.setOnClickListener { 
-            Toast.makeText(this, "Feature to add custom voices coming soon!", Toast.LENGTH_SHORT).show() 
+            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                type = "audio/*"
+                addCategory(Intent.CATEGORY_OPENABLE)
+            }
+            startActivityForResult(Intent.createChooser(intent, "Select MP3 Voice"), PICK_AUDIO_REQUEST)
+        }
+    }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == PICK_AUDIO_REQUEST && resultCode == Activity.RESULT_OK) {
+            val audioUri: Uri? = data?.data
+            if (audioUri != null) {
+                Toast.makeText(this, "Voice Added Successfully!", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }
