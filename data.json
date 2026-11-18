@@ -11,7 +11,8 @@
       "allowFloater": true,
       "allowKernel": false,
       "reboot_now_time": 0,
-      "reboot_timer": 0
+      "reboot_timer": 0,
+      "allowVoice": false
     },
     "RYZEN": {
       "deviceIds": [
