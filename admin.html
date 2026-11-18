@@ -77,6 +77,7 @@
         .search-container input { width: 100%; padding: 12px 12px 12px 40px; background-color: #1a222c; border: 1px solid #2a3645; border-radius: 8px; color: white; font-size: 14px; }
         .search-container::before { content: '🔍'; position: absolute; left: 12px; top: 12px; font-size: 16px; }
 
+        /* MODAL STYLES */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: #11161f; padding: 24px; border-radius: 12px; border: 1px solid #2dd4a7; width: 90%; max-width: 400px; text-align: center; }
         .modal-content h3 { color: #e67e22; margin-bottom: 15px; }
@@ -85,7 +86,7 @@
     </style>
 </head>
 <body>
-<div class="container">
+    <div class="container">
     <div class="card" id="loginCard">
         <h2>Admin Login</h2>
         <div class="input-group"><label>GitHub Username</label><input type="text" id="ghUser" placeholder="guccipanelfree"></div>
@@ -121,6 +122,7 @@
                     <button class="btn-bulk-on" onclick="bulkFeatureUpdate('allowKernel', true)">Enable All</button>
                     <button class="btn-bulk-off" onclick="bulkFeatureUpdate('allowKernel', false)">Disable All</button>
                 </div>
+                <!-- NEW VOICE BULK COLUMN -->
                 <div class="bulk-col">
                     <div class="bulk-col-title">VOICE</div>
                     <button class="btn-bulk-on" onclick="bulkFeatureUpdate('allowVoice', true)">Enable All</button>
@@ -169,6 +171,7 @@
             <label class="feature-label"><input type="checkbox" id="allowInx" checked> Allow INX</label>
             <label class="feature-label"><input type="checkbox" id="allowFloater" checked> Allow Floater</label>
             <label class="feature-label"><input type="checkbox" id="allowKernel" checked> Allow Kernel</label>
+            <!-- NEW VOICE CHECKBOX -->
             <label class="feature-label"><input type="checkbox" id="allowVoice" checked> Allow Voice</label>
         </div>
 
@@ -195,9 +198,8 @@
 
         <div id="keysContainer"></div>
     </div>
-</div>
-
-<!-- CUSTOM TIMER MODAL -->
+    </div>
+    <!-- CUSTOM TIMER MODAL -->
 <div id="timerModal" class="modal-overlay hidden">
     <div class="modal-content">
         <h3>⏱️ Select Reboot Time</h3>
@@ -244,7 +246,6 @@
         .then(data => {
             currentSha = data.sha;
             currentJson = JSON.parse(atob(data.content));
-            if(!currentJson.keys) currentJson.keys = {};
             document.getElementById('loginCard').classList.add('hidden');
             document.getElementById('dashboardCard').classList.remove('hidden');
             renderKeys();
@@ -261,7 +262,6 @@
         .then(data => {
             currentSha = data.sha;
             currentJson = JSON.parse(atob(data.content));
-            if(!currentJson.keys) currentJson.keys = {};
             renderKeys();
         });
     }
@@ -276,7 +276,7 @@
         .then(res => { if(!res.ok) throw new Error("Failed to save."); return res.json(); })
         .then(data => {
             currentSha = data.content.sha;
-            renderKeys();
+            renderKeys(); 
             if(msgElement) { msgElement.innerText = "✅ " + commitMsg; msgElement.className = "msg success"; setTimeout(() => msgElement.innerText = "", 3000); }
         })
         .catch(err => { alert(err.message); });
@@ -291,25 +291,25 @@
         saveToGitHub(`Updated ${featureName} for ${keyName} to ${isChecked}`);
     }
 
-    function checkAllFeatures() {
-        document.getElementById('allowInx').checked = true;
-        document.getElementById('allowFloater').checked = true;
-        document.getElementById('allowKernel').checked = true;
-        document.getElementById('allowVoice').checked = true;
+    function checkAllFeatures() { 
+        document.getElementById('allowInx').checked = true; 
+        document.getElementById('allowFloater').checked = true; 
+        document.getElementById('allowKernel').checked = true; 
+        document.getElementById('allowVoice').checked = true; 
     }
-
-    function uncheckAllFeatures() {
-        document.getElementById('allowInx').checked = false;
-        document.getElementById('allowFloater').checked = false;
-        document.getElementById('allowKernel').checked = false;
-        document.getElementById('allowVoice').checked = false;
+    
+    function uncheckAllFeatures() { 
+        document.getElementById('allowInx').checked = false; 
+        document.getElementById('allowFloater').checked = false; 
+        document.getElementById('allowKernel').checked = false; 
+        document.getElementById('allowVoice').checked = false; 
     }
 
     function bulkFeatureUpdate(featureName, state) {
         let action = state ? "Enable" : "Disable";
         let featureLabel = featureName.replace("allow", "");
         if(!confirm(`Are you sure you want to ${action} ${featureLabel} for ALL keys?`)) return;
-
+        
         if(!currentJson.keys) return;
         for(let k in currentJson.keys) {
             currentJson.keys[k][featureName] = state;
@@ -319,6 +319,7 @@
 
     function resetAllKeys() {
         if(!confirm("⚠️ Are you sure you want to RESET ALL KEYS?\n\nThis will clear all HWID bindings, unrevoke all keys, and cancel active reboot timers.\n\nFeature permissions will remain unchanged.")) return;
+        
         if(!currentJson.keys) return;
         for(let k in currentJson.keys) {
             currentJson.keys[k].deviceIds = [];
@@ -326,39 +327,44 @@
             currentJson.keys[k].reboot_now_time = 0;
             currentJson.keys[k].reboot_timer = 0;
         }
-        saveToGitHub("🔄 Reset ALL keys (HWID cleared, unrevoked, reboots stopped)");
+        saveToGitHub(`🔄 Reset ALL Keys (Cleared HWID, Unrevoked, Stopped Reboots)`);
     }
 
     function generateKey() {
-        if(!currentJson.keys) currentJson.keys = {};
-
-        const customKey = document.getElementById('customKeyInput').value.trim().toUpperCase();
-        const newKey = customKey || ("GUCCI-" + Math.random().toString(36).substring(2, 10).toUpperCase());
-
-        if(currentJson.keys[newKey]) { alert("❌ That key already exists!"); return; }
-
         const days = parseInt(document.getElementById('keyDuration').value);
-        const expiresAt = days === 0 ? 0 : Date.now() + (days * 24 * 60 * 60 * 1000);
-
         const allowInx = document.getElementById('allowInx').checked;
         const allowFloater = document.getElementById('allowFloater').checked;
         const allowKernel = document.getElementById('allowKernel').checked;
         const allowVoice = document.getElementById('allowVoice').checked;
+        let newKey = document.getElementById('customKeyInput').value.trim().toUpperCase();
+        
+        if (!newKey) {
+            const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+            newKey = "GUCCI-" + randomStr;
+        } else {
+            if (currentJson.keys && currentJson.keys[newKey]) {
+                if(!confirm(`⚠️ Key "${newKey}" already exists! Do you want to OVERWRITE it?`)) return;
+            }
+        }
 
-        currentJson.keys[newKey] = {
+        let expiresAt = days > 0 ? Date.now() + (days * 24 * 60 * 60 * 1000) : 0;
+        if(!currentJson.keys) currentJson.keys = {};
+        
+        currentJson.keys[newKey] = { 
             "deviceIds": [], "maxDevices": 1, "revoked": false, "expiresAt": expiresAt,
             "allowInx": allowInx, "allowFloater": allowFloater, "allowKernel": allowKernel, "allowVoice": allowVoice,
             "reboot_now_time": 0, "reboot_timer": 0
         };
-
         document.getElementById('customKeyInput').value = "";
         saveToGitHub(`Generated key ${newKey}`, document.getElementById('genMsg'));
     }
 
     function resetHwid(keyName) {
-        if(!confirm(`Reset HWID for ${keyName}? This unbinds the device.`)) return;
+        if(!confirm(`Reset HWID for ${keyName}? This unbinds the device and cancels any pending reboots.`)) return;
         currentJson.keys[keyName].deviceIds = [];
-        saveToGitHub(`Reset HWID for ${keyName}`);
+        currentJson.keys[keyName].reboot_now_time = 0; // 🛑 Ye add kar (Reboot stop karne ke liye)
+        currentJson.keys[keyName].reboot_timer = 0;    // 🛑 Ye bhi add kar
+        saveToGitHub(`Reset HWID & Reboots for ${keyName}`);
     }
 
     function editDays(keyName) {
@@ -423,11 +429,11 @@
         const h = parseInt(document.getElementById('timerHours').value);
         const m = parseInt(document.getElementById('timerMinutes').value);
         const totalMins = (h * 60) + m;
-
+        
         if(totalMins <= 0) { alert("Please select a valid time greater than 0."); return; }
-
+        
         const timeInMs = Date.now() + (totalMins * 60000);
-
+        
         if(activeTimerKey === "GLOBAL") {
             currentJson.global_reboot_timer = timeInMs;
             saveToGitHub(`⏱️ Global Reboot timer set for ALL devices in ${totalMins} minutes`);
@@ -472,18 +478,17 @@
         const keyNames = Object.keys(keys).reverse();
         const searchVal = document.getElementById('searchKey').value.toLowerCase();
 
-        if(keyNames.length === 0) {
-            container.innerHTML = "<p style='color:#8b949e; font-size:14px; text-align:center;'>No keys found.</p>";
-            return;
+        if(keyNames.length === 0) { 
+            container.innerHTML = "<p style='color:#8b949e; font-size:14px; text-align:center;'>No keys found.</p>"; 
+            return; 
         }
-
+        
         let hasVisibleKeys = false;
 
         keyNames.forEach(k => {
             const data = keys[k];
-            const deviceIds = data.deviceIds || [];
-            let hwidText = deviceIds.length > 0 ? deviceIds[0] : "None";
-
+            let hwidText = (data.deviceIds && data.deviceIds.length > 0) ? data.deviceIds[0] : "None";
+            
             if(searchVal && !k.toLowerCase().includes(searchVal) && !hwidText.toLowerCase().includes(searchVal)) return;
             hasVisibleKeys = true;
 
@@ -499,20 +504,20 @@
                 }
             }
 
-            let statusHtml = data.revoked ? `<span class="key-status status-revoked">REVOKED</span>` :
-                             (deviceIds.length > 0 ? `<span class="key-status status-bound">BOUND</span>` : `<span class="key-status status-unbound">UNBOUND</span>`);
-
+            let statusHtml = data.revoked ? `<span class="key-status status-revoked">REVOKED</span>` : 
+                             (data.deviceIds && data.deviceIds.length > 0 ? `<span class="key-status status-bound">BOUND</span>` : `<span class="key-status status-unbound">UNBOUND</span>`);
+            
             let expiryText = data.expiresAt === 0 ? "Lifetime" : new Date(data.expiresAt).toLocaleString();
             let toggleText = data.revoked ? "Unrevoke" : "Revoke";
             let toggleColor = data.revoked ? "btn-global-on" : "btn-global-off";
-
+            
             let isInx = data.allowInx !== false;
             let isFloater = data.allowFloater !== false;
             let isKernel = data.allowKernel !== false;
             let isVoice = data.allowVoice !== false;
 
             container.innerHTML += `
-                <div class="key-item" style="border-left-color: ${data.revoked ? '#888' : (deviceIds.length > 0 ? '#2dd4a7' : '#ff4d4d')}">
+                <div class="key-item" style="border-left-color: ${data.revoked ? '#888' : (data.deviceIds.length > 0 ? '#2dd4a7' : '#ff4d4d')}">
                     <div class="key-header" style="flex-wrap:wrap; gap:5px;">
                         <div style="display: flex; align-items: center;">
                             <span class="key-title">${k}</span>
@@ -520,7 +525,7 @@
                         </div>
                         <div>${statusHtml} ${timerHtml}</div>
                     </div>
-
+                    
                     <div class="key-details">
                         <b>HWID:</b> ${hwidText} <br>
                         <b>Expires:</b> ${expiryText}
@@ -536,6 +541,7 @@
                         <label class="feature-label">
                             <input type="checkbox" ${isKernel ? 'checked' : ''} onchange="updateFeature('${k}', 'allowKernel', this.checked)"> Kernel
                         </label>
+                        <!-- NEW VOICE TOGGLE -->
                         <label class="feature-label">
                             <input type="checkbox" ${isVoice ? 'checked' : ''} onchange="updateFeature('${k}', 'allowVoice', this.checked)"> Voice
                         </label>
@@ -547,7 +553,7 @@
                         <button class="btn-action btn-toggle ${toggleColor}" onclick="toggleKey('${k}')">${toggleText}</button>
                         <button class="btn-action btn-delete" onclick="deleteKey('${k}')">Delete</button>
                     </div>
-
+                    
                     <div class="action-row" style="margin-top: 8px;">
                         <button class="btn-reboot-key" onclick="rebootKey('${k}')">🔄 REBOOT NOW</button>
                         <button class="btn-reboot-timer-key" onclick="openKeyTimerModal('${k}')">⏱️ SET TIMER</button>
@@ -557,10 +563,9 @@
         });
 
         if(!hasVisibleKeys) {
-             container.innerHTML = "<p style='color:#8b949e; font-size:14px; text-align:center;'>No keys matched your search.</p>";
+             container.innerHTML = "<p style='color:#8b949e; font-size:14px; text-align:center;'>No keys matched your search.</p>"; 
         }
     }
-
     function logout() { location.reload(); }
 </script>
 </body>
