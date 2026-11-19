@@ -59,6 +59,7 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
 <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -82,7 +83,7 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <service android:name=".RebootService" android:exported="false" android:foregroundServiceType="dataSync"/>
 <service android:name=".TimerService" android:exported="false" android:foregroundServiceType="dataSync"/>
 <service android:name=".FloaterOverlayService" android:exported="false" android:foregroundServiceType="specialUse"><property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Overlay for Game Mods" /></service>
-<service android:name=".GucciVoiceService" android:exported="false" android:foregroundServiceType="mediaPlayback" />
+<service android:name=".GucciVoiceService" android:exported="false" android:foregroundServiceType="mediaPlayback|microphone" />
 <service android:name=".SafeTileService" android:exported="true" android:icon="@drawable/ic_tile_normal" android:label="Boost" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
 <service android:name=".BrutalTileService" android:exported="true" android:icon="@drawable/ic_tile_brutal" android:label="Turbo Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
 <service android:name=".FocusTileService" android:exported="true" android:icon="@drawable/ic_tile_focus" android:label="Focus Mode" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"><intent-filter><action android:name="android.service.quicksettings.action.QS_TILE"/></intent-filter></service>
@@ -453,8 +454,11 @@ cat > app/src/main/res/layout/activity_gucci_voice.xml << 'EOF'
     <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="16dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp" android:layout_marginBottom="16dp">
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🗣️ Text → Voice" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginBottom="12dp"/>
-            <EditText android:id="@+id/etVoiceText" android:layout_width="match_parent" android:layout_height="80dp" android:gravity="top|start" android:hint="Type here, press Send and it plays as voice..." android:textColor="#FFFFFF" android:textColorHint="#8B949E" android:background="#12161F" android:padding="10dp" android:layout_marginBottom="12dp"/>
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnSendText" android:layout_width="match_parent" android:layout_height="45dp" android:text="▶️ Send &amp; Save" android:textColor="#FFFFFF" app:backgroundTint="#00E5A0" app:cornerRadius="8dp" android:textStyle="bold"/>
+            <EditText android:id="@+id/etVoiceText" android:layout_width="match_parent" android:layout_height="80dp" android:gravity="top|start" android:hint="Type here..." android:textColor="#FFFFFF" android:textColorHint="#8B949E" android:background="#12161F" android:padding="10dp" android:layout_marginBottom="12dp"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnPlayText" android:layout_width="0dp" android:layout_weight="1" android:layout_height="45dp" android:text="▶️ Play" android:textColor="#000000" app:backgroundTint="#00E5A0" app:cornerRadius="8dp" android:textStyle="bold" android:layout_marginEnd="8dp"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnSaveText" android:layout_width="0dp" android:layout_weight="1" android:layout_height="45dp" android:text="💾 Save to Cards" android:textColor="#FFFFFF" app:backgroundTint="#8B5CF6" app:cornerRadius="8dp" android:textStyle="bold"/>
+            </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
@@ -481,11 +485,10 @@ EOF
 
 cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="280dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="16dp" app:cardElevation="15dp" app:strokeColor="#1F4E79" app:strokeWidth="1.5dp">
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="290dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="16dp" app:cardElevation="15dp" app:strokeColor="#1F4E79" app:strokeWidth="1.5dp">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="10dp">
     <LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
         <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="👑 GUCCI VOICES" android:textColor="#4FC3F7" android:textStyle="bold" android:textSize="13sp" android:fontFamily="sans-serif-black"/>
-        <ImageView android:id="@+id/btnRecord" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_tile_normal" app:tint="#FF4D4D" android:layout_marginEnd="8dp"/>
         <ImageButton android:id="@+id/btnMinimize" android:layout_width="24dp" android:layout_height="24dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#8B949E" android:layout_marginEnd="4dp"/>
         <ImageButton android:id="@+id/btnClose" android:layout_width="24dp" android:layout_height="24dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
     </LinearLayout>
@@ -495,19 +498,40 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
     </LinearLayout>
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
         <LinearLayout android:id="@+id/tabCards" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="4dp">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎵 Sound cards" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎵 Cards" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
         </LinearLayout>
-        <LinearLayout android:id="@+id/tabType" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:gravity="center" android:background="@drawable/bg_box_dark">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💬 Type &amp; send" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
+        <LinearLayout android:id="@+id/tabType" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="4dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💬 Text" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/tabLive" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:gravity="center" android:background="#12161F">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔴 Live" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
         </LinearLayout>
     </LinearLayout>
+    
     <LinearLayout android:id="@+id/pageCards" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="visible">
         <GridView android:id="@+id/lvVoicesFloater" android:layout_width="match_parent" android:layout_height="160dp" android:numColumns="3" android:verticalSpacing="4dp" android:horizontalSpacing="4dp"/>
         <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayStop" android:layout_width="match_parent" android:layout_height="32dp" android:text="⏹ STOP" android:textColor="#FFFFFF" app:backgroundTint="#FF4D4D" app:cornerRadius="6dp" android:textSize="10sp" android:layout_marginTop="4dp"/>
     </LinearLayout>
+    
     <LinearLayout android:id="@+id/pageType" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
         <EditText android:id="@+id/etTypeHere" android:layout_width="match_parent" android:layout_height="40dp" android:hint="Type here..." android:textColor="#FFFFFF" android:textColorHint="#8B949E" android:background="#12161F" android:padding="8dp" android:textSize="12sp" android:layout_marginBottom="4dp"/>
-        <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySend" android:layout_width="match_parent" android:layout_height="36dp" android:text="Send" android:textColor="#000000" app:backgroundTint="#00E5A0" app:cornerRadius="6dp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySend" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:text="Play" android:textColor="#000000" app:backgroundTint="#00E5A0" app:cornerRadius="6dp" android:layout_marginEnd="4dp"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySave" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:text="Save" android:textColor="#FFFFFF" app:backgroundTint="#8B5CF6" app:cornerRadius="6dp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/pageLive" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="6dp" android:layout_marginBottom="6dp">
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="🎤 Mic Live Mode" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+            <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/swLiveMic" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="#12161F" android:padding="8dp" android:layout_marginBottom="6dp">
+            <TextView android:id="@+id/tvPitch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Pitch: 0" android:textColor="#8B949E" android:textSize="10sp"/>
+            <SeekBar android:id="@+id/sbPitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="24" android:progress="12"/>
+            <TextView android:id="@+id/tvEcho" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Echo: 0ms" android:textColor="#8B949E" android:textSize="10sp"/>
+            <SeekBar android:id="@+id/sbEcho" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="50" android:progress="0"/>
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
@@ -605,6 +629,7 @@ package com.example.shtile
 
 import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
 import java.io.File
 import java.io.FileOutputStream
 
@@ -621,10 +646,20 @@ object VoiceDataHelper {
             ?.sortedByDescending { it.lastModified() } ?: emptyList()
     }
 
-    fun saveFromUri(context: Context, uri: Uri, customName: String): File? {
+    fun saveFromUri(context: Context, uri: Uri): File? {
         return try {
+            var fileName = "Voice_${System.currentTimeMillis()}"
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (nameIndex != -1) {
+                        val fullName = cursor.getString(nameIndex)
+                        fileName = fullName.substringBeforeLast(".")
+                    }
+                }
+            }
             val inputStream = context.contentResolver.openInputStream(uri) ?: return null
-            val file = File(getVoicesDir(context), "$customName.wav")
+            val file = File(getVoicesDir(context), "$fileName.wav")
             val outputStream = FileOutputStream(file)
             inputStream.copyTo(outputStream)
             inputStream.close()
@@ -1889,11 +1924,26 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         
         loadVoices()
 
-        // TTS Send Button
-        findViewById<MaterialButton>(R.id.btnSendText).setOnClickListener {
+        // TTS Play Button (Does not save automatically)
+        findViewById<MaterialButton>(R.id.btnPlayText).setOnClickListener {
             val text = etVoiceText.text.toString().trim()
-            if (text.isNotEmpty() && isTtsReady) { generateVoice(text) } 
-            else { Toast.makeText(this, "Type something first!", Toast.LENGTH_SHORT).show() }
+            if (text.isNotEmpty() && isTtsReady) { 
+                tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "GucciTTS")
+            } else { 
+                Toast.makeText(this, "Type something first!", Toast.LENGTH_SHORT).show() 
+            }
+        }
+
+        // TTS Save Button (Saves to card)
+        findViewById<MaterialButton>(R.id.btnSaveText).setOnClickListener {
+            val text = etVoiceText.text.toString().trim()
+            if (text.isNotEmpty() && isTtsReady) { 
+                generateVoice(text)
+                etVoiceText.text.clear()
+                Toast.makeText(this, "Saved to Cards!", Toast.LENGTH_SHORT).show()
+            } else { 
+                Toast.makeText(this, "Type something first!", Toast.LENGTH_SHORT).show() 
+            }
         }
 
         // Add Voice Button
@@ -1944,7 +1994,6 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             file.setReadable(true, false)
             Handler(Looper.getMainLooper()).postDelayed({
                 loadVoices()
-                playVoice(file)
             }, 800)
         }
     }
@@ -1974,7 +2023,7 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             data?.data?.let { uri ->
                 Toast.makeText(this, "Saving file...", Toast.LENGTH_SHORT).show()
                 Thread {
-                    val newFile = VoiceDataHelper.saveFromUri(this, uri, "Voice_${System.currentTimeMillis()}")
+                    val newFile = VoiceDataHelper.saveFromUri(this, uri)
                     runOnUiThread {
                         if (newFile != null) { loadVoices(); Toast.makeText(this, "Voice Added!", Toast.LENGTH_SHORT).show() }
                         else { Toast.makeText(this, "Failed to add voice", Toast.LENGTH_SHORT).show() }
@@ -2039,20 +2088,23 @@ EOF
 cat > app/src/main/java/com/example/shtile/GucciVoiceService.kt << 'EOF'
 package com.example.shtile
 
+import android.Manifest
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.PixelFormat
-import android.media.AudioManager
-import android.media.MediaPlayer
+import android.media.*
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.speech.tts.TextToSpeech
 import android.view.*
+import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.view.ContextThemeWrapper
+import androidx.core.content.ContextCompat
 import com.google.android.material.materialswitch.MaterialSwitch
 import java.io.File
 import java.util.Locale
@@ -2066,8 +2118,17 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var isTtsReady = false
     private var isInjectOn = true
 
+    // Live Voice Vars
+    private var isLiveOn = false
+    private var audioRecord: AudioRecord? = null
+    private var audioTrack: AudioTrack? = null
+    private var liveThread: Thread? = null
+    private var pitchSemitones = 0f
+    private var echoMs = 0
+
     private var voices: List<File> = emptyList()
     private var gridAdapter: VoiceGridAdapter? = null
+    private var params: WindowManager.LayoutParams? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -2085,59 +2146,159 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             nm.createNotificationChannel(channel)
             val notification = Notification.Builder(this, channelId)
                 .setContentTitle("Gucci Voices Active").setSmallIcon(android.R.drawable.ic_btn_speak_now).build()
-            startForeground(99, notification)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(99, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+            } else {
+                startForeground(99, notification)
+            }
         }
     }
 
     private fun showFloater() {
         val themedContext = ContextThemeWrapper(this, R.style.AppTheme)
         overlayView = LayoutInflater.from(themedContext).inflate(R.layout.overlay_gucci_voice, null)
-        val params = WindowManager.LayoutParams(
+        params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT
-        )
-        params.gravity = Gravity.TOP or Gravity.START; params.x = 100; params.y = 200
+        ).apply { gravity = Gravity.TOP or Gravity.START; x = 100; y = 200 }
 
         windowManager.addView(overlayView, params)
-        setupDrag(overlayView!!.findViewById(R.id.dragHandleTop), overlayView!!, params)
+        setupDrag(overlayView!!.findViewById(R.id.dragHandleTop), overlayView!!, params!!)
 
         overlayView!!.findViewById<ImageButton>(R.id.btnClose).setOnClickListener { stopSelf() }
-        overlayView!!.findViewById<ImageButton>(R.id.btnMinimize).setOnClickListener { minimizeFloater(params) }
+        overlayView!!.findViewById<ImageButton>(R.id.btnMinimize).setOnClickListener { minimizeFloater(params!!) }
 
         val swInject = overlayView!!.findViewById<MaterialSwitch>(R.id.swInject)
         swInject.setOnCheckedChangeListener { _, isChecked -> isInjectOn = isChecked }
 
+        // Tabs
         val tabCards = overlayView!!.findViewById<LinearLayout>(R.id.tabCards)
         val tabType = overlayView!!.findViewById<LinearLayout>(R.id.tabType)
+        val tabLive = overlayView!!.findViewById<LinearLayout>(R.id.tabLive)
         val pageCards = overlayView!!.findViewById<LinearLayout>(R.id.pageCards)
         val pageType = overlayView!!.findViewById<LinearLayout>(R.id.pageType)
+        val pageLive = overlayView!!.findViewById<LinearLayout>(R.id.pageLive)
 
-        tabCards.setOnClickListener { 
-            pageCards.visibility = View.VISIBLE; pageType.visibility = View.GONE 
-            tabCards.setBackgroundResource(R.drawable.bg_box_dark); tabType.setBackgroundResource(0)
-        }
-        tabType.setOnClickListener { 
-            pageCards.visibility = View.GONE; pageType.visibility = View.VISIBLE 
-            tabType.setBackgroundResource(R.drawable.bg_box_dark); tabCards.setBackgroundResource(0)
+        fun resetTabs() {
+            pageCards.visibility = View.GONE; pageType.visibility = View.GONE; pageLive.visibility = View.GONE
+            tabCards.setBackgroundColor(0x00000000); tabType.setBackgroundColor(0x00000000); tabLive.setBackgroundColor(0x00000000)
         }
 
+        tabCards.setOnClickListener { resetTabs(); pageCards.visibility = View.VISIBLE; tabCards.setBackgroundResource(R.drawable.bg_box_dark) }
+        tabType.setOnClickListener { resetTabs(); pageType.visibility = View.VISIBLE; tabType.setBackgroundResource(R.drawable.bg_box_dark) }
+        tabLive.setOnClickListener { resetTabs(); pageLive.visibility = View.VISIBLE; tabLive.setBackgroundResource(R.drawable.bg_box_dark) }
+
+        // Card Grid
         val gridView = overlayView!!.findViewById<GridView>(R.id.lvVoicesFloater)
         voices = VoiceDataHelper.getAllVoices(this)
         gridAdapter = VoiceGridAdapter(voices)
         gridView.adapter = gridAdapter
         gridView.setOnItemClickListener { _, _, position, _ -> playVoice(voices[position]) }
 
+        // Text Mode
         val etType = overlayView!!.findViewById<EditText>(R.id.etTypeHere)
-        overlayView!!.findViewById<Button>(R.id.btnOverlaySend).setOnClickListener {
-            val txt = etType.text.toString()
-            if (txt.isNotEmpty() && isTtsReady) generateAndPlayTTS(txt)
+        // FIX: Allow keyboard to show in overlay
+        etType.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                params!!.flags = params!!.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv()
+                windowManager.updateViewLayout(overlayView, params)
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.showSoftInput(etType, InputMethodManager.SHOW_IMPLICIT)
+            } else {
+                params!!.flags = params!!.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                windowManager.updateViewLayout(overlayView, params)
+            }
         }
 
-        overlayView!!.findViewById<Button>(R.id.btnOverlayStop).setOnClickListener { stopPlayback() }
+        overlayView!!.findViewById<Button>(R.id.btnOverlaySend).setOnClickListener {
+            val txt = etType.text.toString()
+            if (txt.isNotEmpty() && isTtsReady) tts?.speak(txt, TextToSpeech.QUEUE_FLUSH, null, "GucciTTS")
+        }
+
+        overlayView!!.findViewById<Button>(R.id.btnOverlaySave).setOnClickListener {
+            val txt = etType.text.toString()
+            if (txt.isNotEmpty() && isTtsReady) {
+                val file = File(VoiceDataHelper.getVoicesDir(this), "TTS_${System.currentTimeMillis()}.wav")
+                tts?.synthesizeToFile(txt, null, file, "GucciTTS")
+                etType.text.clear()
+                Handler(Looper.getMainLooper()).postDelayed({
+                    voices = VoiceDataHelper.getAllVoices(this)
+                    gridAdapter?.notifyDataSetChanged()
+                    Toast.makeText(this, "Saved to Cards!", Toast.LENGTH_SHORT).show()
+                }, 800)
+            }
+        }
+
+        // Live Mode
+        val swLiveMic = overlayView!!.findViewById<MaterialSwitch>(R.id.swLiveMic)
+        val sbPitch = overlayView!!.findViewById<SeekBar>(R.id.sbPitch)
+        val sbEcho = overlayView!!.findViewById<SeekBar>(R.id.sbEcho)
+        val tvPitch = overlayView!!.findViewById<TextView>(R.id.tvPitch)
+        val tvEcho = overlayView!!.findViewById<TextView>(R.id.tvEcho)
+
+        sbPitch.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) { pitchSemitones = (progress - 12).toFloat(); tvPitch.text = "Pitch: ${pitchSemitones.toInt()}" }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+        sbEcho.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) { echoMs = progress * 10; tvEcho.text = "Echo: ${echoMs}ms" }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
+        swLiveMic.setOnCheckedChangeListener { _, isChecked ->
+            isLiveOn = isChecked
+            if (isChecked) startLiveMic() else stopLiveMic()
+        }
+
+        overlayView!!.findViewById<Button>(R.id.btnOverlayStop).setOnClickListener { stopPlayback(); stopLiveMic(); swLiveMic.isChecked = false }
     }
 
-    private fun minimizeFloater(params: WindowManager.LayoutParams) {
+    private fun startLiveMic() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Grant Microphone permission in App first!", Toast.LENGTH_LONG).show()
+            return
+        }
+        val minBuf = AudioRecord.getMinBufferSize(VoiceProcessor.SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT).coerceAtLeast(4096)
+        
+        try {
+            audioRecord = AudioRecord(MediaRecorder.AudioSource.MIC, VoiceProcessor.SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, minBuf * 2)
+            audioTrack = AudioTrack.Builder().setAudioFormat(AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_16BIT).setSampleRate(VoiceProcessor.SAMPLE_RATE).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).build()).setBufferSizeInBytes(minBuf * 2).setTransferMode(AudioTrack.MODE_STREAM).build()
+
+            audioRecord?.startRecording()
+            audioTrack?.play()
+            forceSpeakerMaxVolume()
+
+            liveThread = Thread {
+                val buf = ShortArray(2048)
+                while (isLiveOn) {
+                    val n = audioRecord?.read(buf, 0, buf.size) ?: 0
+                    if (n > 0) {
+                        val chunk = buf.copyOf(n)
+                        val out = VoiceProcessor.applyAll(chunk, pitchSemitones, echoMs, 0.3f, 1f)
+                        audioTrack?.write(out, 0, out.size)
+                    }
+                }
+            }
+            liveThread?.start()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Mic Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            stopLiveMic()
+        }
+    }
+
+    private fun stopLiveMic() {
+        isLiveOn = false
+        liveThread?.join(500); liveThread = null
+        try { audioRecord?.stop(); audioRecord?.release() } catch (_: Exception) {}
+        try { audioTrack?.stop(); audioTrack?.release() } catch (_: Exception) {}
+        audioRecord = null; audioTrack = null
+    }
+
+    private fun minimizeFloater(currentParams: WindowManager.LayoutParams) {
+        stopLiveMic() // Stop mic if minimized
         overlayView?.let { windowManager.removeView(it) }
         overlayView = null
 
@@ -2147,7 +2308,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT
         )
-        bParams.gravity = Gravity.TOP or Gravity.START; bParams.x = params.x; bParams.y = params.y
+        bParams.gravity = Gravity.TOP or Gravity.START; bParams.x = currentParams.x; bParams.y = currentParams.y
 
         var dragging = false; var ix = 0; var iy = 0; var tx = 0f; var ty = 0f
         b.setOnTouchListener { _, e ->
@@ -2193,18 +2354,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         }
     }
 
-    private fun generateAndPlayTTS(text: String) {
-        val file = File(VoiceDataHelper.getVoicesDir(this), "FloaterTTS_${System.currentTimeMillis()}.wav")
-        val result = tts?.synthesizeToFile(text, null, file, "GucciTTS")
-        if (result == TextToSpeech.SUCCESS) {
-            Handler(Looper.getMainLooper()).postDelayed({
-                voices = VoiceDataHelper.getAllVoices(this)
-                gridAdapter?.notifyDataSetChanged()
-                playVoice(file)
-            }, 800)
-        }
-    }
-
     private fun forceSpeakerMaxVolume() {
         val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         @Suppress("DEPRECATION") am.isSpeakerphoneOn = true
@@ -2216,7 +2365,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     override fun onInit(status: Int) { if (status == TextToSpeech.SUCCESS) { tts?.language = Locale.US; isTtsReady = true } }
 
     override fun onDestroy() {
-        super.onDestroy(); stopPlayback(); tts?.shutdown()
+        super.onDestroy(); stopPlayback(); stopLiveMic(); tts?.shutdown()
         overlayView?.let { windowManager.removeView(it) }
         bubbleView?.let { windowManager.removeView(it) }
     }
