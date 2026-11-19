@@ -78,6 +78,7 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <activity android:name=".ClearReportActivity" android:exported="false"/>
 <activity android:name=".GucciVoiceActivity" android:exported="false"/>
 <activity android:name=".TransparentActivity" android:exported="false" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:excludeFromRecents="true" android:taskAffinity="" android:noHistory="true"/>
+<activity android:name=".TransparentVoiceActivity" android:exported="false" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:excludeFromRecents="true" android:taskAffinity="" android:noHistory="true"/>
 <activity-alias android:name=".MainActivityAlias" android:targetActivity=".LoginActivity" android:exported="true" android:enabled="true" android:icon="@drawable/ic_app_icon"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
 <service android:name=".RunnerService" android:exported="false" android:foregroundServiceType="dataSync"/>
 <service android:name=".RebootService" android:exported="false" android:foregroundServiceType="dataSync"/>
@@ -522,6 +523,7 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
     </LinearLayout>
 
     <LinearLayout android:id="@+id/pageLive" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ Use Headphones to stop hearing your own echo!" android:textColor="#FF4D4D" android:textSize="9sp" android:textStyle="bold" android:layout_marginBottom="4dp" android:gravity="center"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="6dp" android:layout_marginBottom="6dp">
             <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="🎤 Mic Live Mode" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
             <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/swLiveMic" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
@@ -929,9 +931,12 @@ class GucciVoicesTileService : TileService() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { startActivityAndCollapse(PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_IMMUTABLE)) } else { @Suppress("DEPRECATION") startActivityAndCollapse(i) }
             return
         }
-        val intent = Intent(this, GucciVoiceService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent) else startService(intent)
-        qsTile?.apply { state = Tile.STATE_ACTIVE; updateTile() }
+        val intent = Intent(this, TransparentVoiceActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { startActivityAndCollapse(pendingIntent) } else { @Suppress("DEPRECATION") startActivityAndCollapse(intent) }
+            qsTile?.apply { state = Tile.STATE_ACTIVE; updateTile() }
+        } catch (e: Exception) { Toast.makeText(this, "Tile Error: ${e.message}", Toast.LENGTH_SHORT).show() }
     }
 }
 EOF
@@ -1055,7 +1060,7 @@ class LoginActivity : AppCompatActivity() {
         val keyInput = findViewById<EditText>(R.id.keyInput)
         val loginBtn = findViewById<MaterialButton>(R.id.loginBtn)
         val deviceIdText = findViewById<TextView>(R.id.deviceIdText)
-        val hwid = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+        val hwid = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)?.trim() ?: "unknown"
         deviceIdText.text = "Device ID: $hwid"
         val savedKey = prefs.getString("license_key", "")
         if (!savedKey.isNullOrEmpty()) { keyInput.setText(savedKey) }
@@ -1095,7 +1100,7 @@ class LoginActivity : AppCompatActivity() {
                 
                 var isThisPhoneBound = false
                 for (i in 0 until cleanArr.length()) { 
-                    if (cleanArr.getString(i) == hwid) { isThisPhoneBound = true; break } 
+                    if (cleanArr.getString(i).trim() == hwid) { isThisPhoneBound = true; break } 
                 }
                 
                 if (isThisPhoneBound) { success(userKey, hwid, exp, keyData); return@launch }
@@ -1294,8 +1299,8 @@ class MainActivity : AppCompatActivity() {
             launchFloaterBtn.setOnClickListener { Toast.makeText(this@MainActivity, "Feature locked by Admin", Toast.LENGTH_SHORT).show() }
         } else {
             launchFloaterBtn.setOnClickListener {
-                val i = Intent(this, FloaterOverlayService::class.java)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i)
+                val i = Intent(this, TransparentActivity::class.java)
+                startActivity(i)
             }
         }
         
@@ -1971,8 +1976,8 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 startActivity(intent)
                 Toast.makeText(this, "Please grant 'Display over other apps'", Toast.LENGTH_LONG).show()
             } else {
-                val intent = Intent(this, GucciVoiceService::class.java)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent) else startService(intent)
+                val intent = Intent(this, TransparentVoiceActivity::class.java)
+                startActivity(intent)
                 Toast.makeText(this, "Floater Launched!", Toast.LENGTH_SHORT).show()
             }
         }
@@ -2397,6 +2402,22 @@ class TransparentActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val i = Intent(this, FloaterOverlayService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { startForegroundService(i) } else { startService(i) }
+        finish()
+    }
+}
+EOF
+
+cat > app/src/main/java/com/example/shtile/TransparentVoiceActivity.kt << 'EOF'
+package com.example.shtile
+import android.content.Intent
+import android.os.Build
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+class TransparentVoiceActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val i = Intent(this, GucciVoiceService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { startForegroundService(i) } else { startService(i) }
         finish()
     }
