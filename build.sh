@@ -511,7 +511,10 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
     
     <LinearLayout android:id="@+id/pageCards" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="visible">
         <GridView android:id="@+id/lvVoicesFloater" android:layout_width="match_parent" android:layout_height="160dp" android:numColumns="3" android:verticalSpacing="4dp" android:horizontalSpacing="4dp"/>
-        <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayStop" android:layout_width="match_parent" android:layout_height="32dp" android:text="⏹ STOP" android:textColor="#FFFFFF" app:backgroundTint="#FF4D4D" app:cornerRadius="6dp" android:textSize="10sp" android:layout_marginTop="4dp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="4dp">
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayRefresh" android:layout_width="0dp" android:layout_weight="1" android:layout_height="32dp" android:text="🔄 REFRESH" android:textColor="#000000" app:backgroundTint="#3B82F6" app:cornerRadius="6dp" android:textSize="10sp" android:layout_marginEnd="4dp"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayStop" android:layout_width="0dp" android:layout_weight="1" android:layout_height="32dp" android:text="⏹ STOP" android:textColor="#FFFFFF" app:backgroundTint="#FF4D4D" app:cornerRadius="6dp" android:textSize="10sp"/>
+        </LinearLayout>
     </LinearLayout>
     
     <LinearLayout android:id="@+id/pageType" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
@@ -644,24 +647,28 @@ object VoiceDataHelper {
 
     fun getAllVoices(context: Context): List<File> {
         val dir = getVoicesDir(context)
-        return dir.listFiles { file -> file.extension in listOf("wav", "mp3", "m4a", "aac") }
+        return dir.listFiles { file -> file.extension.lowercase() in listOf("wav", "mp3", "m4a", "aac", "ogg") }
             ?.sortedByDescending { it.lastModified() } ?: emptyList()
     }
 
     fun saveFromUri(context: Context, uri: Uri): File? {
         return try {
-            var fileName = "Voice_${System.currentTimeMillis()}"
+            var baseName = "Voice_${System.currentTimeMillis()}"
+            var ext = "wav"
             context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
                 if (cursor.moveToFirst()) {
                     val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                     if (nameIndex != -1) {
                         val fullName = cursor.getString(nameIndex)
-                        fileName = fullName.substringBeforeLast(".")
+                        baseName = fullName.substringBeforeLast(".").replace("[^a-zA-Z0-9]".toRegex(), "_")
+                        ext = fullName.substringAfterLast(".", "wav").lowercase()
                     }
                 }
             }
+            if (ext !in listOf("wav", "mp3", "m4a", "aac", "ogg")) ext = "wav"
+            
             val inputStream = context.contentResolver.openInputStream(uri) ?: return null
-            val file = File(getVoicesDir(context), "$fileName.wav")
+            val file = File(getVoicesDir(context), "$baseName.$ext")
             val outputStream = FileOutputStream(file)
             inputStream.copyTo(outputStream)
             inputStream.close()
@@ -1060,7 +1067,11 @@ class LoginActivity : AppCompatActivity() {
         val keyInput = findViewById<EditText>(R.id.keyInput)
         val loginBtn = findViewById<MaterialButton>(R.id.loginBtn)
         val deviceIdText = findViewById<TextView>(R.id.deviceIdText)
-        val hwid = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)?.trim() ?: "unknown"
+        
+        // Fixed HWID logic: Strip non-alphanumeric characters to prevent hidden spaces
+        val rawHwid = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown"
+        val hwid = rawHwid.filter { it.isLetterOrDigit() }
+        
         deviceIdText.text = "Device ID: $hwid"
         val savedKey = prefs.getString("license_key", "")
         if (!savedKey.isNullOrEmpty()) { keyInput.setText(savedKey) }
@@ -1091,16 +1102,22 @@ class LoginActivity : AppCompatActivity() {
                 if (exp > 0L && System.currentTimeMillis() > exp) { showError("❌ Key Expired."); reset(); return@launch }
                 
                 val maxDevices = keyData.optInt("maxDevices", 1)
-                val arr = keyData.optJSONArray("deviceIds") ?: JSONArray()
+                
+                // Fixed: Handle both String and JSONArray from older versions
+                val deviceIdsObj = keyData.opt("deviceIds")
                 val cleanArr = JSONArray()
-                for (i in 0 until arr.length()) {
-                    val d = arr.getString(i).trim()
-                    if (d.isNotEmpty()) cleanArr.put(d)
+                if (deviceIdsObj is JSONArray) {
+                    for (i in 0 until deviceIdsObj.length()) {
+                        cleanArr.put(deviceIdsObj.getString(i).filter { it.isLetterOrDigit() })
+                    }
+                } else if (deviceIdsObj is String) {
+                    val parts = deviceIdsObj.split(",")
+                    for (part in parts) if (part.trim().isNotEmpty()) cleanArr.put(part.trim().filter { it.isLetterOrDigit() })
                 }
                 
                 var isThisPhoneBound = false
                 for (i in 0 until cleanArr.length()) { 
-                    if (cleanArr.getString(i).trim() == hwid) { isThisPhoneBound = true; break } 
+                    if (cleanArr.getString(i) == hwid) { isThisPhoneBound = true; break } 
                 }
                 
                 if (isThisPhoneBound) { success(userKey, hwid, exp, keyData); return@launch }
@@ -1122,7 +1139,7 @@ class LoginActivity : AppCompatActivity() {
     
     data class ReadResult(val content: String, val sha: String)
     private fun readDataJson(): ReadResult? = try {
-        val conn = URL("https://api.github.com/repos/$ghOwner/$ghRepo/contents/$ghPath").openConnection() as HttpURLConnection
+        val conn = URL("https://api.github.com/repos/$ghOwner/$ghRepo/contents/$ghPath?t=${System.currentTimeMillis()}").openConnection() as HttpURLConnection
         conn.setRequestProperty("Authorization", "Bearer $ghToken")
         conn.setRequestProperty("Accept", "application/vnd.github+json")
         conn.connectTimeout = 10000; conn.readTimeout = 10000
@@ -2006,13 +2023,17 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun playVoice(file: File) {
         stopPlayback()
         currentPlayingFile = file
-        mediaPlayer = MediaPlayer().apply {
-            setDataSource(file.absolutePath)
-            prepare()
-            start()
-            setOnCompletionListener { currentPlayingFile = null; voiceAdapter.notifyDataSetChanged() }
+        try {
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(file.absolutePath)
+                prepare()
+                start()
+                setOnCompletionListener { currentPlayingFile = null; voiceAdapter.notifyDataSetChanged() }
+            }
+            voiceAdapter.notifyDataSetChanged()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Cannot play this file", Toast.LENGTH_SHORT).show()
         }
-        voiceAdapter.notifyDataSetChanged()
     }
 
     private fun stopPlayback() {
@@ -2201,6 +2222,14 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         gridView.adapter = gridAdapter
         gridView.setOnItemClickListener { _, _, position, _ -> playVoice(voices[position]) }
 
+        // Refresh Button
+        overlayView!!.findViewById<Button>(R.id.btnOverlayRefresh).setOnClickListener {
+            voices = VoiceDataHelper.getAllVoices(this)
+            gridAdapter = VoiceGridAdapter(voices)
+            gridView.adapter = gridAdapter
+            Toast.makeText(this, "Sounds Refreshed", Toast.LENGTH_SHORT).show()
+        }
+
         // Text Mode
         val etType = overlayView!!.findViewById<EditText>(R.id.etTypeHere)
         // FIX: Allow keyboard to show in overlay
@@ -2352,10 +2381,14 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private fun playVoice(file: File) {
         stopPlayback()
         if (isInjectOn) forceSpeakerMaxVolume()
-        mediaPlayer = MediaPlayer().apply {
-            setDataSource(file.absolutePath)
-            prepare()
-            start()
+        try {
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(file.absolutePath)
+                prepare()
+                start()
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this, "Cannot play this file format", Toast.LENGTH_SHORT).show()
         }
     }
 
