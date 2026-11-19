@@ -229,7 +229,9 @@
       "reboot_timer": 0
     },
     "GUCCI 2": {
-      "deviceIds": [],
+      "deviceIds": [
+        "642a6897b9f4e793"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1797616853039,
