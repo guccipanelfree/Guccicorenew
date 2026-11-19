@@ -454,7 +454,7 @@ cat > app/src/main/res/layout/activity_gucci_voice.xml << 'EOF'
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🗣️ Text → Voice" android:textColor="#FFFFFF" android:textStyle="bold" android:layout_marginBottom="12dp"/>
             <EditText android:id="@+id/etVoiceText" android:layout_width="match_parent" android:layout_height="80dp" android:gravity="top|start" android:hint="Type here, press Send and it plays as voice..." android:textColor="#FFFFFF" android:textColorHint="#8B949E" android:background="#12161F" android:padding="10dp" android:layout_marginBottom="12dp"/>
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnSendText" android:layout_width="match_parent" android:layout_height="45dp" android:text="▶️ Send & Save" android:textColor="#FFFFFF" app:backgroundTint="#00E5A0" app:cornerRadius="8dp" android:textStyle="bold"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnSendText" android:layout_width="match_parent" android:layout_height="45dp" android:text="▶️ Send &amp; Save" android:textColor="#FFFFFF" app:backgroundTint="#00E5A0" app:cornerRadius="8dp" android:textStyle="bold"/>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
@@ -498,7 +498,7 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎵 Sound cards" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
         </LinearLayout>
         <LinearLayout android:id="@+id/tabType" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:gravity="center" android:background="@drawable/bg_box_dark">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💬 Type & send" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💬 Type &amp; send" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
         </LinearLayout>
     </LinearLayout>
     <LinearLayout android:id="@+id/pageCards" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="visible">
