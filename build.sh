@@ -2083,7 +2083,7 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             val btnPlay = v.findViewById<ImageView>(R.id.btnPlay)
             val btnDelete = v.findViewById<ImageView>(R.id.btnDelete)
 
-            val displayName = file.nameWithoutExtension
+            val displayName = file.nameWithoutExtension.ifEmpty { "Sound" }
             tvLetter.text = displayName.take(1).uppercase()
             tvName.text = if (displayName.length > 15) displayName.take(15) + "..." else displayName
 
@@ -2218,14 +2218,14 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         // Card Grid
         val gridView = overlayView!!.findViewById<GridView>(R.id.lvVoicesFloater)
         voices = VoiceDataHelper.getAllVoices(this)
-        gridAdapter = VoiceGridAdapter(voices)
+        gridAdapter = VoiceGridAdapter(voices, themedContext) // FIX: Pass themed context to prevent crash
         gridView.adapter = gridAdapter
         gridView.setOnItemClickListener { _, _, position, _ -> playVoice(voices[position]) }
 
         // Refresh Button
         overlayView!!.findViewById<Button>(R.id.btnOverlayRefresh).setOnClickListener {
             voices = VoiceDataHelper.getAllVoices(this)
-            gridAdapter = VoiceGridAdapter(voices)
+            gridAdapter = VoiceGridAdapter(voices, themedContext)
             gridView.adapter = gridAdapter
             Toast.makeText(this, "Sounds Refreshed", Toast.LENGTH_SHORT).show()
         }
@@ -2410,15 +2410,17 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    inner class VoiceGridAdapter(private val items: List<File>) : BaseAdapter() {
+    inner class VoiceGridAdapter(private val items: List<File>, private val ctx: Context) : BaseAdapter() {
         override fun getCount() = items.size
         override fun getItem(p: Int) = items[p]
         override fun getItemId(p: Int) = p.toLong()
         override fun getView(p: Int, cv: View?, parent: ViewGroup): View {
-            val v = cv ?: LayoutInflater.from(this@GucciVoiceService).inflate(R.layout.item_voice_card_mini, parent, false)
+            // FIX: Use the themed context to inflate the layout
+            val v = cv ?: LayoutInflater.from(ctx).inflate(R.layout.item_voice_card_mini, parent, false)
             val file = items[p]
-            v.findViewById<TextView>(R.id.tvLetterMini).text = file.nameWithoutExtension.take(1).uppercase()
-            v.findViewById<TextView>(R.id.tvNameMini).text = if (file.nameWithoutExtension.length > 8) file.nameWithoutExtension.take(8) + ".." else file.nameWithoutExtension
+            val name = file.nameWithoutExtension.ifEmpty { "Sound" }
+            v.findViewById<TextView>(R.id.tvLetterMini).text = name.take(1).uppercase()
+            v.findViewById<TextView>(R.id.tvNameMini).text = if (name.length > 8) name.take(8) + ".." else name
             return v
         }
     }
