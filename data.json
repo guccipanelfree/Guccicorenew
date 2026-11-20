@@ -1,9 +1,7 @@
 {
   "keys": {
     "GUCCI": {
-      "deviceIds": [
-        "60172b13529bd0b8"
-      ],
+      "deviceIds": [],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 0,
