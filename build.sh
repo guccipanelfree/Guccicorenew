@@ -483,7 +483,6 @@ cat > app/src/main/res/layout/item_voice_card.xml << 'EOF'
     </RelativeLayout>
 </com.google.android.material.card.MaterialCardView>
 EOF
-
 cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="290dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="16dp" app:cardElevation="15dp" app:strokeColor="#1F4E79" app:strokeWidth="1.5dp">
@@ -494,7 +493,8 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
         <ImageButton android:id="@+id/btnClose" android:layout_width="24dp" android:layout_height="24dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
     </LinearLayout>
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="6dp" android:layout_marginBottom="8dp">
-        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="🎙️ Inject ON (Force Speaker)" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
+        <!-- UPDATED TEXT HERE -->
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="🎙️ Inject to Mic (Friends Only)" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
         <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/swInject" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true"/>
     </LinearLayout>
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
@@ -518,6 +518,7 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
     </LinearLayout>
     
     <LinearLayout android:id="@+id/pageType" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+        <Spinner android:id="@+id/spinnerVoiceSelectFloater" android:layout_width="match_parent" android:layout_height="36dp" android:layout_marginBottom="4dp" android:backgroundTint="#00E5A0"/>
         <EditText android:id="@+id/etTypeHere" android:layout_width="match_parent" android:layout_height="40dp" android:hint="Type here..." android:textColor="#FFFFFF" android:textColorHint="#8B949E" android:background="#12161F" android:padding="8dp" android:textSize="12sp" android:layout_marginBottom="4dp"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
             <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySend" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:text="Play" android:textColor="#000000" app:backgroundTint="#00E5A0" app:cornerRadius="6dp" android:layout_marginEnd="4dp"/>
@@ -541,7 +542,6 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
 EOF
-
 cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="70dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="8dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
@@ -2454,32 +2454,27 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         }
     }
 
-    private fun muteLocalSpeaker() {
-        try {
-            val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            am.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
-        } catch (e: Exception) {}
-    }
-
-    private fun unmuteLocalSpeaker() {
-        try {
-            val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            val max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-            am.setStreamVolume(AudioManager.STREAM_MUSIC, max / 2, 0)
-        } catch (e: Exception) {}
-    }
-
+    // ==========================================
+    // 🚀 UNIVERSAL ROOT AUDIO ROUTING LOGIC
+    // ==========================================
     private fun startAudioRouting() {
         Thread {
             try {
+                // This script dynamically searches your OnePlus/Android audio system 
+                // for the correct MultiMedia loopback and disconnects the speaker.
                 val cmd = """
-                    tinymix "SLIMBUS_0_RX Audio Mixer MultiMedia1" 1 2>/dev/null
+                    # 1. Turn ON the loopback from Media to Mic (TX)
+                    tinymix 2>/dev/null | grep -i "multi" | grep -i "tx" | awk '{print ${'$'}2}' | while read id; do tinymix "${'$'}id" 1; done
+                    tinymix 2>/dev/null | grep -i "loopback" | awk '{print ${'$'}2}' | while read id; do tinymix "${'$'}id" 1; done
+                    tinymix 2>/dev/null | grep -i "capture" | grep -i "iir" | awk '{print ${'$'}2}' | while read id; do tinymix "${'$'}id" 1; done
+                    
+                    # 2. Turn OFF the route to the physical speaker (RX) so ONLY friends hear it
+                    tinymix 2>/dev/null | grep -i "multi" | grep -i "rx" | awk '{print ${'$'}2}' | while read id; do tinymix "${'$'}id" 0; done
+                    
+                    # Fallback commands for specific OnePlus / Qualcomm chips
+                    tinymix "SLIMBUS_0_RX Audio Mixer MultiMedia1" 0 2>/dev/null
                     tinymix "MultiMedia1 Mixer SLIMBUS_0_TX" 1 2>/dev/null
                     tinymix "MultiMedia1 Mixer VOC_REC_UL" 1 2>/dev/null
-                    tinymix "Capture_IIR_Filter" 1 2>/dev/null
-                    tinymix "Ultra Sound" 1 2>/dev/null
-                    tinymix "Hardware Loopback" 1 2>/dev/null
-                    tinymix "MAD Input" 1 2>/dev/null
                 """.trimIndent()
 
                 val p = Runtime.getRuntime().exec("su")
@@ -2491,7 +2486,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 p.waitFor()
                 
                 Handler(Looper.getMainLooper()).post { 
-                    Toast.makeText(this, "Mic Injection ON (Root)", Toast.LENGTH_SHORT).show() 
+                    Toast.makeText(this, "Mic Injection ON (Friends Only)", Toast.LENGTH_SHORT).show() 
                 }
             } catch (e: Exception) {
                 Handler(Looper.getMainLooper()).post { 
@@ -2505,12 +2500,16 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         Thread {
             try {
                 val cmd = """
-                    tinymix "SLIMBUS_0_RX Audio Mixer MultiMedia1" 0 2>/dev/null
+                    # Turn OFF loopback
+                    tinymix 2>/dev/null | grep -i "multi" | grep -i "tx" | awk '{print ${'$'}2}' | while read id; do tinymix "${'$'}id" 0; done
+                    tinymix 2>/dev/null | grep -i "loopback" | awk '{print ${'$'}2}' | while read id; do tinymix "${'$'}id" 0; done
+                    
+                    # Restore physical speaker (RX)
+                    tinymix 2>/dev/null | grep -i "multi" | grep -i "rx" | awk '{print ${'$'}2}' | while read id; do tinymix "${'$'}id" 1; done
+                    
+                    tinymix "SLIMBUS_0_RX Audio Mixer MultiMedia1" 1 2>/dev/null
                     tinymix "MultiMedia1 Mixer SLIMBUS_0_TX" 0 2>/dev/null
                     tinymix "MultiMedia1 Mixer VOC_REC_UL" 0 2>/dev/null
-                    tinymix "Capture_IIR_Filter" 0 2>/dev/null
-                    tinymix "Ultra Sound" 0 2>/dev/null
-                    tinymix "Hardware Loopback" 0 2>/dev/null
                 """.trimIndent()
 
                 val p = Runtime.getRuntime().exec("su")
@@ -2553,16 +2552,17 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             try {
                 val tempFile = File(cacheDir, "temp_overlay.mp3")
                 tempFile.writeBytes(bytes)
-                stopPlayback()
                 
-                if (isInjectOn) muteLocalSpeaker() 
-                
+                stopPlayback() // Stop anything currently playing
+
                 mediaPlayer = MediaPlayer().apply {
+                    setAudioStreamType(AudioManager.STREAM_MUSIC)
                     setDataSource(tempFile.absolutePath)
                     prepare()
                     start()
+                    // FIX: Plays exactly once and stops cleanly
                     setOnCompletionListener { 
-                        if (isInjectOn) unmuteLocalSpeaker() 
+                        stopPlayback() 
                     }
                 }
             } catch (e: Exception) { Toast.makeText(this, "Playback Error", Toast.LENGTH_SHORT).show() }
@@ -2596,8 +2596,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             audioRecord?.startRecording()
             audioTrack?.play()
 
-            if (isInjectOn) muteLocalSpeaker()
-
             liveThread = Thread {
                 val buf = ShortArray(2048)
                 while (isLiveOn) {
@@ -2622,7 +2620,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         try { audioRecord?.stop(); audioRecord?.release() } catch (_: Exception) {}
         try { audioTrack?.stop(); audioTrack?.release() } catch (_: Exception) {}
         audioRecord = null; audioTrack = null
-        unmuteLocalSpeaker() 
     }
 
     private fun minimizeFloater(currentParams: WindowManager.LayoutParams) {
@@ -2673,17 +2670,17 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun playVoice(file: File) {
-        stopPlayback()
+        stopPlayback() // Stop any currently playing sound first!
         
-        if (isInjectOn) muteLocalSpeaker()
-
         try {
             mediaPlayer = MediaPlayer().apply {
+                setAudioStreamType(AudioManager.STREAM_MUSIC)
                 setDataSource(file.absolutePath)
                 prepare()
                 start()
+                // FIX: Plays exactly once and stops cleanly
                 setOnCompletionListener { 
-                    if (isInjectOn) unmuteLocalSpeaker() 
+                    stopPlayback() 
                 }
             }
         } catch (e: Exception) {
@@ -2692,9 +2689,11 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun stopPlayback() { 
-        mediaPlayer?.let { if (it.isPlaying) it.stop(); it.release() }
+        mediaPlayer?.let { 
+            try { if (it.isPlaying) it.stop() } catch (e: Exception) {}
+            try { it.release() } catch (e: Exception) {} 
+        }
         mediaPlayer = null 
-        if (isInjectOn) unmuteLocalSpeaker()
     }
     
     override fun onInit(status: Int) { if (status == TextToSpeech.SUCCESS) { tts?.language = Locale.US; isTtsReady = true } }
@@ -2738,7 +2737,6 @@ class TransparentActivity : AppCompatActivity() {
     }
 }
 EOF
-
 cat > app/src/main/java/com/example/shtile/TransparentVoiceActivity.kt << 'EOF'
 package com.example.shtile
 import android.content.Intent
