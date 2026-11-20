@@ -548,15 +548,12 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
 EOF
 cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="70dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="8dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/cardMini" android:layout_width="match_parent" android:layout_height="70dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="8dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
     <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent" android:padding="4dp">
-        
-        <!-- FAVORITE STAR (Text Icon for guaranteed visibility) -->
-        <TextView android:id="@+id/tvStarMini" android:layout_width="28dp" android:layout_height="28dp" android:text="☆" android:textColor="#8B949E" android:textSize="20sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentEnd="true"/>
-
+        <TextView android:id="@+id/tvStarMini" android:layout_width="24dp" android:layout_height="24dp" android:text="☆" android:textColor="#8B949E" android:textSize="18sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentEnd="true"/>
         <TextView android:id="@+id/tvLetterMini" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="20sp" android:textStyle="bold" android:layout_centerInParent="true"/>
-        
-        <TextView android:id="@+id/tvNameMini" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="8sp" android:maxLines="1" android:layout_alignParentBottom="true" android:gravity="center" android:layout_marginTop="12dp"/>
+        <TextView android:id="@+id/tvNameMini" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="8sp" android:maxLines="1" android:layout_alignParentBottom="true" android:gravity="center" android:layout_marginTop="12dp" android:layout_marginStart="22dp"/>
+        <ImageView android:id="@+id/btnPlayMini" android:layout_width="20dp" android:layout_height="20dp" android:src="@android:drawable/ic_media_play" app:tint="#00E5A0" android:layout_alignParentBottom="true" android:layout_alignParentStart="true" android:layout_margin="2dp"/>
     </RelativeLayout>
 </com.google.android.material.card.MaterialCardView>
 EOF
@@ -947,7 +944,6 @@ EOF
 cat > app/src/main/java/com/example/shtile/MediaDecoder.kt << 'EOF'
 package com.example.shtile
 
-import android.media.AudioFormat
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
@@ -957,7 +953,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 object MediaDecoder {
-    data class DecodedAudio(val samples: ShortArray, val sampleRate: Int, val channelMask: Int)
+    data class DecodedAudio(val samples: ShortArray, val sampleRate: Int)
 
     fun decodeToPcm(file: File): DecodedAudio? {
         val extractor = MediaExtractor()
@@ -975,7 +971,6 @@ object MediaDecoder {
             
             val sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
             val channelCount = if (format.containsKey(MediaFormat.KEY_CHANNEL_COUNT)) format.getInteger(MediaFormat.KEY_CHANNEL_COUNT) else 1
-            val channelMask = if (channelCount == 1) AudioFormat.CHANNEL_OUT_MONO else AudioFormat.CHANNEL_OUT_STEREO
             
             val codec = MediaCodec.createDecoderByType(mime)
             codec.configure(format, null, null, 0); codec.start()
@@ -1003,10 +998,33 @@ object MediaDecoder {
             codec.stop(); codec.release()
             
             val bytes = pcmOut.toByteArray()
-            val shorts = ShortArray(bytes.size / 2)
+            var shorts = ShortArray(bytes.size / 2)
             ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts)
 
-            return DecodedAudio(shorts, sampleRate, channelMask)
+            // 1. Downmix Stereo to Mono
+            if (channelCount == 2) {
+                val mono = ShortArray(shorts.size / 2)
+                for (i in mono.indices) {
+                    mono[i] = ((shorts[i * 2].toInt() + shorts[i * 2 + 1].toInt()) / 2).toShort()
+                }
+                shorts = mono
+            }
+
+            // 2. Perfect Resample to 48000Hz
+            if (sampleRate != 48000) {
+                val ratio = 48000.0 / sampleRate
+                val newSize = (shorts.size * ratio).toInt()
+                val resampled = ShortArray(newSize)
+                for (i in resampled.indices) {
+                    val srcIdx = i / ratio
+                    val i0 = srcIdx.toInt().coerceIn(0, shorts.size - 1)
+                    val i1 = (i0 + 1).coerceIn(0, shorts.size - 1)
+                    val frac = (srcIdx - i0).toFloat()
+                    resampled[i] = (shorts[i0] * (1 - frac) + shorts[i1] * frac).toInt().toShort()
+                }
+                return DecodedAudio(resampled, 48000)
+            }
+            return DecodedAudio(shorts, sampleRate)
         } catch (_: Exception) { return null } finally { extractor.release() }
     }
 }
@@ -2927,11 +2945,14 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             }
 
             val gridView = overlayView?.findViewById<GridView>(R.id.lvVoicesFloater)
-            loadVoices(); gridAdapter = VoiceGridAdapter(voices, ctx); gridView?.adapter = gridAdapter
+            loadVoices()
+            // Wire up the Play button click
+            gridAdapter = VoiceGridAdapter(voices, ctx) { file -> playVoice(file) }
+            gridView?.adapter = gridAdapter
             gridView?.setOnItemClickListener { _, _, pos, _ -> if (pos in voices.indices) playVoice(voices[pos]) }
 
             overlayView?.findViewById<Button>(R.id.btnOverlayRefresh)?.setOnClickListener {
-                loadVoices(); gridAdapter = VoiceGridAdapter(voices, ctx); gridView?.adapter = gridAdapter
+                loadVoices(); gridAdapter = VoiceGridAdapter(voices, ctx) { file -> playVoice(file) }; gridView?.adapter = gridAdapter
                 Toast.makeText(this, "Refreshed", Toast.LENGTH_SHORT).show()
             }
 
@@ -2994,14 +3015,16 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             prefs.edit().putStringSet("favorites", favs).apply()
             loadVoices()
             val ctx = ContextThemeWrapper(this, R.style.AppTheme)
-            gridAdapter = VoiceGridAdapter(voices, ctx)
-            overlayView?.findViewById<GridView>(R.id.lvVoicesFloater)?.adapter = gridAdapter
+            gridAdapter?.notifyDataSetChanged()
         } catch (_: Exception) {}
     }
 
     private fun stopAudioRouting() { AudioRouter.disable(this) }
 
     private fun playVoice(file: File) {
+        gridAdapter?.playingFilePath = file.absolutePath
+        gridAdapter?.notifyDataSetChanged()
+
         if (isInjectOn) {
             Thread {
                 val audio = MediaDecoder.decodeToPcm(file)
@@ -3030,7 +3053,9 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     prepare()
                     startProgressBar(duration)
                     start()
-                    setOnCompletionListener { stopPlayback() }
+                    setOnCompletionListener { 
+                        stopPlayback()
+                    }
                 }
             } catch (e: Exception) {
                 Toast.makeText(this, "Cannot play file", Toast.LENGTH_SHORT).show()
@@ -3138,7 +3163,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     f.writeBytes(bytes); loadVoices()
                     Handler(Looper.getMainLooper()).post {
                         val ctx = ContextThemeWrapper(this, R.style.AppTheme)
-                        gridAdapter = VoiceGridAdapter(voices, ctx)
+                        gridAdapter = VoiceGridAdapter(voices, ctx) { file -> playVoice(file) }
                         overlayView?.findViewById<GridView>(R.id.lvVoicesFloater)?.adapter = gridAdapter
                         Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT).show()
                     }
@@ -3159,7 +3184,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 audioRecord = AudioRecord(MediaRecorder.AudioSource.MIC, rate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, minBuf * 2)
             }
             audioRecord?.startRecording()
-            // Live mic always monitors locally so you can hear yourself (standard behavior)
             liveOutput = DualAudioOutput(rate, AudioFormat.CHANNEL_OUT_MONO, true)
             liveOutput?.start()
             isLiveOn = true
@@ -3224,6 +3248,8 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         try { mediaPlayer?.stop(); mediaPlayer?.release() } catch (_: Exception) {}
         mediaPlayer = null
         stopProgressBar()
+        gridAdapter?.playingFilePath = null
+        gridAdapter?.notifyDataSetChanged()
     }
 
     override fun onInit(status: Int) { if (status == TextToSpeech.SUCCESS) { tts?.language = Locale.US } }
@@ -3238,15 +3264,30 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    inner class VoiceGridAdapter(private val items: List<File>, private val ctx: Context) : BaseAdapter() {
+    inner class VoiceGridAdapter(private val items: List<File>, private val ctx: Context, private val onPlay: (File) -> Unit) : BaseAdapter() {
+        var playingFilePath: String? = null
         override fun getCount() = items.size
         override fun getItem(p: Int) = items[p]
         override fun getItemId(p: Int) = p.toLong()
         override fun getView(p: Int, cv: View?, parent: ViewGroup): View {
             val v = cv ?: LayoutInflater.from(ctx).inflate(R.layout.item_voice_card_mini, parent, false)
+            val card = v as com.google.android.material.card.MaterialCardView
             val f = items[p]; val name = f.nameWithoutExtension.ifEmpty { "Sound" }
             v.findViewById<TextView>(R.id.tvLetterMini)?.text = name.take(1).uppercase()
             v.findViewById<TextView>(R.id.tvNameMini)?.text = if (name.length > 8) name.take(8) + ".." else name
+            
+            // Highlight the playing card
+            if (f.absolutePath == playingFilePath) {
+                card.setCardBackgroundColor(android.graphics.Color.parseColor("#1F4E79"))
+                card.setStrokeColor(android.graphics.Color.parseColor("#00E5A0"))
+            } else {
+                card.setCardBackgroundColor(android.graphics.Color.parseColor("#12161F"))
+                card.setStrokeColor(android.graphics.Color.parseColor("#1F4E79"))
+            }
+
+            val playBtn = v.findViewById<ImageView>(R.id.btnPlayMini)
+            playBtn.setOnClickListener { onPlay(f) }
+
             val star = v.findViewById<TextView>(R.id.tvStarMini)
             star?.apply {
                 if (favorites.contains(f.name)) { text = "★"; setTextColor(android.graphics.Color.parseColor("#FFD700")) }
