@@ -2525,7 +2525,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         try {
             val all = VoiceDataHelper.getAllVoices(this)
             val favs = favorites
-            // Sorts by favorites first, then A-Z
             voices = all.sortedWith(compareByDescending<File> { favs.contains(it.name) }.thenBy { it.name })
         } catch (e: Exception) {
             voices = emptyList()
@@ -2537,8 +2536,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             val favs = favorites.toMutableSet()
             if (favs.contains(file.name)) favs.remove(file.name) else favs.add(file.name)
             prefs.edit().putStringSet("favorites", favs).apply()
-            
-            // Re-load and Re-attach the adapter instantly so it jumps to the top
             loadVoices()
             val themedContext = ContextThemeWrapper(this, R.style.AppTheme)
             gridAdapter = VoiceGridAdapter(voices, themedContext)
@@ -2546,13 +2543,78 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         } catch (e: Exception) {}
     }
 
+    // ==========================================
+    // 🚀 HARDWARE-LEVEL AUDIO ROUTING (NO VOLUME MUTING)
+    // ==========================================
     private fun startAudioRouting() {
+        Toast.makeText(this, "Hooking to Mic (Root)...", Toast.LENGTH_SHORT).show()
+        Thread {
+            try {
+                val rootCheck = Runtime.getRuntime().exec("su -c id")
+                val rootOutput = rootCheck.inputStream.bufferedReader().readText()
+                if (!rootOutput.contains("uid=0")) {
+                    Handler(Looper.getMainLooper()).post { 
+                        Toast.makeText(this, "❌ Root Denied! Toggle OFF", Toast.LENGTH_LONG).show() 
+                        overlayView?.findViewById<MaterialSwitch>(R.id.swInject)?.isChecked = false
+                    }
+                    return@Thread
+                }
+
+                // Aggressive OnePlus/Qualcomm loopback routing
+                val cmd = """
+                    # 1. Disconnect Speaker physically
+                    tinymix "SLIMBUS_0_RX Audio Mixer MultiMedia1" 0 2>/dev/null
+                    tinymix "MultiMedia1 Mixer SLIMBUS_0_RX" 0 2>/dev/null
+                    tinymix "RX_1 Mixer MultiMedia1" 0 2>/dev/null
+                    
+                    # 2. Connect directly to the Mic (TX)
+                    tinymix "MultiMedia1 Mixer SLIMBUS_0_TX" 1 2>/dev/null
+                    tinymix "MultiMedia1 Mixer VOC_REC_UL" 1 2>/dev/null
+                    tinymix "MultiMedia1 Mixer VOC_REC_DL" 1 2>/dev/null
+                    tinymix "Capture_IIR_Filter" 1 2>/dev/null
+                    
+                    echo "SUCCESS"
+                """.trimIndent()
+
+                val p = Runtime.getRuntime().exec("su")
+                val os = DataOutputStream(p.outputStream)
+                os.writeBytes(cmd + "\n"); os.writeBytes("exit\n"); os.flush(); os.close()
+                
+                val output = p.inputStream.bufferedReader().readText()
+                p.waitFor()
+                
+                Handler(Looper.getMainLooper()).post { 
+                    if (output.contains("SUCCESS")) {
+                        Toast.makeText(this, "✅ MIC INJECTION ACTIVE", Toast.LENGTH_LONG).show() 
+                    } else {
+                        Toast.makeText(this, "⚠️ Routing Failed, check Root.", Toast.LENGTH_LONG).show() 
+                        overlayView?.findViewById<MaterialSwitch>(R.id.swInject)?.isChecked = false
+                    }
+                }
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post { 
+                    Toast.makeText(this, "❌ Error: ${e.message}", Toast.LENGTH_LONG).show() 
+                }
+            }
+        }.start()
+    }
+
+    private fun stopAudioRouting() {
+        Toast.makeText(this, "Unhooking Mic...", Toast.LENGTH_SHORT).show()
         Thread {
             try {
                 val cmd = """
-                    tinymix 2>/dev/null | grep -i "rx" | awk '{print ${'$'}2}' | while read id; do tinymix "${'$'}id" 0; done
-                    tinymix 2>/dev/null | grep -i "multi" | grep -i "tx" | awk '{print ${'$'}2}' | while read id; do tinymix "${'$'}id" 1; done
-                    tinymix 2>/dev/null | grep -i "loopback" | awk '{print ${'$'}2}' | while read id; do tinymix "${'$'}id" 1; done
+                    # Disconnect from mic (TX)
+                    tinymix "MultiMedia1 Mixer SLIMBUS_0_TX" 0 2>/dev/null
+                    tinymix "MultiMedia1 Mixer VOC_REC_UL" 0 2>/dev/null
+                    tinymix "MultiMedia1 Mixer VOC_REC_DL" 0 2>/dev/null
+                    
+                    # Restore Speaker (RX)
+                    tinymix "SLIMBUS_0_RX Audio Mixer MultiMedia1" 1 2>/dev/null
+                    tinymix "MultiMedia1 Mixer SLIMBUS_0_RX" 1 2>/dev/null
+                    tinymix "RX_1 Mixer MultiMedia1" 1 2>/dev/null
+                    
+                    echo "SUCCESS"
                 """.trimIndent()
 
                 val p = Runtime.getRuntime().exec("su")
@@ -2561,25 +2623,8 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 p.waitFor()
                 
                 Handler(Looper.getMainLooper()).post { 
-                    Toast.makeText(this, "Mic Injection ON", Toast.LENGTH_SHORT).show() 
+                    Toast.makeText(this, "🎙️ Mic Injection OFF", Toast.LENGTH_SHORT).show() 
                 }
-            } catch (e: Exception) {}
-        }.start()
-    }
-
-    private fun stopAudioRouting() {
-        Thread {
-            try {
-                val cmd = """
-                    tinymix 2>/dev/null | grep -i "tx" | awk '{print ${'$'}2}' | while read id; do tinymix "${'$'}id" 0; done
-                    tinymix 2>/dev/null | grep -i "loopback" | awk '{print ${'$'}2}' | while read id; do tinymix "${'$'}id" 0; done
-                    tinymix 2>/dev/null | grep -i "rx" | awk '{print ${'$'}2}' | while read id; do tinymix "${'$'}id" 1; done
-                """.trimIndent()
-
-                val p = Runtime.getRuntime().exec("su")
-                val os = DataOutputStream(p.outputStream)
-                os.writeBytes(cmd + "\n"); os.writeBytes("exit\n"); os.flush(); os.close()
-                p.waitFor()
             } catch (e: Exception) {}
         }.start()
     }
@@ -2811,15 +2856,14 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             v.findViewById<TextView>(R.id.tvLetterMini)?.text = name.take(1).uppercase()
             v.findViewById<TextView>(R.id.tvNameMini)?.text = if (name.length > 8) name.take(8) + ".." else name
             
-            // TEXT STAR LOGIC (Guaranteed to show up)
             val star = v.findViewById<TextView>(R.id.tvStarMini)
             if (star != null) {
                 if (favorites.contains(file.name)) {
                     star.text = "★"
-                    star.setTextColor(android.graphics.Color.parseColor("#FFD700")) // Gold
+                    star.setTextColor(android.graphics.Color.parseColor("#FFD700"))
                 } else {
                     star.text = "☆"
-                    star.setTextColor(android.graphics.Color.parseColor("#8B949E")) // Grey
+                    star.setTextColor(android.graphics.Color.parseColor("#8B949E"))
                 }
                 star.setOnClickListener {
                     toggleFavorite(file)
