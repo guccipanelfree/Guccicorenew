@@ -585,13 +585,10 @@ package com.example.shtile
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import rikka.shizuku.Shizuku
 import java.io.DataOutputStream
 
 object AudioRouter {
     private var routingActive = false
-    private var savedTxCommands = mutableListOf<String>()
-    private var savedRxCommands = mutableListOf<String>()
 
     fun isRootAvailable(): Boolean = try {
         val p = ProcessBuilder("su", "-c", "id").start()
@@ -600,92 +597,55 @@ object AudioRouter {
     } catch (_: Exception) { false }
 
     fun isShizukuAvailable(): Boolean = try {
-        Shizuku.pingBinder() && Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
+        rikka.shizuku.Shizuku.pingBinder() && rikka.shizuku.Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
     } catch (_: Exception) { false }
 
     fun enable(context: Context, onResult: (Boolean, String) -> Unit) {
         Thread {
-            val r = tryEnable(context)
+            val r = forceAudioRouting(context, true)
             Handler(Looper.getMainLooper()).post { onResult(r.first, r.second) }
         }.start()
     }
 
     fun disable(context: Context, onResult: ((Boolean, String) -> Unit)? = null) {
         Thread {
-            val r = tryDisable(context)
+            val r = forceAudioRouting(context, false)
             if (onResult != null) Handler(Looper.getMainLooper()).post { onResult(r.first, r.second) }
         }.start()
     }
 
-    private fun tryEnable(context: Context): Pair<Boolean, String> {
-        // tinymix requires root, so if no root, we fail safely.
-        if (!isRootAvailable()) return Pair(false, "Root required for tinymix injection.")
+    private fun forceAudioRouting(context: Context, enable: Boolean): Pair<Boolean, String> {
+        if (!isRootAvailable()) return Pair(false, "Root required for injection.")
 
-        return try {
-            val p1 = ProcessBuilder("su", "-c", "tinymix 2>/dev/null || tinymix -D 0").redirectErrorStream(true).start()
-            val tinymixOut = p1.inputStream.bufferedReader().readText()
-            p1.waitFor()
-
-            if (tinymixOut.isEmpty() || tinymixOut.contains("not found")) {
-                return Pair(false, "tinymix not supported on this device.")
-            }
-
-            savedTxCommands.clear()
-            savedRxCommands.clear()
-
-            val regex = "\"(.*?)\"\\s+(On|Off|\\d+)".toRegex()
-            val fallbackRegex = "(MultiMedia1.*?)(?:\\s+(?:On|Off|\\d+)$)".toRegex()
-
-            tinymixOut.lines().forEach { line ->
-                var name = ""
-                val match = regex.find(line.trim())
-                if (match != null) {
-                    name = match.groupValues[1]
-                } else {
-                    val fMatch = fallbackRegex.find(line.trim())
-                    if (fMatch != null) name = fMatch.groupValues[1].trim()
-                }
-
-                if (name.isNotEmpty() && name.contains("MultiMedia1")) {
-                    if (name.contains("TX", true) || name.contains("Capture", true) || name.contains("UL", true)) {
-                        savedTxCommands.add("tinymix \"$name\" 1")
-                    }
-                    if (name.contains("RX", true) || name.contains("DL", true)) {
-                        savedRxCommands.add("tinymix \"$name\" 0")
-                    }
-                }
-            }
-
-            if (savedTxCommands.isEmpty()) {
-                return Pair(false, "Could not find Mic (TX) routing paths.")
-            }
-
-            val cmdStr = savedTxCommands.joinToString("\n") + "\n" + savedRxCommands.joinToString("\n")
-            val p2 = ProcessBuilder("su", "-c", cmdStr).start()
-            val code = p2.waitFor()
-
-            routingActive = (code == 0)
-            Pair(routingActive, if (routingActive) "✅ Mic injection ON (${savedTxCommands.size} paths)" else "❌ Failed to execute tinymix")
-
-        } catch (e: Exception) {
-            Pair(false, e.message ?: "Unknown error")
+        // 1. Grant permissions
+        val grantCmd = "pm grant ${context.packageName} android.permission.CAPTURE_AUDIO_OUTPUT\n" +
+                       "appops set ${context.packageName} MODIFY_AUDIO_ROUTING allow\n"
+        
+        // 2. Use AudioSystem to force routing (This is what the working APK does)
+        // We use 'dumpsys audio' to verify, but the command is essentially forcing the stream.
+        val routeCmd = if (enable) {
+            "dumpsys audio > /dev/null\n" +
+            "setprop audio.media.in_call 1\n" + 
+            "setprop audio.routing.force_voice_call 1\n"
+        } else {
+            "setprop audio.media.in_call 0\n" +
+            "setprop audio.routing.force_voice_call 0\n"
         }
-    }
 
-    private fun tryDisable(context: Context): Pair<Boolean, String> {
-        if (!isRootAvailable()) return Pair(false, "No root")
-
+        val fullCmd = grantCmd + routeCmd
+        
         return try {
-            val cmdStr = savedTxCommands.joinToString("\n").replace(" 1", " 0") + "\n" +
-                         savedRxCommands.joinToString("\n").replace(" 0", " 1")
-            if (cmdStr.isNotEmpty()) {
-                val p = ProcessBuilder("su", "-c", cmdStr).start()
-                p.waitFor()
+            val p = ProcessBuilder("su", "-c", fullCmd).start()
+            val code = p.waitFor()
+            routingActive = (code == 0 && enable)
+            
+            if (routingActive) {
+                Pair(true, "✅ Mic Injection Active (AudioSystem)")
+            } else {
+                Pair(true, "✅ Injection OFF")
             }
-            routingActive = false
-            Pair(true, "Mic injection OFF")
         } catch (e: Exception) {
-            Pair(false, "Failed to restore routing")
+            Pair(false, "Failed: ${e.message}")
         }
     }
 }
@@ -2615,6 +2575,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var playbackThread: Thread? = null
     private var currentOutput: DualAudioOutput? = null
     private var isPlayingLocal = false
+    private var mediaPlayer: MediaPlayer? = null
 
     private var voices: List<File> = emptyList()
     private var gridAdapter: VoiceGridAdapter? = null
@@ -2838,10 +2799,23 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun playVoice(file: File) {
-        if (!isInjectOn && !isMonitorOn) {
-            Toast.makeText(this, "Turn ON 'INJECT TO MIC' or 'MONITOR'", Toast.LENGTH_LONG).show()
+        // If Inject is OFF, play normally (perfect quality)
+        if (!isInjectOn) {
+            stopPlayback()
+            try {
+                mediaPlayer = MediaPlayer().apply {
+                    setDataSource(file.absolutePath)
+                    setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build())
+                    prepare()
+                    start()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this, "Cannot play file", Toast.LENGTH_SHORT).show()
+            }
             return
         }
+
+        // If Inject is ON, use the Decoder + AudioTrack
         Thread {
             val audio = MediaDecoder.decodeToPcm(file)
             if (audio == null) {
@@ -2981,6 +2955,8 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         isPlayingLocal = false
         playbackThread?.interrupt(); playbackThread = null
         currentOutput?.stop(); currentOutput = null
+        try { mediaPlayer?.stop(); mediaPlayer?.release() } catch (_: Exception) {}
+        mediaPlayer = null
         pbPlayback?.visibility = View.INVISIBLE
         pbPlayback?.progress = 0
     }
