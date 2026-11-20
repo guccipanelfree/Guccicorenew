@@ -1075,9 +1075,10 @@ class LoginActivity : AppCompatActivity() {
         val loginBtn = findViewById<MaterialButton>(R.id.loginBtn)
         val deviceIdText = findViewById<TextView>(R.id.deviceIdText)
         
-        // 🚀 PERMANENT HWID (Never changes on reinstall/rebuild)
-        val hardware = Build.BOARD + Build.BRAND + Build.DEVICE + Build.MODEL + Build.PRODUCT
-        val hwid = hardware.replace("[^a-zA-Z0-9]".toRegex(), "")
+        // 🚀 PERMANENT HARDWARE HWID (Never changes)
+        val androidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown"
+        val hardware = Build.BOARD + Build.BRAND + Build.DEVICE + Build.MODEL
+        val hwid = ("$androidId$hardware").replace("[^a-zA-Z0-9]".toRegex(), "")
         
         deviceIdText.text = "Device ID: ${hwid.take(8)}...${hwid.takeLast(4)}"
         val savedKey = prefs.getString("license_key", "")
@@ -1125,12 +1126,12 @@ class LoginActivity : AppCompatActivity() {
                     if (cleanArr.getString(i) == hwid) { isThisPhoneBound = true; break } 
                 }
                 
-                // 🚀 STRICT LOCK CHECK
                 if (isThisPhoneBound) { 
                     success(userKey, hwid, exp, keyData); 
                     return@launch 
                 }
                 
+                // STRICT LOCK CHECK
                 if (cleanArr.length() >= maxDevices) { 
                     showError("❌ Key is locked to $maxDevices device(s).\nThis device is not authorized."); 
                     reset(); return@launch 
@@ -2152,28 +2153,40 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun generateAndPlayElevenLabs(text: String, persona: VoicePersona) {
         Toast.makeText(this, "Generating ${persona.name}...", Toast.LENGTH_SHORT).show()
         callElevenLabsApi(text, persona.id, { bytes ->
-            try {
-                val tempFile = File(cacheDir, "temp_play.mp3")
-                tempFile.writeBytes(bytes)
-                stopPlayback()
-                mediaPlayer = MediaPlayer().apply {
-                    setDataSource(tempFile.absolutePath)
-                    prepare()
-                    start()
+            Thread {
+                try {
+                    val tempFile = File(cacheDir, "temp_play.mp3")
+                    tempFile.writeBytes(bytes)
+                    Handler(Looper.getMainLooper()).post {
+                        stopPlayback()
+                        mediaPlayer = MediaPlayer().apply {
+                            setDataSource(tempFile.absolutePath)
+                            prepare()
+                            start()
+                        }
+                    }
+                } catch (e: Exception) { 
+                    Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Playback Error", Toast.LENGTH_SHORT).show() }
                 }
-            } catch (e: Exception) { Toast.makeText(this, "Playback Error", Toast.LENGTH_SHORT).show() }
+            }.start()
         }, { error -> Toast.makeText(this, error, Toast.LENGTH_LONG).show() })
     }
 
     private fun generateAndSaveElevenLabs(text: String, persona: VoicePersona) {
         Toast.makeText(this, "Saving ${persona.name}...", Toast.LENGTH_SHORT).show()
         callElevenLabsApi(text, persona.id, { bytes ->
-            try {
-                val file = File(VoiceDataHelper.getVoicesDir(this), "${persona.name.replace(" ", "_")}_${System.currentTimeMillis()}.mp3")
-                file.writeBytes(bytes)
-                loadVoices()
-                Toast.makeText(this, "Saved to Cards!", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) { Toast.makeText(this, "Save Error", Toast.LENGTH_SHORT).show() }
+            Thread {
+                try {
+                    val file = File(VoiceDataHelper.getVoicesDir(this), "${persona.name.replace(" ", "_")}_${System.currentTimeMillis()}.mp3")
+                    file.writeBytes(bytes)
+                    runOnUiThread {
+                        loadVoices()
+                        Toast.makeText(this, "Saved to Cards!", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) { 
+                    runOnUiThread { Toast.makeText(this, "Save Error", Toast.LENGTH_SHORT).show() }
+                }
+            }.start()
         }, { error -> Toast.makeText(this, error, Toast.LENGTH_LONG).show() })
     }
 
@@ -2322,7 +2335,8 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var progressRunnable: Runnable? = null
 
     private val prefs by lazy { getSharedPreferences("VoicePrefs", Context.MODE_PRIVATE) }
-    private val favorites get() = prefs.getStringSet("favorites", emptySet())?.toSet() ?: emptySet()
+    // Safe favorites getter to prevent crashes
+    private val favorites: Set<String> get() = try { prefs.getStringSet("favorites", emptySet()) ?: emptySet() } catch (e: Exception) { emptySet() }
 
     private val ELEVENLABS_API_KEY = "sk_YOUR_NEW_API_KEY_HERE"
     private val personas = listOf(
@@ -2355,13 +2369,23 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             nm.createNotificationChannel(NotificationChannel(channelId, "Gucci Voices", NotificationManager.IMPORTANCE_MIN))
             val notification = Notification.Builder(this, channelId).setContentTitle("Gucci Voices Active").setSmallIcon(android.R.drawable.ic_btn_speak_now).build()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                startForeground(99, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
-            } else { startForeground(99, notification) }
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val hasMic = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                    if (hasMic) {
+                        startForeground(99, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+                    } else {
+                        startForeground(99, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+                    }
+                } else { 
+                    startForeground(99, notification) 
+                }
+            } catch (e: Exception) {
+                try { startForeground(99, notification) } catch (e2: Exception) {}
+            }
         }
     }
 
-    // 🛡️ SAFE FLOATER (PREVENTS CRASHES)
     private fun showFloaterSafely() {
         try {
             val themedContext = ContextThemeWrapper(this, R.style.AppTheme)
@@ -2425,7 +2449,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             gridAdapter = VoiceGridAdapter(voices, themedContext)
             gridView?.adapter = gridAdapter
             
-            // 🛡️ ANTI-CRASH: Check if index exists before playing
             gridView?.setOnItemClickListener { _, _, position, _ -> 
                 if (position in voices.indices) {
                     playVoice(voices[position]) 
@@ -2490,7 +2513,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 swLiveMic?.isChecked = false 
             }
         } catch (e: Exception) {
-            // IF THE XML IS BROKEN OR MISSING BUTTONS, SHOW TOAST INSTEAD OF CRASHING
             Toast.makeText(this, "Overlay Load Error: ${e.message}", Toast.LENGTH_LONG).show()
             stopSelf()
         }
@@ -2507,11 +2529,15 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun toggleFavorite(file: File) {
-        val favs = favorites.toMutableSet()
-        if (favs.contains(file.name)) favs.remove(file.name) else favs.add(file.name)
-        prefs.edit().putStringSet("favorites", favs).apply()
-        loadVoices()
-        gridAdapter?.notifyDataSetChanged()
+        try {
+            val favs = favorites.toMutableSet()
+            if (favs.contains(file.name)) favs.remove(file.name) else favs.add(file.name)
+            prefs.edit().putStringSet("favorites", favs).apply()
+            loadVoices()
+            val themedContext = ContextThemeWrapper(this, R.style.AppTheme)
+            gridAdapter = VoiceGridAdapter(voices, themedContext)
+            overlayView?.findViewById<GridView>(R.id.lvVoicesFloater)?.adapter = gridAdapter
+        } catch (e: Exception) {}
     }
 
     private fun muteLocalSpeaker() {
@@ -2646,35 +2672,48 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private fun generateAndPlayOverlay(text: String, persona: VoicePersona) {
         Toast.makeText(this, "Generating ${persona.name}...", Toast.LENGTH_SHORT).show()
         callElevenLabsApi(text, persona.id, { bytes ->
-            try {
-                val tempFile = File(cacheDir, "temp_overlay.mp3")
-                tempFile.writeBytes(bytes)
-                stopPlayback() 
-                muteLocalSpeaker()
-
-                mediaPlayer = MediaPlayer().apply {
-                    setAudioStreamType(AudioManager.STREAM_MUSIC)
-                    setDataSource(tempFile.absolutePath)
-                    prepare()
-                    startProgressBar(duration)
-                    start()
-                    if (isInjectOn) mutePhysicalMic()
-                    setOnCompletionListener { stopPlayback() }
+            Thread {
+                try {
+                    val tempFile = File(cacheDir, "temp_overlay.mp3")
+                    tempFile.writeBytes(bytes)
+                    Handler(Looper.getMainLooper()).post {
+                        stopPlayback() 
+                        muteLocalSpeaker()
+                        mediaPlayer = MediaPlayer().apply {
+                            setAudioStreamType(AudioManager.STREAM_MUSIC)
+                            setDataSource(tempFile.absolutePath)
+                            prepare()
+                            startProgressBar(duration)
+                            start()
+                            if (isInjectOn) mutePhysicalMic()
+                            setOnCompletionListener { stopPlayback() }
+                        }
+                    }
+                } catch (e: Exception) { 
+                    Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Playback Error", Toast.LENGTH_SHORT).show() }
                 }
-            } catch (e: Exception) { Toast.makeText(this, "Playback Error", Toast.LENGTH_SHORT).show() }
+            }.start()
         }, { error -> Toast.makeText(this, error, Toast.LENGTH_LONG).show() })
     }
 
     private fun generateAndSaveOverlay(text: String, persona: VoicePersona) {
         Toast.makeText(this, "Saving...", Toast.LENGTH_SHORT).show()
         callElevenLabsApi(text, persona.id, { bytes ->
-            try {
-                val file = File(VoiceDataHelper.getVoicesDir(this), "${persona.name.replace(" ", "_")}_${System.currentTimeMillis()}.mp3")
-                file.writeBytes(bytes)
-                loadVoices()
-                gridAdapter?.notifyDataSetChanged()
-                Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) { Toast.makeText(this, "Save Error", Toast.LENGTH_SHORT).show() }
+            Thread {
+                try {
+                    val file = File(VoiceDataHelper.getVoicesDir(this), "${persona.name.replace(" ", "_")}_${System.currentTimeMillis()}.mp3")
+                    file.writeBytes(bytes)
+                    loadVoices()
+                    Handler(Looper.getMainLooper()).post {
+                        val themedContext = ContextThemeWrapper(this, R.style.AppTheme)
+                        gridAdapter = VoiceGridAdapter(voices, themedContext)
+                        overlayView?.findViewById<GridView>(R.id.lvVoicesFloater)?.adapter = gridAdapter
+                        Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) { 
+                    Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Save Error", Toast.LENGTH_SHORT).show() }
+                }
+            }.start()
         }, { error -> Toast.makeText(this, error, Toast.LENGTH_LONG).show() })
     }
 
@@ -2814,26 +2853,31 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         override fun getItem(p: Int) = items[p]
         override fun getItemId(p: Int) = p.toLong()
         override fun getView(p: Int, cv: View?, parent: ViewGroup): View {
-            val v = cv ?: LayoutInflater.from(ctx).inflate(R.layout.item_voice_card_mini, parent, false)
-            val file = items[p]
-            val name = file.nameWithoutExtension.ifEmpty { "Sound" }
-            
-            v.findViewById<TextView>(R.id.tvLetterMini)?.text = name.take(1).uppercase()
-            v.findViewById<TextView>(R.id.tvNameMini)?.text = if (name.length > 8) name.take(8) + ".." else name
-            
-            val star = v.findViewById<AppCompatImageView>(R.id.btnStarMini)
-            if (star != null) {
-                if (favorites.contains(file.name)) {
-                    star.setColorFilter(android.graphics.Color.parseColor("#FFD700")) 
-                } else {
-                    star.setColorFilter(android.graphics.Color.parseColor("#8B949E")) 
+            try {
+                val v = cv ?: LayoutInflater.from(ctx).inflate(R.layout.item_voice_card_mini, parent, false)
+                val file = items[p]
+                val name = try { file.nameWithoutExtension.ifEmpty { "Sound" } } catch(e: Exception) { "Sound" }
+                
+                v.findViewById<TextView>(R.id.tvLetterMini)?.text = name.take(1).uppercase()
+                v.findViewById<TextView>(R.id.tvNameMini)?.text = if (name.length > 8) name.take(8) + ".." else name
+                
+                val star = v.findViewById<AppCompatImageView>(R.id.btnStarMini)
+                if (star != null) {
+                    if (favorites.contains(file.name)) {
+                        star.setColorFilter(android.graphics.Color.parseColor("#FFD700")) 
+                    } else {
+                        star.setColorFilter(android.graphics.Color.parseColor("#8B949E")) 
+                    }
+                    star.setOnClickListener {
+                        toggleFavorite(file)
+                    }
                 }
-                star.setOnClickListener {
-                    toggleFavorite(file)
-                }
+                return v
+            } catch (e: Exception) {
+                val v = LayoutInflater.from(ctx).inflate(android.R.layout.simple_list_item_1, parent, false)
+                v.findViewById<TextView>(android.R.id.text1)?.text = "Error loading card"
+                return v
             }
-            
-            return v
         }
     }
 }
