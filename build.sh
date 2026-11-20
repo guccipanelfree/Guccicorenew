@@ -2370,7 +2370,9 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private val prefs by lazy { getSharedPreferences("VoicePrefs", Context.MODE_PRIVATE) }
     private val favorites: Set<String> get() = try { prefs.getStringSet("favorites", emptySet()) ?: emptySet() } catch (e: Exception) { emptySet() }
 
+    // 🔴 PASTE YOUR ELEVENLABS API KEY HERE
     private val ELEVENLABS_API_KEY = "sk_YOUR_NEW_API_KEY_HERE"
+
     private val personas = listOf(
         VoicePersona("21m00Tcm4TlvDq8ikWAM", "Rachel"),
         VoicePersona("YOUR_ZARA_ID_HERE", "Zara Gaming")
@@ -2439,7 +2441,11 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             overlayView?.findViewById<ImageButton>(R.id.btnMinimize)?.setOnClickListener { minimizeFloater(params!!) }
 
             val swInject = overlayView?.findViewById<MaterialSwitch>(R.id.swInject)
-            swInject?.isChecked = isInjectOn
+            
+            // CRITICAL FIX: Clear old listeners, force OFF, then attach new listener
+            swInject?.setOnCheckedChangeListener(null)
+            isInjectOn = false
+            swInject?.isChecked = false 
             
             swInject?.setOnCheckedChangeListener { _, isChecked -> 
                 isInjectOn = isChecked
@@ -2572,86 +2578,89 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     }
 
     // ==========================================
-    // 🚀 THE DIRECT MIC INJECTION TRICK (ROOT/SHIZUKU)
+    // 🚀 SELINUX BYPASS ROUTING (su -mm)
     // ==========================================
     private fun startAudioRouting() {
-        Toast.makeText(this, "Hooking to Mic (Root/Shizuku)...", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Checking Root & Hooking Mic...", Toast.LENGTH_SHORT).show()
         Thread {
             try {
-                // 1. Grant CAPTURE_AUDIO_OUTPUT permission dynamically using Root/Shizuku
+                // Use `su -mm` to bypass mount namespace / SELinux restrictions
+                val pRoot = Runtime.getRuntime().exec("su -mm -c id")
+                val outRoot = pRoot.inputStream.bufferedReader().readText()
+                if (!outRoot.contains("uid=0")) {
+                    Handler(Looper.getMainLooper()).post { 
+                        Toast.makeText(this, "❌ Root Access Denied! Toggle OFF", Toast.LENGTH_LONG).show() 
+                        overlayView?.findViewById<MaterialSwitch>(R.id.swInject)?.isChecked = false
+                    }
+                    return@Thread
+                }
+
+                // Force AppOps using su -mm
                 val appOpsCmd = """
                     appops set com.example.shtile android:capture_audio_output allow
                     appops set com.example.shtile android:record_audio allow
                     appops set com.example.shtile MODIFY_AUDIO_ROUTING allow
-                    echo "SUCCESS"
                 """.trimIndent()
-                
-                val p = Runtime.getRuntime().exec("su")
-                val os = DataOutputStream(p.outputStream)
-                os.writeBytes(appOpsCmd + "\n"); os.writeBytes("exit\n"); os.flush(); os.close()
-                val output = p.inputStream.bufferedReader().readText()
-                p.waitFor()
+                val p1 = Runtime.getRuntime().exec("su -mm")
+                val os1 = DataOutputStream(p1.outputStream)
+                os1.writeBytes(appOpsCmd + "\n"); os1.writeBytes("exit\n"); os1.flush(); os1.close()
+                p1.waitFor()
 
-                // 2. Force OS to VOIP Mode
-                val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-                am.mode = AudioManager.MODE_IN_COMMUNICATION
-                am.isSpeakerphoneOn = false // Route to Earpiece/Internal Mic path
-                am.isMicrophoneMute = false
-
-                // 3. Tell the OS to loop the media stream into the mic buffer
+                // Execute tinymix using su -mm to bypass SELinux
                 val systemCmd = """
-                    # Force stop any audio conflicts
+                    # Disconnect speaker (RX) for MultiMedia
                     tinymix "SLIMBUS_0_RX Audio Mixer MultiMedia1" 0 2>/dev/null
+                    tinymix "MultiMedia1 Mixer SLIMBUS_0_RX" 0 2>/dev/null
+                    tinymix "RX_1 Mixer MultiMedia1" 0 2>/dev/null
+                    tinymix "PCM_RX_MIXER MultiMedia1" 0 2>/dev/null
                     
-                    # Route MultiMedia1 to Mic (TX)
+                    # Connect to Mic (TX)
                     tinymix "MultiMedia1 Mixer SLIMBUS_0_TX" 1 2>/dev/null
                     tinymix "MultiMedia1 Mixer VOC_REC_UL" 1 2>/dev/null
                     tinymix "MultiMedia1 Mixer VOC_REC_DL" 1 2>/dev/null
                     tinymix "Capture_IIR_Filter" 1 2>/dev/null
+                    tinymix "PCM_TX_MIXER MultiMedia1" 1 2>/dev/null
                 """.trimIndent()
-
-                val p2 = Runtime.getRuntime().exec("su")
+                
+                val p2 = Runtime.getRuntime().exec("su -mm")
                 val os2 = DataOutputStream(p2.outputStream)
                 os2.writeBytes(systemCmd + "\n"); os2.writeBytes("exit\n"); os2.flush(); os2.close()
                 p2.waitFor()
 
                 Handler(Looper.getMainLooper()).post { 
-                    Toast.makeText(this, "✅ MIC INJECTION ACTIVE (VOIP ROUTE)", Toast.LENGTH_LONG).show() 
+                    Toast.makeText(this, "✅ MIC INJECTION ACTIVE", Toast.LENGTH_LONG).show() 
                 }
             } catch (e: Exception) {
                 Handler(Looper.getMainLooper()).post { 
-                    Toast.makeText(this, "❌ Root Error: ${e.message}", Toast.LENGTH_LONG).show() 
-                    overlayView?.findViewById<MaterialSwitch>(R.id.swInject)?.isChecked = false
+                    Toast.makeText(this, "❌ Error: ${e.message}", Toast.LENGTH_SHORT).show() 
                 }
             }
         }.start()
     }
 
     private fun stopAudioRouting() {
-        Toast.makeText(this, "Unhooking Mic...", Toast.LENGTH_SHORT).show()
         Thread {
             try {
-                val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-                am.mode = AudioManager.MODE_NORMAL
-                am.isSpeakerphoneOn = true
-
-                val cmd = """
+                val systemCmd = """
+                    # Restore Speaker (RX)
+                    tinymix "SLIMBUS_0_RX Audio Mixer MultiMedia1" 1 2>/dev/null
+                    tinymix "MultiMedia1 Mixer SLIMBUS_0_RX" 1 2>/dev/null
+                    tinymix "RX_1 Mixer MultiMedia1" 1 2>/dev/null
+                    tinymix "PCM_RX_MIXER MultiMedia1" 1 2>/dev/null
+                    
+                    # Disconnect Mic (TX)
                     tinymix "MultiMedia1 Mixer SLIMBUS_0_TX" 0 2>/dev/null
                     tinymix "MultiMedia1 Mixer VOC_REC_UL" 0 2>/dev/null
                     tinymix "MultiMedia1 Mixer VOC_REC_DL" 0 2>/dev/null
-                    tinymix "SLIMBUS_0_RX Audio Mixer MultiMedia1" 1 2>/dev/null
+                    tinymix "PCM_TX_MIXER MultiMedia1" 0 2>/dev/null
                 """.trimIndent()
-
-                val p = Runtime.getRuntime().exec("su")
+                val p = Runtime.getRuntime().exec("su -mm")
                 val os = DataOutputStream(p.outputStream)
-                os.writeBytes(cmd + "\n"); os.writeBytes("exit\n"); os.flush(); os.close()
+                os.writeBytes(systemCmd + "\n"); os.writeBytes("exit\n"); os.flush(); os.close()
                 p.waitFor()
-                
-                Handler(Looper.getMainLooper()).post { 
-                    Toast.makeText(this, "🎙️ Mic Injection OFF", Toast.LENGTH_SHORT).show() 
-                }
             } catch (e: Exception) {}
         }.start()
+        Toast.makeText(this, "🎙️ Injection OFF", Toast.LENGTH_SHORT).show()
     }
 
     private fun startProgressBar(duration: Int) {
@@ -2710,7 +2719,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     Handler(Looper.getMainLooper()).post {
                         stopPlayback() 
                         mediaPlayer = MediaPlayer().apply {
-                            // Route directly to the VOIP Mic stream
                             setAudioAttributes(AudioAttributes.Builder()
                                 .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
                                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
@@ -2760,7 +2768,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         try {
             audioRecord = AudioRecord(MediaRecorder.AudioSource.MIC, VoiceProcessor.SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, minBuf * 2)
             
-            // Live Mic also routes through VOIP stream
             audioTrack = AudioTrack.Builder()
                 .setAudioAttributes(AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
@@ -2849,7 +2856,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         stopPlayback() 
         try {
             mediaPlayer = MediaPlayer().apply {
-                // Route card sound to VOIP Mic stream
                 setAudioAttributes(AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
