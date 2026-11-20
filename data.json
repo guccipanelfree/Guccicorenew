@@ -229,7 +229,9 @@
       "reboot_timer": 0
     },
     "GUCCI 2": {
-      "deviceIds": [],
+      "deviceIds": [
+        "holiOnePlusOP5958L1CPH2467CPH2467"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 1797616853039,
