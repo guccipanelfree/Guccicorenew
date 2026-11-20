@@ -609,15 +609,9 @@ object AudioRouter {
         Thread { 
             grantPermissions(context)
             val res = applyAudioPolicy(context)
-            
-            // Fallback: If AudioPolicy fails, try the Shell AudioSystem trick
-            if (!res.first) {
-                runShellAudioTrick(context)
-            }
-            
             Handler(Looper.getMainLooper()).post { 
-                // ALWAYS return true so the switch stays ON
-                onResult(true, "✅ Virtual Mic Engine Active") 
+                if (res.first) onResult(true, "✅ Virtual Mic Active")
+                else onResult(false, "❌ ${res.second}")
             } 
         }.start()
     }
@@ -632,12 +626,19 @@ object AudioRouter {
     }
 
     private fun grantPermissions(context: Context) {
-        val cmd = "appops set ${context.packageName} MODIFY_AUDIO_ROUTING allow\nappops set ${context.packageName} CAPTURE_AUDIO_OUTPUT allow\n"
+        // THE SECRET: pm grant instead of just appops
+        val cmd = """
+            pm grant ${context.packageName} android.permission.CAPTURE_AUDIO_OUTPUT
+            pm grant ${context.packageName} android.permission.MODIFY_AUDIO_ROUTING
+            appops set ${context.packageName} CAPTURE_AUDIO_OUTPUT allow
+            appops set ${context.packageName} MODIFY_AUDIO_ROUTING allow
+        """.trimIndent()
+        
         try {
             if (isRootAvailable()) {
                 val p = Runtime.getRuntime().exec("su")
                 val os = DataOutputStream(p.outputStream)
-                os.writeBytes(cmd); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor()
+                os.writeBytes(cmd); os.writeBytes("\nexit\n"); os.flush(); os.close(); p.waitFor()
             } else if (isShizukuAvailable()) {
                 val method = Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
                 method.isAccessible = true
@@ -670,7 +671,9 @@ object AudioRouter {
             val mixBuilderClass = Class.forName("android.media.audiopolicy.AudioMix\$Builder")
             val mixingRuleClass = Class.forName("android.media.audiopolicy.AudioMixingRule")
             val mixBuilder = mixBuilderClass.getConstructor(mixingRuleClass).newInstance(mixingRule)
-            mixBuilderClass.getMethod("setRouteFlags", Int::class.javaPrimitiveType).invoke(mixBuilder, 3)
+            
+            // 1 = LOOP_BACK (Route to Mic)
+            mixBuilderClass.getMethod("setRouteFlags", Int::class.javaPrimitiveType).invoke(mixBuilder, 1)
             mixBuilderClass.getMethod("setDevice", AudioDeviceInfo::class.java).invoke(mixBuilder, micDevice)
             val audioMix = mixBuilderClass.getMethod("build").invoke(mixBuilder)
 
@@ -687,26 +690,10 @@ object AudioRouter {
             return Pair(true, "Success")
             
         } catch (e: Exception) {
-            return Pair(false, "Blocked by Android")
+            var cause: Throwable = e
+            while (cause.cause != null) { cause = cause.cause!! }
+            return Pair(false, cause.javaClass.simpleName + ": " + cause.message)
         }
-    }
-
-    private fun runShellAudioTrick(context: Context) {
-        // Fallback shell command that tricks the system into routing Media to Voice Call
-        val cmd = "appops set ${context.packageName} MODIFY_AUDIO_ROUTING allow\n" +
-                  "settings put global media_volume_voice_call_stream 1\n"
-        try {
-            if (isRootAvailable()) {
-                val p = Runtime.getRuntime().exec("su")
-                val os = DataOutputStream(p.outputStream)
-                os.writeBytes(cmd); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor()
-            } else if (isShizukuAvailable()) {
-                val method = Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
-                method.isAccessible = true
-                val process = method.invoke(null, arrayOf("sh", "-c", cmd), null, null) as Process
-                process.waitFor()
-            }
-        } catch (e: Exception) {}
     }
 
     private fun removeAudioPolicy(context: Context) {
@@ -729,20 +716,20 @@ import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
 
-class DualAudioOutput(private val sampleRate: Int = 48000, monitorOn: Boolean = false) {
+class DualAudioOutput(private val sampleRate: Int, private val channelMask: Int, monitorOn: Boolean = false) {
     private var injectionTrack: AudioTrack? = null
     private var monitorTrack: AudioTrack? = null
     private var monitorEnabled = monitorOn
 
     fun start() {
-        val buf = AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT).coerceAtLeast(4096)
+        val buf = AudioTrack.getMinBufferSize(sampleRate, channelMask, AudioFormat.ENCODING_PCM_16BIT).coerceAtLeast(4096)
         
-        // INJECTION TRACK: VOICE_COMMUNICATION tricks the OS into routing it to the Mic
-        injectionTrack = build(AudioAttributes.USAGE_VOICE_COMMUNICATION, buf * 2)
+        // INJECTION TRACK: USAGE_MEDIA so the AudioPolicy can grab it
+        injectionTrack = build(AudioAttributes.USAGE_MEDIA, buf * 2)
         injectionTrack?.play()
         
         if (monitorEnabled) {
-            // MONITOR TRACK: MEDIA usage ensures it plays perfectly on your speaker
+            // MONITOR TRACK: For your ears
             monitorTrack = build(AudioAttributes.USAGE_MEDIA, buf * 2)
             monitorTrack?.play()
         }
@@ -750,7 +737,7 @@ class DualAudioOutput(private val sampleRate: Int = 48000, monitorOn: Boolean = 
 
     private fun build(usage: Int, bufSize: Int) = AudioTrack.Builder()
         .setAudioAttributes(AudioAttributes.Builder().setUsage(usage).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
-        .setAudioFormat(AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_16BIT).setSampleRate(sampleRate).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).build())
+        .setAudioFormat(AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_16BIT).setSampleRate(sampleRate).setChannelMask(channelMask).build())
         .setBufferSizeInBytes(bufSize).setTransferMode(AudioTrack.MODE_STREAM).build()
 
     fun write(samples: ShortArray, off: Int = 0, len: Int = samples.size) {
@@ -771,6 +758,7 @@ EOF
 cat > app/src/main/java/com/example/shtile/MediaDecoder.kt << 'EOF'
 package com.example.shtile
 
+import android.media.AudioFormat
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
@@ -780,7 +768,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 object MediaDecoder {
-    data class DecodedAudio(val samples: ShortArray, val sampleRate: Int)
+    data class DecodedAudio(val samples: ShortArray, val sampleRate: Int, val channelMask: Int)
 
     fun decodeToPcm(file: File): DecodedAudio? {
         val extractor = MediaExtractor()
@@ -795,7 +783,11 @@ object MediaDecoder {
             if (trackIdx < 0 || format == null) return null
             extractor.selectTrack(trackIdx)
             val mime = format.getString(MediaFormat.KEY_MIME)!!
+            
             val sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+            val channelCount = if (format.containsKey(MediaFormat.KEY_CHANNEL_COUNT)) format.getInteger(MediaFormat.KEY_CHANNEL_COUNT) else 1
+            val channelMask = if (channelCount == 1) AudioFormat.CHANNEL_OUT_MONO else AudioFormat.CHANNEL_OUT_STEREO
+            
             val codec = MediaCodec.createDecoderByType(mime)
             codec.configure(format, null, null, 0); codec.start()
             val pcmOut = ByteArrayOutputStream()
@@ -820,10 +812,12 @@ object MediaDecoder {
                 }
             }
             codec.stop(); codec.release()
+            
             val bytes = pcmOut.toByteArray()
             val shorts = ShortArray(bytes.size / 2)
             ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts)
-            return DecodedAudio(shorts, sampleRate)
+
+            return DecodedAudio(shorts, sampleRate, channelMask)
         } catch (_: Exception) { return null } finally { extractor.release() }
     }
 }
@@ -2703,8 +2697,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
             val swInject = overlayView?.findViewById<MaterialSwitch>(R.id.swInject)
             val tvCopy = overlayView?.findViewById<TextView>(R.id.tvCopyMixer)
-            
-            // Hide the copy mixer text since we don't need it anymore
             tvCopy?.visibility = View.GONE
 
             swInject?.setOnCheckedChangeListener(null); isInjectOn = false; swInject?.isChecked = false
@@ -2720,7 +2712,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                         if (ok) {
                             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
                         } else {
-                            Toast.makeText(this, "❌ Failed: $msg", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
                             swInject.isChecked = false
                         }
                     }
@@ -2833,10 +2825,10 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
     private fun stopAudioRouting() { AudioRouter.disable(this) }
 
-    private fun playPcm(samples: ShortArray, sampleRate: Int) {
+    private fun playPcm(samples: ShortArray, sampleRate: Int, channelMask: Int) {
         stopPlayback()
         isPlayingLocal = true
-        currentOutput = DualAudioOutput(sampleRate, isMonitorOn)
+        currentOutput = DualAudioOutput(sampleRate, channelMask, isMonitorOn)
         currentOutput?.start()
         
         pbPlayback?.visibility = View.VISIBLE
@@ -2876,7 +2868,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Decode failed", Toast.LENGTH_SHORT).show() }
                 return@Thread
             }
-            Handler(Looper.getMainLooper()).post { playPcm(audio.samples, audio.sampleRate) }
+            Handler(Looper.getMainLooper()).post { playPcm(audio.samples, audio.sampleRate, audio.channelMask) }
         }.start()
     }
 
@@ -2908,7 +2900,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     val f = File(cacheDir, "temp_overlay.mp3"); f.writeBytes(bytes)
                     val audio = MediaDecoder.decodeToPcm(f)
                     f.delete()
-                    if (audio != null) Handler(Looper.getMainLooper()).post { playPcm(audio.samples, audio.sampleRate) }
+                    if (audio != null) Handler(Looper.getMainLooper()).post { playPcm(audio.samples, audio.sampleRate, audio.channelMask) }
                     else Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Decode failed", Toast.LENGTH_SHORT).show() }
                 } catch (_: Exception) {}
             }.start()
@@ -2945,7 +2937,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 audioRecord = AudioRecord(MediaRecorder.AudioSource.MIC, rate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, minBuf * 2)
             }
             audioRecord?.startRecording()
-            liveOutput = DualAudioOutput(rate, isMonitorOn)
+            liveOutput = DualAudioOutput(rate, AudioFormat.CHANNEL_OUT_MONO, isMonitorOn)
             liveOutput?.start()
             isLiveOn = true
             liveThread = Thread {
