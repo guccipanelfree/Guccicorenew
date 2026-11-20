@@ -1074,7 +1074,6 @@ class LoginActivity : AppCompatActivity() {
         val loginBtn = findViewById<MaterialButton>(R.id.loginBtn)
         val deviceIdText = findViewById<TextView>(R.id.deviceIdText)
         
-        // Fixed HWID logic: Strip non-alphanumeric characters to prevent hidden spaces
         val rawHwid = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown"
         val hwid = rawHwid.filter { it.isLetterOrDigit() }
         
@@ -1085,6 +1084,20 @@ class LoginActivity : AppCompatActivity() {
         loginBtn.setOnClickListener {
             val userKey = keyInput.text.toString().trim()
             if (userKey.isEmpty()) { Toast.makeText(this, "Enter a key", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
+            
+            // 🚀 ADMIN BYPASS FOR TESTING
+            if (userKey == "GUCCI-ADMIN") {
+                prefs.edit()
+                    .putBoolean("is_authenticated", true).putBoolean("has_valid_license", true)
+                    .putString("license_key", userKey).putString("device_id", hwid).putLong("license_expires", 0L)
+                    .putBoolean("allow_inx", true).putBoolean("allow_floater", true)
+                    .putBoolean("allow_kernel", true).putBoolean("allow_voice", true)
+                    .apply()
+                Toast.makeText(this, "Admin Login Successful!", Toast.LENGTH_SHORT).show()
+                startActivity(Intent(this, MainActivity::class.java)); finish()
+                return@setOnClickListener
+            }
+            
             verifyKey(userKey, hwid)
         }
     }
@@ -1109,7 +1122,6 @@ class LoginActivity : AppCompatActivity() {
                 
                 val maxDevices = keyData.optInt("maxDevices", 1)
                 
-                // Fixed: Handle both String and JSONArray from older versions
                 val deviceIdsObj = keyData.opt("deviceIds")
                 val cleanArr = JSONArray()
                 if (deviceIdsObj is JSONArray) {
@@ -1129,7 +1141,7 @@ class LoginActivity : AppCompatActivity() {
                 if (isThisPhoneBound) { success(userKey, hwid, exp, keyData); return@launch }
                 
                 if (cleanArr.length() >= maxDevices) { 
-                    showError("❌ Key is already locked to $maxDevices device(s).\nThis phone is not allowed."); 
+                    showError("❌ Key locked to $maxDevices device(s).\nDelete old HWID in data.json."); 
                     reset(); return@launch 
                 }
                 
@@ -1185,7 +1197,6 @@ class LoginActivity : AppCompatActivity() {
     private fun showError(m: String) = Toast.makeText(this, m, Toast.LENGTH_LONG).show()
 }
 EOF
-
 cat > app/src/main/java/com/example/shtile/MainActivity.kt << 'EOF'
 package com.example.shtile
 import android.Manifest
@@ -2314,7 +2325,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var gridAdapter: VoiceGridAdapter? = null
     private var params: WindowManager.LayoutParams? = null
     
-    // PROGRESS BAR TRACKING
     private var pbPlayback: ProgressBar? = null
     private val progressHandler = Handler(Looper.getMainLooper())
     private var progressRunnable: Runnable? = null
@@ -2331,10 +2341,15 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
     override fun onCreate() {
         super.onCreate()
-        startForegroundServiceNotification()
-        tts = TextToSpeech(this, this)
-        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        showFloater()
+        try {
+            startForegroundServiceNotification()
+            tts = TextToSpeech(this, this)
+            windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+            showFloater()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Overlay Crash Prevented: ${e.message}", Toast.LENGTH_LONG).show()
+            stopSelf()
+        }
     }
 
     private fun startForegroundServiceNotification() {
@@ -2359,18 +2374,19 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         ).apply { gravity = Gravity.TOP or Gravity.START; x = 100; y = 200 }
 
         windowManager.addView(overlayView, params)
-        setupDrag(overlayView!!.findViewById(R.id.dragHandleTop), overlayView!!, params!!)
+        
+        overlayView?.findViewById<View>(R.id.dragHandleTop)?.let { setupDrag(it, overlayView!!, params!!) }
 
-        overlayView!!.findViewById<ImageButton>(R.id.btnClose).setOnClickListener { 
+        overlayView?.findViewById<ImageButton>(R.id.btnClose)?.setOnClickListener { 
             stopAudioRouting()
             stopSelf() 
         }
-        overlayView!!.findViewById<ImageButton>(R.id.btnMinimize).setOnClickListener { minimizeFloater(params!!) }
+        overlayView?.findViewById<ImageButton>(R.id.btnMinimize)?.setOnClickListener { minimizeFloater(params!!) }
 
-        val swInject = overlayView!!.findViewById<MaterialSwitch>(R.id.swInject)
-        swInject.isChecked = isInjectOn
+        val swInject = overlayView?.findViewById<MaterialSwitch>(R.id.swInject)
+        swInject?.isChecked = isInjectOn
         
-        swInject.setOnCheckedChangeListener { _, isChecked -> 
+        swInject?.setOnCheckedChangeListener { _, isChecked -> 
             isInjectOn = isChecked
             if (isChecked) {
                 startAudioRouting()
@@ -2380,46 +2396,46 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             }
         }
 
-        val tabCards = overlayView!!.findViewById<LinearLayout>(R.id.tabCards)
-        val tabType = overlayView!!.findViewById<LinearLayout>(R.id.tabType)
-        val tabLive = overlayView!!.findViewById<LinearLayout>(R.id.tabLive)
-        val pageCards = overlayView!!.findViewById<LinearLayout>(R.id.pageCards)
-        val pageType = overlayView!!.findViewById<LinearLayout>(R.id.pageType)
-        val pageLive = overlayView!!.findViewById<LinearLayout>(R.id.pageLive)
+        val tabCards = overlayView?.findViewById<LinearLayout>(R.id.tabCards)
+        val tabType = overlayView?.findViewById<LinearLayout>(R.id.tabType)
+        val tabLive = overlayView?.findViewById<LinearLayout>(R.id.tabLive)
+        val pageCards = overlayView?.findViewById<LinearLayout>(R.id.pageCards)
+        val pageType = overlayView?.findViewById<LinearLayout>(R.id.pageType)
+        val pageLive = overlayView?.findViewById<LinearLayout>(R.id.pageLive)
         
-        pbPlayback = overlayView!!.findViewById(R.id.pbPlayback)
+        pbPlayback = overlayView?.findViewById(R.id.pbPlayback)
 
         fun resetTabs() {
-            pageCards.visibility = View.GONE; pageType.visibility = View.GONE; pageLive.visibility = View.GONE
-            tabCards.setBackgroundColor(0x00000000); tabType.setBackgroundColor(0x00000000); tabLive.setBackgroundColor(0x00000000)
+            pageCards?.visibility = View.GONE; pageType?.visibility = View.GONE; pageLive?.visibility = View.GONE
+            tabCards?.setBackgroundColor(0x00000000); tabType?.setBackgroundColor(0x00000000); tabLive?.setBackgroundColor(0x00000000)
         }
 
-        tabCards.setOnClickListener { resetTabs(); pageCards.visibility = View.VISIBLE; tabCards.setBackgroundResource(R.drawable.bg_box_dark) }
-        tabType.setOnClickListener { resetTabs(); pageType.visibility = View.VISIBLE; tabType.setBackgroundResource(R.drawable.bg_box_dark) }
-        tabLive.setOnClickListener { resetTabs(); pageLive.visibility = View.VISIBLE; tabLive.setBackgroundResource(R.drawable.bg_box_dark) }
+        tabCards?.setOnClickListener { resetTabs(); pageCards?.visibility = View.VISIBLE; tabCards?.setBackgroundResource(R.drawable.bg_box_dark) }
+        tabType?.setOnClickListener { resetTabs(); pageType?.visibility = View.VISIBLE; tabType?.setBackgroundResource(R.drawable.bg_box_dark) }
+        tabLive?.setOnClickListener { resetTabs(); pageLive?.visibility = View.VISIBLE; tabLive?.setBackgroundResource(R.drawable.bg_box_dark) }
 
-        val spinner = overlayView!!.findViewById<Spinner>(R.id.spinnerVoiceSelectFloater)
-        spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, personas.map { it.name })
-        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        val spinner = overlayView?.findViewById<Spinner>(R.id.spinnerVoiceSelectFloater)
+        spinner?.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, personas.map { it.name })
+        spinner?.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) { selectedPersona = personas[position] }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
-        val gridView = overlayView!!.findViewById<GridView>(R.id.lvVoicesFloater)
+        val gridView = overlayView?.findViewById<GridView>(R.id.lvVoicesFloater)
         loadVoices()
         gridAdapter = VoiceGridAdapter(voices, themedContext)
-        gridView.adapter = gridAdapter
-        gridView.setOnItemClickListener { _, _, position, _ -> playVoice(voices[position]) }
+        gridView?.adapter = gridAdapter
+        gridView?.setOnItemClickListener { _, _, position, _ -> playVoice(voices[position]) }
 
-        overlayView!!.findViewById<Button>(R.id.btnOverlayRefresh).setOnClickListener {
+        overlayView?.findViewById<Button>(R.id.btnOverlayRefresh)?.setOnClickListener {
             loadVoices()
             gridAdapter = VoiceGridAdapter(voices, themedContext)
-            gridView.adapter = gridAdapter
+            gridView?.adapter = gridAdapter
             Toast.makeText(this, "Sounds Refreshed", Toast.LENGTH_SHORT).show()
         }
 
-        val etType = overlayView!!.findViewById<EditText>(R.id.etTypeHere)
-        etType.setOnFocusChangeListener { _, hasFocus ->
+        val etType = overlayView?.findViewById<EditText>(R.id.etTypeHere)
+        etType?.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
                 params!!.flags = params!!.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv()
                 windowManager.updateViewLayout(overlayView, params)
@@ -2431,49 +2447,48 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             }
         }
 
-        overlayView!!.findViewById<Button>(R.id.btnOverlaySend).setOnClickListener {
-            val txt = etType.text.toString()
+        overlayView?.findViewById<Button>(R.id.btnOverlaySend)?.setOnClickListener {
+            val txt = etType?.text.toString()
             if (txt.isNotEmpty()) { generateAndPlayOverlay(txt, selectedPersona) }
         }
 
-        overlayView!!.findViewById<Button>(R.id.btnOverlaySave).setOnClickListener {
-            val txt = etType.text.toString()
-            if (txt.isNotEmpty()) { generateAndSaveOverlay(txt, selectedPersona); etType.text.clear() }
+        overlayView?.findViewById<Button>(R.id.btnOverlaySave)?.setOnClickListener {
+            val txt = etType?.text.toString()
+            if (txt.isNotEmpty()) { generateAndSaveOverlay(txt, selectedPersona); etType?.text?.clear() }
         }
 
-        val swLiveMic = overlayView!!.findViewById<MaterialSwitch>(R.id.swLiveMic)
-        val sbPitch = overlayView!!.findViewById<SeekBar>(R.id.sbPitch)
-        val sbEcho = overlayView!!.findViewById<SeekBar>(R.id.sbEcho)
-        val tvPitch = overlayView!!.findViewById<TextView>(R.id.tvPitch)
-        val tvEcho = overlayView!!.findViewById<TextView>(R.id.tvEcho)
+        val swLiveMic = overlayView?.findViewById<MaterialSwitch>(R.id.swLiveMic)
+        val sbPitch = overlayView?.findViewById<SeekBar>(R.id.sbPitch)
+        val sbEcho = overlayView?.findViewById<SeekBar>(R.id.sbEcho)
+        val tvPitch = overlayView?.findViewById<TextView>(R.id.tvPitch)
+        val tvEcho = overlayView?.findViewById<TextView>(R.id.tvEcho)
 
-        sbPitch.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) { pitchSemitones = (progress - 12).toFloat(); tvPitch.text = "Pitch: ${pitchSemitones.toInt()}" }
+        sbPitch?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) { pitchSemitones = (progress - 12).toFloat(); tvPitch?.text = "Pitch: ${pitchSemitones.toInt()}" }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
-        sbEcho.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) { echoMs = progress * 10; tvEcho.text = "Echo: ${echoMs}ms" }
+        sbEcho?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) { echoMs = progress * 10; tvEcho?.text = "Echo: ${echoMs}ms" }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
 
-        swLiveMic.setOnCheckedChangeListener { _, isChecked ->
+        swLiveMic?.setOnCheckedChangeListener { _, isChecked ->
             isLiveOn = isChecked
             if (isChecked) startLiveMic() else stopLiveMic()
         }
 
-        overlayView!!.findViewById<Button>(R.id.btnOverlayStop).setOnClickListener { 
+        overlayView?.findViewById<Button>(R.id.btnOverlayStop)?.setOnClickListener { 
             stopPlayback()
             stopLiveMic()
-            swLiveMic.isChecked = false 
+            swLiveMic?.isChecked = false 
         }
     }
 
     private fun loadVoices() {
         val all = VoiceDataHelper.getAllVoices(this)
         val favs = favorites
-        // Sort: Favorites first, then by name
         voices = all.sortedWith(compareByDescending<File> { favs.contains(it.name) }.thenBy { it.name })
     }
 
@@ -2485,9 +2500,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         gridAdapter?.notifyDataSetChanged()
     }
 
-    // ==========================================
-    // 🔇 MUTE LOCAL SPEAKER & PHYSICAL MIC
-    // ==========================================
     private fun muteLocalSpeaker() {
         try {
             val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -2503,7 +2515,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         } catch (e: Exception) {}
     }
 
-    // Mutes physical mic so friends hear ONLY the sound card, not you
     private fun mutePhysicalMic() {
         Thread {
             try {
@@ -2534,9 +2545,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         }.start()
     }
 
-    // ==========================================
-    // 🚀 AGGRESSIVE UNIVERSAL ROOT AUDIO ROUTING
-    // ==========================================
     private fun startAudioRouting() {
         Thread {
             try {
@@ -2576,6 +2584,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun startProgressBar(duration: Int) {
+        if (duration <= 0) return
         pbPlayback?.visibility = View.VISIBLE
         pbPlayback?.max = duration
         progressRunnable = object : Runnable {
@@ -2635,7 +2644,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     prepare()
                     startProgressBar(duration)
                     start()
-                    if (isInjectOn) mutePhysicalMic() // Mute your real voice!
+                    if (isInjectOn) mutePhysicalMic()
                     setOnCompletionListener { stopPlayback() }
                 }
             } catch (e: Exception) { Toast.makeText(this, "Playback Error", Toast.LENGTH_SHORT).show() }
@@ -2699,7 +2708,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
     private fun minimizeFloater(currentParams: WindowManager.LayoutParams) {
         stopLiveMic()
-        overlayView?.let { windowManager.removeView(it) }
+        overlayView?.let { runCatching { windowManager.removeView(it) } }
         overlayView = null
 
         val b = LayoutInflater.from(this).inflate(R.layout.overlay_bubble, null)
@@ -2755,7 +2764,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 prepare()
                 startProgressBar(duration)
                 start()
-                if (isInjectOn) mutePhysicalMic() // Mutes your actual voice
+                if (isInjectOn) mutePhysicalMic() 
                 setOnCompletionListener { stopPlayback() }
             }
         } catch (e: Exception) {
@@ -2772,7 +2781,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         mediaPlayer = null 
         stopProgressBar()
         unmuteLocalSpeaker()
-        if (isInjectOn) unmutePhysicalMic() // Restores your actual voice
+        if (isInjectOn) unmutePhysicalMic() 
     }
     
     override fun onInit(status: Int) { if (status == TextToSpeech.SUCCESS) { tts?.language = Locale.US; isTtsReady = true } }
@@ -2780,8 +2789,8 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     override fun onDestroy() {
         super.onDestroy(); stopPlayback(); stopLiveMic(); tts?.shutdown()
         stopAudioRouting() 
-        overlayView?.let { windowManager.removeView(it) }
-        bubbleView?.let { windowManager.removeView(it) }
+        overlayView?.let { runCatching { windowManager.removeView(it) } }
+        bubbleView?.let { runCatching { windowManager.removeView(it) } }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -2795,19 +2804,20 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             val file = items[p]
             val name = file.nameWithoutExtension.ifEmpty { "Sound" }
             
-            v.findViewById<TextView>(R.id.tvLetterMini).text = name.take(1).uppercase()
-            v.findViewById<TextView>(R.id.tvNameMini).text = if (name.length > 8) name.take(8) + ".." else name
+            v.findViewById<TextView>(R.id.tvLetterMini)?.text = name.take(1).uppercase()
+            v.findViewById<TextView>(R.id.tvNameMini)?.text = if (name.length > 8) name.take(8) + ".." else name
             
-            // Favorite Star Logic
+            // SAFE CALL for Star to prevent crashes
             val star = v.findViewById<AppCompatImageView>(R.id.btnStarMini)
-            if (favorites.contains(file.name)) {
-                star.setColorFilter(android.graphics.Color.parseColor("#FFD700")) // Gold Star
-            } else {
-                star.setColorFilter(android.graphics.Color.parseColor("#8B949E")) // Grey Star
-            }
-            
-            star.setOnClickListener {
-                toggleFavorite(file)
+            if (star != null) {
+                if (favorites.contains(file.name)) {
+                    star.setColorFilter(android.graphics.Color.parseColor("#FFD700")) 
+                } else {
+                    star.setColorFilter(android.graphics.Color.parseColor("#8B949E")) 
+                }
+                star.setOnClickListener {
+                    toggleFavorite(file)
+                }
             }
             
             return v
