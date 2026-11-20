@@ -3010,6 +3010,37 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     }
 }
 EOF
+cat > app/src/main/java/com/example/shtile/TransparentActivity.kt << 'EOF'
+package com.example.shtile
+import android.content.Intent
+import android.os.Build
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+class TransparentActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val i = Intent(this, FloaterOverlayService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { startForegroundService(i) } else { startService(i) }
+        finish()
+    }
+}
+EOF
+
+cat > app/src/main/java/com/example/shtile/TransparentVoiceActivity.kt << 'EOF'
+package com.example.shtile
+import android.content.Intent
+import android.os.Build
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+class TransparentVoiceActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val i = Intent(this, GucciVoiceService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { startForegroundService(i) } else { startService(i) }
+        finish()
+    }
+}
+EOF
 cat > app/src/main/java/com/example/shtile/TransparentVoiceActivity.kt << 'EOF'
 package com.example.shtile
 import android.content.Intent
