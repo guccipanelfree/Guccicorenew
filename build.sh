@@ -2280,6 +2280,7 @@ import android.widget.*
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.content.ContextCompat
 import com.google.android.material.materialswitch.MaterialSwitch
+import java.io.DataOutputStream
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
@@ -2347,11 +2348,23 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         windowManager.addView(overlayView, params)
         setupDrag(overlayView!!.findViewById(R.id.dragHandleTop), overlayView!!, params!!)
 
-        overlayView!!.findViewById<ImageButton>(R.id.btnClose).setOnClickListener { stopSelf() }
+        overlayView!!.findViewById<ImageButton>(R.id.btnClose).setOnClickListener { 
+            stopAudioRouting()
+            stopSelf() 
+        }
         overlayView!!.findViewById<ImageButton>(R.id.btnMinimize).setOnClickListener { minimizeFloater(params!!) }
 
         val swInject = overlayView!!.findViewById<MaterialSwitch>(R.id.swInject)
-        swInject.setOnCheckedChangeListener { _, isChecked -> isInjectOn = isChecked }
+        swInject.setOnCheckedChangeListener { _, isChecked -> 
+            isInjectOn = isChecked
+            if (isChecked) {
+                startAudioRouting()
+            } else {
+                stopAudioRouting()
+            }
+        }
+        
+        if (swInject.isChecked) startAudioRouting()
 
         val tabCards = overlayView!!.findViewById<LinearLayout>(R.id.tabCards)
         val tabType = overlayView!!.findViewById<LinearLayout>(R.id.tabType)
@@ -2434,7 +2447,81 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             if (isChecked) startLiveMic() else stopLiveMic()
         }
 
-        overlayView!!.findViewById<Button>(R.id.btnOverlayStop).setOnClickListener { stopPlayback(); stopLiveMic(); swLiveMic.isChecked = false }
+        overlayView!!.findViewById<Button>(R.id.btnOverlayStop).setOnClickListener { 
+            stopPlayback()
+            stopLiveMic()
+            swLiveMic.isChecked = false 
+        }
+    }
+
+    private fun muteLocalSpeaker() {
+        try {
+            val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            am.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
+        } catch (e: Exception) {}
+    }
+
+    private fun unmuteLocalSpeaker() {
+        try {
+            val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            val max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            am.setStreamVolume(AudioManager.STREAM_MUSIC, max / 2, 0)
+        } catch (e: Exception) {}
+    }
+
+    private fun startAudioRouting() {
+        Thread {
+            try {
+                val cmd = """
+                    tinymix "SLIMBUS_0_RX Audio Mixer MultiMedia1" 1 2>/dev/null
+                    tinymix "MultiMedia1 Mixer SLIMBUS_0_TX" 1 2>/dev/null
+                    tinymix "MultiMedia1 Mixer VOC_REC_UL" 1 2>/dev/null
+                    tinymix "Capture_IIR_Filter" 1 2>/dev/null
+                    tinymix "Ultra Sound" 1 2>/dev/null
+                    tinymix "Hardware Loopback" 1 2>/dev/null
+                    tinymix "MAD Input" 1 2>/dev/null
+                """.trimIndent()
+
+                val p = Runtime.getRuntime().exec("su")
+                val os = DataOutputStream(p.outputStream)
+                os.writeBytes(cmd + "\n")
+                os.writeBytes("exit\n")
+                os.flush()
+                os.close()
+                p.waitFor()
+                
+                Handler(Looper.getMainLooper()).post { 
+                    Toast.makeText(this, "Mic Injection ON (Root)", Toast.LENGTH_SHORT).show() 
+                }
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post { 
+                    Toast.makeText(this, "Root required for Inject!", Toast.LENGTH_SHORT).show() 
+                }
+            }
+        }.start()
+    }
+
+    private fun stopAudioRouting() {
+        Thread {
+            try {
+                val cmd = """
+                    tinymix "SLIMBUS_0_RX Audio Mixer MultiMedia1" 0 2>/dev/null
+                    tinymix "MultiMedia1 Mixer SLIMBUS_0_TX" 0 2>/dev/null
+                    tinymix "MultiMedia1 Mixer VOC_REC_UL" 0 2>/dev/null
+                    tinymix "Capture_IIR_Filter" 0 2>/dev/null
+                    tinymix "Ultra Sound" 0 2>/dev/null
+                    tinymix "Hardware Loopback" 0 2>/dev/null
+                """.trimIndent()
+
+                val p = Runtime.getRuntime().exec("su")
+                val os = DataOutputStream(p.outputStream)
+                os.writeBytes(cmd + "\n")
+                os.writeBytes("exit\n")
+                os.flush()
+                os.close()
+                p.waitFor()
+            } catch (e: Exception) {}
+        }.start()
     }
 
     private fun callElevenLabsApi(text: String, voiceId: String, onSuccess: (ByteArray) -> Unit, onError: (String) -> Unit) {
@@ -2467,11 +2554,16 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 val tempFile = File(cacheDir, "temp_overlay.mp3")
                 tempFile.writeBytes(bytes)
                 stopPlayback()
-                if (isInjectOn) forceSpeakerMaxVolume()
+                
+                if (isInjectOn) muteLocalSpeaker() 
+                
                 mediaPlayer = MediaPlayer().apply {
                     setDataSource(tempFile.absolutePath)
                     prepare()
                     start()
+                    setOnCompletionListener { 
+                        if (isInjectOn) unmuteLocalSpeaker() 
+                    }
                 }
             } catch (e: Exception) { Toast.makeText(this, "Playback Error", Toast.LENGTH_SHORT).show() }
         }, { error -> Toast.makeText(this, error, Toast.LENGTH_LONG).show() })
@@ -2503,7 +2595,8 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
             audioRecord?.startRecording()
             audioTrack?.play()
-            forceSpeakerMaxVolume()
+
+            if (isInjectOn) muteLocalSpeaker()
 
             liveThread = Thread {
                 val buf = ShortArray(2048)
@@ -2529,6 +2622,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         try { audioRecord?.stop(); audioRecord?.release() } catch (_: Exception) {}
         try { audioTrack?.stop(); audioTrack?.release() } catch (_: Exception) {}
         audioRecord = null; audioTrack = null
+        unmuteLocalSpeaker() 
     }
 
     private fun minimizeFloater(currentParams: WindowManager.LayoutParams) {
@@ -2580,30 +2674,34 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
     private fun playVoice(file: File) {
         stopPlayback()
-        if (isInjectOn) forceSpeakerMaxVolume()
+        
+        if (isInjectOn) muteLocalSpeaker()
+
         try {
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(file.absolutePath)
                 prepare()
                 start()
+                setOnCompletionListener { 
+                    if (isInjectOn) unmuteLocalSpeaker() 
+                }
             }
         } catch (e: Exception) {
             Toast.makeText(this, "Cannot play this file format", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun forceSpeakerMaxVolume() {
-        val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        @Suppress("DEPRECATION") am.isSpeakerphoneOn = true
-        am.setStreamVolume(AudioManager.STREAM_MUSIC, am.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0)
+    private fun stopPlayback() { 
+        mediaPlayer?.let { if (it.isPlaying) it.stop(); it.release() }
+        mediaPlayer = null 
+        if (isInjectOn) unmuteLocalSpeaker()
     }
-
-    private fun stopPlayback() { mediaPlayer?.let { if (it.isPlaying) it.stop(); it.release() }; mediaPlayer = null }
     
     override fun onInit(status: Int) { if (status == TextToSpeech.SUCCESS) { tts?.language = Locale.US; isTtsReady = true } }
 
     override fun onDestroy() {
         super.onDestroy(); stopPlayback(); stopLiveMic(); tts?.shutdown()
+        stopAudioRouting() 
         overlayView?.let { windowManager.removeView(it) }
         bubbleView?.let { windowManager.removeView(it) }
     }
