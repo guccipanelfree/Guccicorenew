@@ -583,11 +583,17 @@ cat > app/src/main/java/com/example/shtile/AudioRouter.kt << 'EOF'
 package com.example.shtile
 
 import android.content.Context
+import android.media.AudioAttributes
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
+import rikka.shizuku.Shizuku
+import java.io.DataOutputStream
 
 object AudioRouter {
     private var routingActive = false
+    private var activePolicy: Any? = null
 
     fun isRootAvailable(): Boolean = try {
         val p = ProcessBuilder("su", "-c", "id").start()
@@ -595,85 +601,114 @@ object AudioRouter {
         out.contains("uid=0")
     } catch (_: Exception) { false }
 
+    fun isShizukuAvailable(): Boolean = try {
+        Shizuku.pingBinder() && Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
+    } catch (_: Exception) { false }
+
     fun enable(context: Context, onResult: (Boolean, String) -> Unit) {
         Thread { 
-            val r = autoRoute(context, true)
-            Handler(Looper.getMainLooper()).post { onResult(r.first, r.second) } 
+            grantPermissions(context)
+            val success = applyAudioPolicy(context)
+            Handler(Looper.getMainLooper()).post { 
+                if (success) onResult(true, "✅ Virtual Mic Engine Active")
+                else onResult(false, "❌ Failed to start AudioPolicy")
+            } 
         }.start()
     }
 
     fun disable(context: Context, onResult: ((Boolean, String) -> Unit)? = null) {
         Thread { 
-            val r = autoRoute(context, false)
-            if (onResult != null) Handler(Looper.getMainLooper()).post { onResult(r.first, r.second) } 
+            val success = removeAudioPolicy(context)
+            Handler(Looper.getMainLooper()).post { 
+                onResult?.invoke(success, "Injection OFF") 
+            } 
         }.start()
     }
 
-    fun getMixerDump(): String {
-        return try {
-            val p = ProcessBuilder("su", "-c", "tinymix 2>/dev/null || tinymix -D 0").redirectErrorStream(true).start()
-            val out = p.inputStream.bufferedReader().readText()
-            p.waitFor()
-            if (out.isEmpty()) "Empty mixer output" else out
-        } catch (e: Exception) { "Failed: ${e.message}" }
+    private fun grantPermissions(context: Context) {
+        val cmd = "appops set ${context.packageName} MODIFY_AUDIO_ROUTING allow\nappops set ${context.packageName} CAPTURE_AUDIO_OUTPUT allow\n"
+        try {
+            if (isRootAvailable()) {
+                val p = Runtime.getRuntime().exec("su")
+                val os = DataOutputStream(p.outputStream)
+                os.writeBytes(cmd); os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor()
+            } else if (isShizukuAvailable()) {
+                // Use Shizuku to execute the command
+                val method = Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
+                method.isAccessible = true
+                val process = method.invoke(null, arrayOf("sh", "-c", cmd), null, null) as Process
+                process.waitFor()
+            }
+        } catch (e: Exception) { e.printStackTrace() }
     }
 
-    private fun autoRoute(context: Context, enable: Boolean): Pair<Boolean, String> {
-        if (!isRootAvailable()) return Pair(false, "Root required.")
-
-        var tinymixOut = ""
+    @Suppress("UNCHECKED_CAST")
+    private fun applyAudioPolicy(context: Context): Boolean {
         try {
-            val p1 = ProcessBuilder("su", "-c", "tinymix").redirectErrorStream(true).start()
-            tinymixOut = p1.inputStream.bufferedReader().readText()
-            p1.waitFor()
-            
-            if (tinymixOut.isEmpty() || tinymixOut.contains("not found")) {
-                val p2 = ProcessBuilder("su", "-c", "tinymix -D 0").redirectErrorStream(true).start()
-                tinymixOut = p2.inputStream.bufferedReader().readText()
-                p2.waitFor()
-            }
-        } catch (e: Exception) {
-            return Pair(false, "Failed to run tinymix.")
-        }
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-        if (tinymixOut.isEmpty() || tinymixOut.contains("not found")) {
-            return Pair(false, "tinymix not supported on this device.")
-        }
-
-        val commands = mutableListOf<String>()
-        // Regex matches: "MultiMedia1 Mixer SLIMBUS_0_TX" Off
-        val regex = "\\d+\\s+[A-Z]+\\s+\\d+\\s+(.*?)\\s+(On|Off|\\d+)".toRegex()
-        var count = 0
-
-        for (match in regex.findAll(tinymixOut)) {
-            val name = match.groupValues[1]
-            // Look for Microphone paths (TX/Capture/UL)
-            if (name.contains("MultiMedia1", ignoreCase = true) || 
-                name.contains("VOICE_CALL", ignoreCase = true) || 
-                name.contains("Voice Call", ignoreCase = true)) {
-                
-                if (name.contains("TX", ignoreCase = true) || 
-                    name.contains("Capture", ignoreCase = true) || 
-                    name.contains("UL", ignoreCase = true)) {
-                    
-                    commands.add("tinymix \"$name\" ${if (enable) "1" else "0"}")
-                    count++
+            // 1. Find the Built-in Mic
+            var micDevice: AudioDeviceInfo? = null
+            for (device in audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)) {
+                if (device.type == AudioDeviceInfo.TYPE_BUILTIN_MIC) {
+                    micDevice = device
+                    break
                 }
             }
-        }
+            if (micDevice == null) return false
 
-        if (commands.isEmpty()) {
-            return Pair(false, "Could not find Mic (TX) routing paths.")
-        }
+            // 2. Build AudioMixingRule (Target USAGE_MEDIA)
+            val ruleBuilderClass = Class.forName("android.media.audiopolicy.AudioMixingRule\$Builder")
+            val ruleBuilder = ruleBuilderClass.getConstructor().newInstance()
+            val attrs = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build()
+            ruleBuilderClass.getMethod("addRule", AudioAttributes::class.java, Int::class.javaPrimitiveType)
+                .invoke(ruleBuilder, attrs, 1) // 1 = RULE_MATCH_ATTRIBUTE_USAGE
+            val mixingRule = ruleBuilderClass.getMethod("build").invoke(ruleBuilder)
 
-        return try {
-            val cmdStr = commands.joinToString("\n")
-            val p = ProcessBuilder("su", "-c", cmdStr).start()
-            val code = p.waitFor()
-            routingActive = (code == 0 && enable)
-            Pair(true, if (enable) "✅ Routed $count paths to MIC" else "Injection OFF")
+            // 3. Build AudioMix (Route to Mic)
+            val mixBuilderClass = Class.forName("android.media.audiopolicy.AudioMix\$Builder")
+            val mixingRuleClass = Class.forName("android.media.audiopolicy.AudioMixingRule")
+            val mixBuilder = mixBuilderClass.getConstructor(mixingRuleClass).newInstance(mixingRule)
+            
+            val routeFlags = 3 // 1 = LOOP_BACK, 2 = RENDER
+            mixBuilderClass.getMethod("setRouteFlags", Int::class.javaPrimitiveType).invoke(mixBuilder, routeFlags)
+            mixBuilderClass.getMethod("setDevice", AudioDeviceInfo::class.java).invoke(mixBuilder, micDevice)
+            val audioMix = mixBuilderClass.getMethod("build").invoke(mixBuilder)
+
+            // 4. Build AudioPolicy
+            val policyBuilderClass = Class.forName("android.media.audiopolicy.AudioPolicy\$Builder")
+            val policyBuilder = policyBuilderClass.getConstructor(Context::class.java).newInstance(context)
+            policyBuilderClass.getMethod("addMix", Class.forName("android.media.audiopolicy.AudioMix")).invoke(policyBuilder, audioMix)
+            val audioPolicy = policyBuilderClass.getMethod("build").invoke(policyBuilder)
+
+            // 5. Register AudioPolicy
+            val registerMethod = AudioManager::class.java.getMethod("registerAudioPolicy", Class.forName("android.media.audiopolicy.AudioPolicy"))
+            val result = registerMethod.invoke(audioManager, audioPolicy)
+            
+            if (result != null) {
+                activePolicy = audioPolicy
+                routingActive = true
+                return true
+            }
+            return false
         } catch (e: Exception) {
-            Pair(false, "Root execution failed.")
+            e.printStackTrace()
+            return false
+        }
+    }
+
+    private fun removeAudioPolicy(context: Context): Boolean {
+        try {
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            if (activePolicy != null) {
+                val unregisterMethod = AudioManager::class.java.getMethod("unregisterAudioPolicy", Class.forName("android.media.audiopolicy.AudioPolicy"))
+                unregisterMethod.invoke(audioManager, activePolicy)
+                activePolicy = null
+                routingActive = false
+            }
+            return true
+        } catch (e: Exception) {
+            return false
         }
     }
 }
@@ -693,12 +728,11 @@ class DualAudioOutput(private val sampleRate: Int = 48000, monitorOn: Boolean = 
     fun start() {
         val buf = AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT).coerceAtLeast(4096)
         
-        // INJECTION TRACK: Uses VOICE_COMMUNICATION to trick the system mixer
-        injectionTrack = build(AudioAttributes.USAGE_VOICE_COMMUNICATION, buf * 2)
+        // CHANGED TO USAGE_MEDIA so the AudioPolicy Mixer can catch it
+        injectionTrack = build(AudioAttributes.USAGE_MEDIA, buf * 2)
         injectionTrack?.play()
         
         if (monitorEnabled) {
-            // MONITOR TRACK: Uses MEDIA so it's loud and clear locally
             monitorTrack = build(AudioAttributes.USAGE_MEDIA, buf * 2)
             monitorTrack?.play()
         }
