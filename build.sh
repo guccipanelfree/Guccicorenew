@@ -485,58 +485,67 @@ cat > app/src/main/res/layout/item_voice_card.xml << 'EOF'
 EOF
 cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="290dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="16dp" app:cardElevation="15dp" app:strokeColor="#1F4E79" app:strokeWidth="1.5dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="10dp">
-    <LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
-        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="👑 GUCCI VOICES" android:textColor="#4FC3F7" android:textStyle="bold" android:textSize="13sp" android:fontFamily="sans-serif-black"/>
-        <ImageButton android:id="@+id/btnMinimize" android:layout_width="24dp" android:layout_height="24dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#8B949E" android:layout_marginEnd="4dp"/>
-        <ImageButton android:id="@+id/btnClose" android:layout_width="24dp" android:layout_height="24dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="240dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="12dp" app:cardElevation="10dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="8dp">
+    <LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp">
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="👑 GUCCI VOICES" android:textColor="#4FC3F7" android:textStyle="bold" android:textSize="11sp" android:fontFamily="sans-serif-black"/>
+        <ImageButton android:id="@+id/btnMinimize" android:layout_width="20dp" android:layout_height="20dp" android:padding="2dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#8B949E" android:layout_marginEnd="4dp"/>
+        <ImageButton android:id="@+id/btnClose" android:layout_width="20dp" android:layout_height="20dp" android:padding="2dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
     </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="6dp" android:layout_marginBottom="4dp">
-        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="INJECT TO MIC (root)" android:textColor="#00E5A0" android:textSize="11sp" android:textStyle="bold"/>
+    
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="4dp" android:layout_marginBottom="4dp">
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="INJECT TO MIC (root)" android:textColor="#00E5A0" android:textSize="9sp" android:textStyle="bold"/>
         <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/swInject" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="false"/>
     </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="6dp" android:layout_marginBottom="8dp">
-        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="🔊 MONITOR (hear locally)" android:textColor="#4FC3F7" android:textSize="11sp" android:textStyle="bold"/>
+    
+    <!-- THIS BUTTON APPEARS ONLY IF ROUTING FAILS -->
+    <TextView android:id="@+id/tvCopyMixer" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ Routing failed. Tap here to copy Mixer Log." android:textColor="#FF4D4D" android:textSize="9sp" android:textStyle="bold" android:gravity="center" android:padding="4dp" android:visibility="gone"/>
+    
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="4dp" android:layout_marginBottom="6dp">
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="🔊 MONITOR (local)" android:textColor="#4FC3F7" android:textSize="9sp" android:textStyle="bold"/>
         <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/swMonitor" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="false"/>
     </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
-        <LinearLayout android:id="@+id/tabCards" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="4dp">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎵 Cards" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
+    
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="6dp">
+        <LinearLayout android:id="@+id/tabCards" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="2dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎵" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold"/>
         </LinearLayout>
-        <LinearLayout android:id="@+id/tabType" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="4dp">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💬 Text" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
+        <LinearLayout android:id="@+id/tabType" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="2dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💬" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold"/>
         </LinearLayout>
-        <LinearLayout android:id="@+id/tabLive" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:gravity="center" android:background="#12161F">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔴 Live" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
+        <LinearLayout android:id="@+id/tabLive" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:gravity="center" android:background="#12161F">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔴" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold"/>
         </LinearLayout>
     </LinearLayout>
+    
     <LinearLayout android:id="@+id/pageCards" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="visible">
-        <GridView android:id="@+id/lvVoicesFloater" android:layout_width="match_parent" android:layout_height="160dp" android:numColumns="3" android:verticalSpacing="4dp" android:horizontalSpacing="4dp"/>
-        <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="4dp" android:layout_marginTop="4dp" android:layout_marginBottom="4dp" android:progressTint="#00E5A0" android:visibility="invisible"/>
+        <GridView android:id="@+id/lvVoicesFloater" android:layout_width="match_parent" android:layout_height="130dp" android:numColumns="3" android:verticalSpacing="2dp" android:horizontalSpacing="2dp"/>
+        <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="3dp" android:layout_marginTop="2dp" android:layout_marginBottom="2dp" android:progressTint="#00E5A0" android:visibility="invisible"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayRefresh" android:layout_width="0dp" android:layout_weight="1" android:layout_height="32dp" android:text="🔄 REFRESH" android:textColor="#000000" app:backgroundTint="#3B82F6" app:cornerRadius="6dp" android:textSize="10sp" android:layout_marginEnd="4dp"/>
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayStop" android:layout_width="0dp" android:layout_weight="1" android:layout_height="32dp" android:text="⏹ STOP" android:textColor="#FFFFFF" app:backgroundTint="#FF4D4D" app:cornerRadius="6dp" android:textSize="10sp"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayRefresh" android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp" android:text="REFRESH" android:textColor="#000000" app:backgroundTint="#3B82F6" app:cornerRadius="4dp" android:textSize="8sp" android:layout_marginEnd="2dp" android:insetTop="0dp" android:insetBottom="0dp"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayStop" android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp" android:text="STOP" android:textColor="#FFFFFF" app:backgroundTint="#FF4D4D" app:cornerRadius="4dp" android:textSize="8sp" android:insetTop="0dp" android:insetBottom="0dp"/>
         </LinearLayout>
     </LinearLayout>
+    
     <LinearLayout android:id="@+id/pageType" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
-        <Spinner android:id="@+id/spinnerVoiceSelectFloater" android:layout_width="match_parent" android:layout_height="36dp" android:layout_marginBottom="4dp" android:backgroundTint="#00E5A0"/>
-        <EditText android:id="@+id/etTypeHere" android:layout_width="match_parent" android:layout_height="40dp" android:hint="Type here..." android:textColor="#FFFFFF" android:textColorHint="#8B949E" android:background="#12161F" android:padding="8dp" android:textSize="12sp" android:layout_marginBottom="4dp"/>
+        <Spinner android:id="@+id/spinnerVoiceSelectFloater" android:layout_width="match_parent" android:layout_height="28dp" android:layout_marginBottom="4dp" android:backgroundTint="#00E5A0"/>
+        <EditText android:id="@+id/etTypeHere" android:layout_width="match_parent" android:layout_height="32dp" android:hint="Type here..." android:textColor="#FFFFFF" android:textColorHint="#8B949E" android:background="#12161F" android:padding="4dp" android:textSize="10sp" android:layout_marginBottom="4dp"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySend" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:text="Play" android:textColor="#000000" app:backgroundTint="#00E5A0" app:cornerRadius="6dp" android:layout_marginEnd="4dp"/>
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySave" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:text="Save" android:textColor="#FFFFFF" app:backgroundTint="#8B5CF6" app:cornerRadius="6dp"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySend" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:text="Play" android:textColor="#000000" app:backgroundTint="#00E5A0" app:cornerRadius="4dp" android:textSize="9sp" android:layout_marginEnd="2dp" android:insetTop="0dp" android:insetBottom="0dp"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySave" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:text="Save" android:textColor="#FFFFFF" app:backgroundTint="#8B5CF6" app:cornerRadius="4dp" android:textSize="9sp" android:insetTop="0dp" android:insetBottom="0dp"/>
         </LinearLayout>
     </LinearLayout>
+    
     <LinearLayout android:id="@+id/pageLive" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ Headphones recommended. Use MONITOR to hear yourself." android:textColor="#FF4D4D" android:textSize="9sp" android:textStyle="bold" android:layout_marginBottom="4dp" android:gravity="center"/>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="6dp" android:layout_marginBottom="6dp">
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="🎤 Mic Live Mode" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ Headphones recommended." android:textColor="#FF4D4D" android:textSize="8sp" android:textStyle="bold" android:layout_marginBottom="2dp" android:gravity="center"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="4dp" android:layout_marginBottom="4dp">
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="🎤 Live Mode" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold"/>
             <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/swLiveMic" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
         </LinearLayout>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="#12161F" android:padding="8dp" android:layout_marginBottom="6dp">
-            <TextView android:id="@+id/tvPitch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Pitch: 0" android:textColor="#8B949E" android:textSize="10sp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="#12161F" android:padding="4dp" android:layout_marginBottom="4dp">
+            <TextView android:id="@+id/tvPitch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Pitch: 0" android:textColor="#8B949E" android:textSize="8sp"/>
             <SeekBar android:id="@+id/sbPitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="24" android:progress="12"/>
-            <TextView android:id="@+id/tvEcho" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Echo: 0ms" android:textColor="#8B949E" android:textSize="10sp"/>
+            <TextView android:id="@+id/tvEcho" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Echo: 0ms" android:textColor="#8B949E" android:textSize="8sp"/>
             <SeekBar android:id="@+id/sbEcho" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="50" android:progress="0"/>
         </LinearLayout>
     </LinearLayout>
@@ -574,34 +583,11 @@ cat > app/src/main/java/com/example/shtile/AudioRouter.kt << 'EOF'
 package com.example.shtile
 
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
-import java.io.File
-import rikka.shizuku.Shizuku
 
 object AudioRouter {
     private var routingActive = false
-
-    private val txControls = listOf(
-        "MultiMedia1 Mixer SLIMBUS_0_TX", "MultiMedia1 Mixer SLIMBUS_1_TX",
-        "MultiMedia1 Mixer SLIMBUS_2_TX", "MultiMedia1 Mixer SLIMBUS_3_TX",
-        "MultiMedia1 Mixer MI2S_TX", "MultiMedia1 Mixer SEC_MI2S_TX",
-        "MultiMedia1 Mixer QUAT_MI2S_TX",
-        "MM1 Mixer UL1_CH1", "MultiMedia1 Mixer UL1_CH1", "MultiMedia1 Mixer DL1_CH1",
-        "PCM_TX_MIXER MultiMedia1", "AUXDL_PCM_TX_MIXER MultiMedia1",
-        "DL1_PCM_TX_MIXER MultiMedia1", "DAP_PCM_Capture_MIXER MultiMedia1",
-        "MultiMedia1 Mixer Voice Tx", "MultiMedia1 Mixer Capture",
-        "Voice Tx Mixer MultiMedia1", "MultiMedia1 Mixer TX"
-    )
-
-    private val rxControls = listOf(
-        "SLIMBUS_0_RX Audio Mixer MultiMedia1", "SLIMBUS_1_RX Audio Mixer MultiMedia1",
-        "RX_1 Mixer MultiMedia1", "PCM_RX_MIXER MultiMedia1",
-        "MultiMedia1 Mixer SLIMBUS_0_RX", "MultiMedia1 Mixer SLIMBUS_1_RX",
-        "MultiMedia1 Mixer I2S_RX", "DL1 Media Mixer MultiMedia1",
-        "MultiMedia1 Mixer DL1_CH1"
-    )
 
     fun isRootAvailable(): Boolean = try {
         val p = ProcessBuilder("su", "-c", "id").start()
@@ -609,62 +595,86 @@ object AudioRouter {
         out.contains("uid=0")
     } catch (_: Exception) { false }
 
-    fun isShizukuAvailable(): Boolean = try {
-        Shizuku.pingBinder() && Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
-    } catch (_: Exception) { false }
-
     fun enable(context: Context, onResult: (Boolean, String) -> Unit) {
-        Thread { val r = tryEnable(context); Handler(Looper.getMainLooper()).post { onResult(r.first, r.second) } }.start()
+        Thread { 
+            val r = autoRoute(context, true)
+            Handler(Looper.getMainLooper()).post { onResult(r.first, r.second) } 
+        }.start()
     }
 
     fun disable(context: Context, onResult: ((Boolean, String) -> Unit)? = null) {
-        Thread { val r = tryDisable(context); if (onResult != null) Handler(Looper.getMainLooper()).post { onResult(r.first, r.second) } }.start()
+        Thread { 
+            val r = autoRoute(context, false)
+            if (onResult != null) Handler(Looper.getMainLooper()).post { onResult(r.first, r.second) } 
+        }.start()
     }
 
-    fun isActive() = routingActive
-
-    private fun tryEnable(context: Context): Pair<Boolean, String> {
-        if (!isRootAvailable()) {
-            if (isShizukuAvailable()) return Pair(false, "Shizuku has no ALSA access - root required for mic routing.")
-            return Pair(false, "No root access.")
-        }
-        return runAsRoot(context, buildScript(context, true))
-    }
-
-    private fun tryDisable(context: Context): Pair<Boolean, String> {
-        if (!isRootAvailable()) return Pair(false, "No root")
-        return runAsRoot(context, buildScript(context, false))
-    }
-
-    private fun buildScript(context: Context, enable: Boolean): String {
-        val sb = StringBuilder()
-        sb.append("CARD=\$(for c in /proc/asound/card*; do if [ -f \$c/id ] && grep -qiE 'msm|q6|mediatek|exynos|tegra|sdm|samsung' \$c/id; then echo \$(basename \$c | sed 's/card//'); break; fi; done)\n")
-        sb.append("if [ -z \"\$CARD\" ]; then CARD=0; fi\n")
-        sb.append("echo \"Using card \$CARD\"\n")
-        if (enable) {
-            txControls.forEach { c -> sb.append("tinymix -D \$CARD \"$c\" 1 2>/dev/null || tinymix \"$c\" 1 2>/dev/null\n") }
-            rxControls.forEach { c -> sb.append("tinymix -D \$CARD \"$c\" 0 2>/dev/null || tinymix \"$c\" 0 2>/dev/null\n") }
-            sb.append("appops set ${context.packageName} MODIFY_AUDIO_ROUTING allow 2>/dev/null\n")
-            sb.append("appops set ${context.packageName} RECORD_AUDIO allow 2>/dev/null\n")
-        } else {
-            txControls.forEach { c -> sb.append("tinymix -D \$CARD \"$c\" 0 2>/dev/null || tinymix \"$c\" 0 2>/dev/null\n") }
-            rxControls.forEach { c -> sb.append("tinymix -D \$CARD \"$c\" 1 2>/dev/null || tinymix \"$c\" 1 2>/dev/null\n") }
-        }
-        sb.append("echo ROUTE_DONE\n")
-        return sb.toString()
-    }
-
-    private fun runAsRoot(context: Context, script: String): Pair<Boolean, String> {
+    fun getMixerDump(): String {
         return try {
-            val sf = File(context.cacheDir, "audio_route_${System.currentTimeMillis()}.sh")
-            sf.writeText("#!/system/bin/sh\n$script")
-            ProcessBuilder("su", "-c", "chmod 755 ${sf.absolutePath}").start().waitFor()
-            val p = ProcessBuilder("su", "-c", "sh ${sf.absolutePath}").redirectErrorStream(true).start()
-            val out = p.inputStream.bufferedReader().readText(); val code = p.waitFor()
-            sf.delete()
-            routingActive = (code == 0 && out.contains("ROUTE_DONE"))
-            Pair(routingActive, out)
-        } catch (e: Exception) { Pair(false, e.message ?: "su failure") }
+            val p = ProcessBuilder("su", "-c", "tinymix 2>/dev/null || tinymix -D 0").redirectErrorStream(true).start()
+            val out = p.inputStream.bufferedReader().readText()
+            p.waitFor()
+            if (out.isEmpty()) "Empty mixer output" else out
+        } catch (e: Exception) { "Failed: ${e.message}" }
+    }
+
+    private fun autoRoute(context: Context, enable: Boolean): Pair<Boolean, String> {
+        if (!isRootAvailable()) return Pair(false, "Root required.")
+
+        var tinymixOut = ""
+        try {
+            val p1 = ProcessBuilder("su", "-c", "tinymix").redirectErrorStream(true).start()
+            tinymixOut = p1.inputStream.bufferedReader().readText()
+            p1.waitFor()
+            
+            if (tinymixOut.isEmpty() || tinymixOut.contains("not found")) {
+                val p2 = ProcessBuilder("su", "-c", "tinymix -D 0").redirectErrorStream(true).start()
+                tinymixOut = p2.inputStream.bufferedReader().readText()
+                p2.waitFor()
+            }
+        } catch (e: Exception) {
+            return Pair(false, "Failed to run tinymix.")
+        }
+
+        if (tinymixOut.isEmpty() || tinymixOut.contains("not found")) {
+            return Pair(false, "tinymix not supported on this device.")
+        }
+
+        val commands = mutableListOf<String>()
+        // Regex matches: "MultiMedia1 Mixer SLIMBUS_0_TX" Off
+        val regex = "\\d+\\s+[A-Z]+\\s+\\d+\\s+(.*?)\\s+(On|Off|\\d+)".toRegex()
+        var count = 0
+
+        for (match in regex.findAll(tinymixOut)) {
+            val name = match.groupValues[1]
+            // Look for Microphone paths (TX/Capture/UL)
+            if (name.contains("MultiMedia1", ignoreCase = true) || 
+                name.contains("VOICE_CALL", ignoreCase = true) || 
+                name.contains("Voice Call", ignoreCase = true)) {
+                
+                if (name.contains("TX", ignoreCase = true) || 
+                    name.contains("Capture", ignoreCase = true) || 
+                    name.contains("UL", ignoreCase = true)) {
+                    
+                    commands.add("tinymix \"$name\" ${if (enable) "1" else "0"}")
+                    count++
+                }
+            }
+        }
+
+        if (commands.isEmpty()) {
+            return Pair(false, "Could not find Mic (TX) routing paths.")
+        }
+
+        return try {
+            val cmdStr = commands.joinToString("\n")
+            val p = ProcessBuilder("su", "-c", cmdStr).start()
+            val code = p.waitFor()
+            routingActive = (code == 0 && enable)
+            Pair(true, if (enable) "✅ Routed $count paths to MIC" else "Injection OFF")
+        } catch (e: Exception) {
+            Pair(false, "Root execution failed.")
+        }
     }
 }
 EOF
@@ -681,9 +691,17 @@ class DualAudioOutput(private val sampleRate: Int = 48000, monitorOn: Boolean = 
     private var monitorEnabled = monitorOn
 
     fun start() {
-        val buf = AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT).coerceAtLeast(sampleRate / 4)
-        injectionTrack = build(AudioAttributes.USAGE_VOICE_COMMUNICATION, buf * 2); injectionTrack?.play()
-        if (monitorEnabled) { monitorTrack = build(AudioAttributes.USAGE_MEDIA, buf * 2); monitorTrack?.play() }
+        val buf = AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT).coerceAtLeast(4096)
+        
+        // INJECTION TRACK: Uses VOICE_COMMUNICATION to trick the system mixer
+        injectionTrack = build(AudioAttributes.USAGE_VOICE_COMMUNICATION, buf * 2)
+        injectionTrack?.play()
+        
+        if (monitorEnabled) {
+            // MONITOR TRACK: Uses MEDIA so it's loud and clear locally
+            monitorTrack = build(AudioAttributes.USAGE_MEDIA, buf * 2)
+            monitorTrack?.play()
+        }
     }
 
     private fun build(usage: Int, bufSize: Int) = AudioTrack.Builder()
@@ -693,27 +711,15 @@ class DualAudioOutput(private val sampleRate: Int = 48000, monitorOn: Boolean = 
 
     fun write(samples: ShortArray, off: Int = 0, len: Int = samples.size) {
         try { injectionTrack?.write(samples, off, len) } catch (_: Exception) {}
-        try { monitorTrack?.write(samples, off, len) } catch (_: Exception) {}
-    }
-
-    fun setMonitorEnabled(on: Boolean) {
-        monitorEnabled = on
-        if (on && monitorTrack == null) {
-            val buf = AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT).coerceAtLeast(sampleRate / 4)
-            monitorTrack = build(AudioAttributes.USAGE_MEDIA, buf * 2); monitorTrack?.play()
-        } else if (!on) {
-            try { monitorTrack?.stop() } catch (_: Exception) {}
-            try { monitorTrack?.release() } catch (_: Exception) {}
-            monitorTrack = null
+        if (monitorEnabled) {
+            try { monitorTrack?.write(samples, off, len) } catch (_: Exception) {}
         }
     }
 
     fun stop() {
-        try { injectionTrack?.stop() } catch (_: Exception) {}
-        try { injectionTrack?.release() } catch (_: Exception) {}
+        try { injectionTrack?.pause(); injectionTrack?.flush(); injectionTrack?.release() } catch (_: Exception) {}
         injectionTrack = null
-        try { monitorTrack?.stop() } catch (_: Exception) {}
-        try { monitorTrack?.release() } catch (_: Exception) {}
+        try { monitorTrack?.pause(); monitorTrack?.flush(); monitorTrack?.release() } catch (_: Exception) {}
         monitorTrack = null
     }
 }
@@ -730,7 +736,9 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 object MediaDecoder {
-    fun decodeToPcm(file: File): ShortArray? {
+    data class DecodedAudio(val samples: ShortArray, val sampleRate: Int)
+
+    fun decodeToPcm(file: File): DecodedAudio? {
         val extractor = MediaExtractor()
         try {
             extractor.setDataSource(file.absolutePath)
@@ -743,6 +751,7 @@ object MediaDecoder {
             if (trackIdx < 0 || format == null) return null
             extractor.selectTrack(trackIdx)
             val mime = format.getString(MediaFormat.KEY_MIME)!!
+            val sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
             val codec = MediaCodec.createDecoderByType(mime)
             codec.configure(format, null, null, 0); codec.start()
             val pcmOut = ByteArrayOutputStream()
@@ -770,7 +779,7 @@ object MediaDecoder {
             val bytes = pcmOut.toByteArray()
             val shorts = ShortArray(bytes.size / 2)
             ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts)
-            return shorts
+            return DecodedAudio(shorts, sampleRate)
         } catch (_: Exception) { return null } finally { extractor.release() }
     }
 }
@@ -2184,58 +2193,67 @@ cat > app/src/main/res/layout/activity_gucci_voice.xml << 'EOF'
 EOF
 cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="290dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="16dp" app:cardElevation="15dp" app:strokeColor="#1F4E79" app:strokeWidth="1.5dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="10dp">
-    <LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
-        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="👑 GUCCI VOICES" android:textColor="#4FC3F7" android:textStyle="bold" android:textSize="13sp" android:fontFamily="sans-serif-black"/>
-        <ImageButton android:id="@+id/btnMinimize" android:layout_width="24dp" android:layout_height="24dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#8B949E" android:layout_marginEnd="4dp"/>
-        <ImageButton android:id="@+id/btnClose" android:layout_width="24dp" android:layout_height="24dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="240dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="12dp" app:cardElevation="10dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="8dp">
+    <LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp">
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="👑 GUCCI VOICES" android:textColor="#4FC3F7" android:textStyle="bold" android:textSize="11sp" android:fontFamily="sans-serif-black"/>
+        <ImageButton android:id="@+id/btnMinimize" android:layout_width="20dp" android:layout_height="20dp" android:padding="2dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#8B949E" android:layout_marginEnd="4dp"/>
+        <ImageButton android:id="@+id/btnClose" android:layout_width="20dp" android:layout_height="20dp" android:padding="2dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
     </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="6dp" android:layout_marginBottom="4dp">
-        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="INJECT TO MIC (root)" android:textColor="#00E5A0" android:textSize="11sp" android:textStyle="bold"/>
+    
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="4dp" android:layout_marginBottom="4dp">
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="INJECT TO MIC (root)" android:textColor="#00E5A0" android:textSize="9sp" android:textStyle="bold"/>
         <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/swInject" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="false"/>
     </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="6dp" android:layout_marginBottom="8dp">
-        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="🔊 MONITOR (hear locally)" android:textColor="#4FC3F7" android:textSize="11sp" android:textStyle="bold"/>
+    
+    <!-- THIS BUTTON APPEARS ONLY IF ROUTING FAILS -->
+    <TextView android:id="@+id/tvCopyMixer" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ Routing failed. Tap here to copy Mixer Log." android:textColor="#FF4D4D" android:textSize="9sp" android:textStyle="bold" android:gravity="center" android:padding="4dp" android:visibility="gone"/>
+    
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="4dp" android:layout_marginBottom="6dp">
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="🔊 MONITOR (local)" android:textColor="#4FC3F7" android:textSize="9sp" android:textStyle="bold"/>
         <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/swMonitor" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="false"/>
     </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
-        <LinearLayout android:id="@+id/tabCards" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="4dp">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎵 Cards" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
+    
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="6dp">
+        <LinearLayout android:id="@+id/tabCards" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="2dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎵" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold"/>
         </LinearLayout>
-        <LinearLayout android:id="@+id/tabType" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="4dp">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💬 Text" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
+        <LinearLayout android:id="@+id/tabType" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="2dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💬" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold"/>
         </LinearLayout>
-        <LinearLayout android:id="@+id/tabLive" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:gravity="center" android:background="#12161F">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔴 Live" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
+        <LinearLayout android:id="@+id/tabLive" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:gravity="center" android:background="#12161F">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔴" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold"/>
         </LinearLayout>
     </LinearLayout>
+    
     <LinearLayout android:id="@+id/pageCards" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="visible">
-        <GridView android:id="@+id/lvVoicesFloater" android:layout_width="match_parent" android:layout_height="160dp" android:numColumns="3" android:verticalSpacing="4dp" android:horizontalSpacing="4dp"/>
-        <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="4dp" android:layout_marginTop="4dp" android:layout_marginBottom="4dp" android:progressTint="#00E5A0" android:visibility="invisible"/>
+        <GridView android:id="@+id/lvVoicesFloater" android:layout_width="match_parent" android:layout_height="130dp" android:numColumns="3" android:verticalSpacing="2dp" android:horizontalSpacing="2dp"/>
+        <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="3dp" android:layout_marginTop="2dp" android:layout_marginBottom="2dp" android:progressTint="#00E5A0" android:visibility="invisible"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayRefresh" android:layout_width="0dp" android:layout_weight="1" android:layout_height="32dp" android:text="🔄 REFRESH" android:textColor="#000000" app:backgroundTint="#3B82F6" app:cornerRadius="6dp" android:textSize="10sp" android:layout_marginEnd="4dp"/>
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayStop" android:layout_width="0dp" android:layout_weight="1" android:layout_height="32dp" android:text="⏹ STOP" android:textColor="#FFFFFF" app:backgroundTint="#FF4D4D" app:cornerRadius="6dp" android:textSize="10sp"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayRefresh" android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp" android:text="REFRESH" android:textColor="#000000" app:backgroundTint="#3B82F6" app:cornerRadius="4dp" android:textSize="8sp" android:layout_marginEnd="2dp" android:insetTop="0dp" android:insetBottom="0dp"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayStop" android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp" android:text="STOP" android:textColor="#FFFFFF" app:backgroundTint="#FF4D4D" app:cornerRadius="4dp" android:textSize="8sp" android:insetTop="0dp" android:insetBottom="0dp"/>
         </LinearLayout>
     </LinearLayout>
+    
     <LinearLayout android:id="@+id/pageType" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
-        <Spinner android:id="@+id/spinnerVoiceSelectFloater" android:layout_width="match_parent" android:layout_height="36dp" android:layout_marginBottom="4dp" android:backgroundTint="#00E5A0"/>
-        <EditText android:id="@+id/etTypeHere" android:layout_width="match_parent" android:layout_height="40dp" android:hint="Type here..." android:textColor="#FFFFFF" android:textColorHint="#8B949E" android:background="#12161F" android:padding="8dp" android:textSize="12sp" android:layout_marginBottom="4dp"/>
+        <Spinner android:id="@+id/spinnerVoiceSelectFloater" android:layout_width="match_parent" android:layout_height="28dp" android:layout_marginBottom="4dp" android:backgroundTint="#00E5A0"/>
+        <EditText android:id="@+id/etTypeHere" android:layout_width="match_parent" android:layout_height="32dp" android:hint="Type here..." android:textColor="#FFFFFF" android:textColorHint="#8B949E" android:background="#12161F" android:padding="4dp" android:textSize="10sp" android:layout_marginBottom="4dp"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySend" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:text="Play" android:textColor="#000000" app:backgroundTint="#00E5A0" app:cornerRadius="6dp" android:layout_marginEnd="4dp"/>
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySave" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:text="Save" android:textColor="#FFFFFF" app:backgroundTint="#8B5CF6" app:cornerRadius="6dp"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySend" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:text="Play" android:textColor="#000000" app:backgroundTint="#00E5A0" app:cornerRadius="4dp" android:textSize="9sp" android:layout_marginEnd="2dp" android:insetTop="0dp" android:insetBottom="0dp"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySave" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:text="Save" android:textColor="#FFFFFF" app:backgroundTint="#8B5CF6" app:cornerRadius="4dp" android:textSize="9sp" android:insetTop="0dp" android:insetBottom="0dp"/>
         </LinearLayout>
     </LinearLayout>
+    
     <LinearLayout android:id="@+id/pageLive" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ Headphones recommended. Use MONITOR to hear yourself." android:textColor="#FF4D4D" android:textSize="9sp" android:textStyle="bold" android:layout_marginBottom="4dp" android:gravity="center"/>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="6dp" android:layout_marginBottom="6dp">
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="🎤 Mic Live Mode" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ Headphones recommended." android:textColor="#FF4D4D" android:textSize="8sp" android:textStyle="bold" android:layout_marginBottom="2dp" android:gravity="center"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="4dp" android:layout_marginBottom="4dp">
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="🎤 Live Mode" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold"/>
             <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/swLiveMic" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
         </LinearLayout>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="#12161F" android:padding="8dp" android:layout_marginBottom="6dp">
-            <TextView android:id="@+id/tvPitch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Pitch: 0" android:textColor="#8B949E" android:textSize="10sp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="#12161F" android:padding="4dp" android:layout_marginBottom="4dp">
+            <TextView android:id="@+id/tvPitch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Pitch: 0" android:textColor="#8B949E" android:textSize="8sp"/>
             <SeekBar android:id="@+id/sbPitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="24" android:progress="12"/>
-            <TextView android:id="@+id/tvEcho" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Echo: 0ms" android:textColor="#8B949E" android:textSize="10sp"/>
+            <TextView android:id="@+id/tvEcho" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Echo: 0ms" android:textColor="#8B949E" android:textSize="8sp"/>
             <SeekBar android:id="@+id/sbEcho" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="50" android:progress="0"/>
         </LinearLayout>
     </LinearLayout>
@@ -2537,6 +2555,8 @@ package com.example.shtile
 
 import android.Manifest
 import android.app.*
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -2564,7 +2584,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var overlayView: View? = null
     private var bubbleView: View? = null
     private var tts: TextToSpeech? = null
-    private var isTtsReady = false
 
     private var isInjectOn = false
     private var isMonitorOn = false
@@ -2578,11 +2597,12 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private val liveEchoState = VoiceProcessor.EchoState()
 
     private var playbackThread: Thread? = null
+    private var currentOutput: DualAudioOutput? = null
+    private var isPlayingLocal = false
 
     private var voices: List<File> = emptyList()
     private var gridAdapter: VoiceGridAdapter? = null
     private var params: WindowManager.LayoutParams? = null
-
     private var pbPlayback: ProgressBar? = null
 
     private val prefs by lazy { getSharedPreferences("VoicePrefs", Context.MODE_PRIVATE) }
@@ -2632,7 +2652,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT
-            ).apply { gravity = Gravity.TOP or Gravity.START; x = 100; y = 200 }
+            ).apply { gravity = Gravity.TOP or Gravity.START; x = 50; y = 150 }
             windowManager.addView(overlayView, params)
 
             overlayView?.findViewById<View>(R.id.dragHandleTop)?.let { setupDrag(it, overlayView!!, params!!) }
@@ -2640,6 +2660,8 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             overlayView?.findViewById<ImageButton>(R.id.btnMinimize)?.setOnClickListener { minimizeFloater(params!!) }
 
             val swInject = overlayView?.findViewById<MaterialSwitch>(R.id.swInject)
+            val tvCopy = overlayView?.findViewById<TextView>(R.id.tvCopyMixer)
+            
             swInject?.setOnCheckedChangeListener(null); isInjectOn = false; swInject?.isChecked = false
             swInject?.setOnCheckedChangeListener { _, on ->
                 isInjectOn = on
@@ -2650,21 +2672,33 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                         return@setOnCheckedChangeListener
                     }
                     AudioRouter.enable(this) { ok, msg ->
-                        if (ok) Toast.makeText(this, "✅ Mic injection ON", Toast.LENGTH_SHORT).show()
-                        else { Toast.makeText(this, "❌ Routing failed:\n$msg", Toast.LENGTH_LONG).show(); swInject.isChecked = false }
+                        if (ok) {
+                            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+                            tvCopy?.visibility = View.GONE
+                        } else {
+                            Toast.makeText(this, "❌ Failed: $msg", Toast.LENGTH_LONG).show()
+                            swInject.isChecked = false
+                            tvCopy?.visibility = View.VISIBLE
+                        }
                     }
                 } else {
                     AudioRouter.disable(this); Toast.makeText(this, "Mic injection OFF", Toast.LENGTH_SHORT).show()
+                    tvCopy?.visibility = View.GONE
                 }
+            }
+
+            tvCopy?.setOnClickListener {
+                val dump = AudioRouter.getMixerDump()
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                clipboard.setPrimaryClip(ClipData.newPlainText("Mixer", dump))
+                Toast.makeText(this, "✅ Mixer copied! Send to dev.", Toast.LENGTH_LONG).show()
             }
 
             val swMonitor = overlayView?.findViewById<MaterialSwitch>(R.id.swMonitor)
             swMonitor?.isChecked = isMonitorOn
             swMonitor?.setOnCheckedChangeListener { _, on ->
                 isMonitorOn = on
-                liveOutput?.setMonitorEnabled(on)
-                if (on) Toast.makeText(this, "🔊 Monitor ON — you'll hear it too", Toast.LENGTH_SHORT).show()
-                else Toast.makeText(this, "🔇 Monitor OFF — only friends hear", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, if (on) "🔊 Monitor ON" else "🔇 Monitor OFF", Toast.LENGTH_SHORT).show()
             }
 
             val tabCards = overlayView?.findViewById<LinearLayout>(R.id.tabCards)
@@ -2696,7 +2730,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
             overlayView?.findViewById<Button>(R.id.btnOverlayRefresh)?.setOnClickListener {
                 loadVoices(); gridAdapter = VoiceGridAdapter(voices, ctx); gridView?.adapter = gridAdapter
-                Toast.makeText(this, "Sounds Refreshed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Refreshed", Toast.LENGTH_SHORT).show()
             }
 
             val etType = overlayView?.findViewById<EditText>(R.id.etTypeHere)
@@ -2735,6 +2769,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
             overlayView?.findViewById<Button>(R.id.btnOverlayStop)?.setOnClickListener {
                 stopPlayback(); stopLiveMic(); swLive?.isChecked = false
+                Toast.makeText(this, "Stopped", Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
             Toast.makeText(this, "Overlay Load Error: ${e.message}", Toast.LENGTH_LONG).show(); stopSelf()
@@ -2761,50 +2796,52 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         } catch (_: Exception) {}
     }
 
-    private fun startAudioRouting() { AudioRouter.enable(this) { ok, msg -> if (!ok) Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() } }
     private fun stopAudioRouting() { AudioRouter.disable(this) }
 
     private fun playPcm(samples: ShortArray, sampleRate: Int) {
         stopPlayback()
-        val out = DualAudioOutput(sampleRate, isMonitorOn)
-        out.start()
+        isPlayingLocal = true
+        currentOutput = DualAudioOutput(sampleRate, isMonitorOn)
+        currentOutput?.start()
+        
         pbPlayback?.visibility = View.VISIBLE
         pbPlayback?.max = samples.size
-        val t = Thread {
+        
+        playbackThread = Thread {
             var idx = 0
             val chunk = 2048
             try {
-                while (idx < samples.size) {
+                while (idx < samples.size && isPlayingLocal) {
                     val n = minOf(chunk, samples.size - idx)
-                    out.write(samples, idx, n)
+                    currentOutput?.write(samples, idx, n)
                     idx += n
                     val p = idx
                     Handler(Looper.getMainLooper()).post { pbPlayback?.progress = p }
                 }
             } finally {
-                try { Thread.sleep(300) } catch (_: InterruptedException) {}
-                out.stop()
+                try { Thread.sleep(200) } catch (_: InterruptedException) {}
+                currentOutput?.stop()
+                currentOutput = null
                 Handler(Looper.getMainLooper()).post {
                     pbPlayback?.visibility = View.INVISIBLE
                     pbPlayback?.progress = 0
                 }
             }
-        }
-        playbackThread = t
-        t.start()
+        }.apply { start() }
     }
 
     private fun playVoice(file: File) {
         if (!isInjectOn && !isMonitorOn) {
-            Toast.makeText(this, "Turn ON 'INJECT TO MIC' to send to friends", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Turn ON 'INJECT TO MIC' or 'MONITOR'", Toast.LENGTH_LONG).show()
+            return
         }
         Thread {
-            val pcm = MediaDecoder.decodeToPcm(file)
-            if (pcm == null) {
-                Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Cannot decode this file", Toast.LENGTH_SHORT).show() }
+            val audio = MediaDecoder.decodeToPcm(file)
+            if (audio == null) {
+                Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Decode failed", Toast.LENGTH_SHORT).show() }
                 return@Thread
             }
-            Handler(Looper.getMainLooper()).post { playPcm(pcm, 48000) }
+            Handler(Looper.getMainLooper()).post { playPcm(audio.samples, audio.sampleRate) }
         }.start()
     }
 
@@ -2834,9 +2871,9 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             Thread {
                 try {
                     val f = File(cacheDir, "temp_overlay.mp3"); f.writeBytes(bytes)
-                    val pcm = MediaDecoder.decodeToPcm(f)
+                    val audio = MediaDecoder.decodeToPcm(f)
                     f.delete()
-                    if (pcm != null) Handler(Looper.getMainLooper()).post { playPcm(pcm, 48000) }
+                    if (audio != null) Handler(Looper.getMainLooper()).post { playPcm(audio.samples, audio.sampleRate) }
                     else Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Decode failed", Toast.LENGTH_SHORT).show() }
                 } catch (_: Exception) {}
             }.start()
@@ -2904,7 +2941,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private fun minimizeFloater(currentParams: WindowManager.LayoutParams) {
         overlayView?.let { runCatching { windowManager.removeView(it) } }; overlayView = null
         val b = LayoutInflater.from(this).inflate(R.layout.overlay_bubble, null)
-        val bp = WindowManager.LayoutParams(120, 120,
+        val bp = WindowManager.LayoutParams(100, 100,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT)
         bp.gravity = Gravity.TOP or Gravity.START; bp.x = currentParams.x; bp.y = currentParams.y
@@ -2934,12 +2971,14 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun stopPlayback() {
+        isPlayingLocal = false
         playbackThread?.interrupt(); playbackThread = null
+        currentOutput?.stop(); currentOutput = null
         pbPlayback?.visibility = View.INVISIBLE
         pbPlayback?.progress = 0
     }
 
-    override fun onInit(status: Int) { if (status == TextToSpeech.SUCCESS) { tts?.language = Locale.US; isTtsReady = true } }
+    override fun onInit(status: Int) { if (status == TextToSpeech.SUCCESS) { tts?.language = Locale.US } }
 
     override fun onDestroy() {
         super.onDestroy()
@@ -2968,21 +3007,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             }
             return v
         }
-    }
-}
-EOF
-cat > app/src/main/java/com/example/shtile/TransparentActivity.kt << 'EOF'
-package com.example.shtile
-import android.content.Intent
-import android.os.Build
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-class TransparentActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val i = Intent(this, FloaterOverlayService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { startForegroundService(i) } else { startService(i) }
-        finish()
     }
 }
 EOF
