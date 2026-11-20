@@ -585,6 +585,7 @@ package com.example.shtile
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import rikka.shizuku.Shizuku
 import java.io.DataOutputStream
 
 object AudioRouter {
@@ -596,6 +597,10 @@ object AudioRouter {
         val p = ProcessBuilder("su", "-c", "id").start()
         val out = p.inputStream.bufferedReader().readText(); p.waitFor()
         out.contains("uid=0")
+    } catch (_: Exception) { false }
+
+    fun isShizukuAvailable(): Boolean = try {
+        Shizuku.pingBinder() && Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
     } catch (_: Exception) { false }
 
     fun enable(context: Context, onResult: (Boolean, String) -> Unit) {
@@ -613,10 +618,10 @@ object AudioRouter {
     }
 
     private fun tryEnable(context: Context): Pair<Boolean, String> {
-        if (!isRootAvailable()) return Pair(false, "Root required for mic injection.")
+        // tinymix requires root, so if no root, we fail safely.
+        if (!isRootAvailable()) return Pair(false, "Root required for tinymix injection.")
 
         return try {
-            // 1. Dump mixer state
             val p1 = ProcessBuilder("su", "-c", "tinymix 2>/dev/null || tinymix -D 0").redirectErrorStream(true).start()
             val tinymixOut = p1.inputStream.bufferedReader().readText()
             p1.waitFor()
@@ -642,11 +647,9 @@ object AudioRouter {
                 }
 
                 if (name.isNotEmpty() && name.contains("MultiMedia1")) {
-                    // Microphone (TX) paths
                     if (name.contains("TX", true) || name.contains("Capture", true) || name.contains("UL", true)) {
                         savedTxCommands.add("tinymix \"$name\" 1")
                     }
-                    // Speaker (RX) paths -> MUTE
                     if (name.contains("RX", true) || name.contains("DL", true)) {
                         savedRxCommands.add("tinymix \"$name\" 0")
                     }
@@ -673,7 +676,6 @@ object AudioRouter {
         if (!isRootAvailable()) return Pair(false, "No root")
 
         return try {
-            // Restore original state
             val cmdStr = savedTxCommands.joinToString("\n").replace(" 1", " 0") + "\n" +
                          savedRxCommands.joinToString("\n").replace(" 0", " 1")
             if (cmdStr.isNotEmpty()) {
