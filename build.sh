@@ -492,10 +492,13 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
         <ImageButton android:id="@+id/btnMinimize" android:layout_width="24dp" android:layout_height="24dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#8B949E" android:layout_marginEnd="4dp"/>
         <ImageButton android:id="@+id/btnClose" android:layout_width="24dp" android:layout_height="24dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
     </LinearLayout>
+    
+    <!-- UPDATED NAME HERE -->
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="6dp" android:layout_marginBottom="8dp">
-        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI VOICE" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="INJECT GUCCI VOICE" android:textColor="#00E5A0" android:textSize="11sp" android:textStyle="bold"/>
         <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/swInject" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="false"/>
     </LinearLayout>
+
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
         <LinearLayout android:id="@+id/tabCards" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="4dp">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎵 Cards" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
@@ -511,7 +514,6 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
     <LinearLayout android:id="@+id/pageCards" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="visible">
         <GridView android:id="@+id/lvVoicesFloater" android:layout_width="match_parent" android:layout_height="160dp" android:numColumns="3" android:verticalSpacing="4dp" android:horizontalSpacing="4dp"/>
         
-        <!-- PLAYBACK PROGRESS BAR -->
         <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="4dp" android:layout_marginTop="4dp" android:layout_marginBottom="4dp" android:progressTint="#00E5A0" android:visibility="invisible"/>
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
@@ -549,11 +551,13 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="70dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="8dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
     <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent" android:padding="4dp">
-        <!-- FAVORITE STAR -->
-        <ImageView android:id="@+id/btnStarMini" android:layout_width="18dp" android:layout_height="18dp" android:src="@android:drawable/btn_star" app:tint="#8B949E" android:layout_alignParentTop="true" android:layout_alignParentEnd="true" android:padding="2dp"/>
         
+        <!-- FAVORITE STAR (Text Icon for guaranteed visibility) -->
+        <TextView android:id="@+id/tvStarMini" android:layout_width="28dp" android:layout_height="28dp" android:text="☆" android:textColor="#8B949E" android:textSize="20sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentEnd="true"/>
+
         <TextView android:id="@+id/tvLetterMini" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="20sp" android:textStyle="bold" android:layout_centerInParent="true"/>
-        <TextView android:id="@+id/tvNameMini" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="8sp" android:maxLines="1" android:layout_alignParentBottom="true" android:gravity="center"/>
+        
+        <TextView android:id="@+id/tvNameMini" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="8sp" android:maxLines="1" android:layout_alignParentBottom="true" android:gravity="center" android:layout_marginTop="12dp"/>
     </RelativeLayout>
 </com.google.android.material.card.MaterialCardView>
 EOF
@@ -1966,10 +1970,13 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
         <ImageButton android:id="@+id/btnMinimize" android:layout_width="24dp" android:layout_height="24dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#8B949E" android:layout_marginEnd="4dp"/>
         <ImageButton android:id="@+id/btnClose" android:layout_width="24dp" android:layout_height="24dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
     </LinearLayout>
+    
+    <!-- UPDATED NAME HERE -->
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="6dp" android:layout_marginBottom="8dp">
-        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI VOICE" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="INJECT GUCCI VOICE" android:textColor="#00E5A0" android:textSize="11sp" android:textStyle="bold"/>
         <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/swInject" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="false"/>
     </LinearLayout>
+
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
         <LinearLayout android:id="@+id/tabCards" android:layout_width="0dp" android:layout_weight="1" android:layout_height="36dp" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="4dp">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎵 Cards" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
@@ -1985,7 +1992,6 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
     <LinearLayout android:id="@+id/pageCards" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="visible">
         <GridView android:id="@+id/lvVoicesFloater" android:layout_width="match_parent" android:layout_height="160dp" android:numColumns="3" android:verticalSpacing="4dp" android:horizontalSpacing="4dp"/>
         
-        <!-- PLAYBACK PROGRESS BAR -->
         <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="4dp" android:layout_marginTop="4dp" android:layout_marginBottom="4dp" android:progressTint="#00E5A0" android:visibility="invisible"/>
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
@@ -2300,7 +2306,6 @@ import android.speech.tts.TextToSpeech
 import android.view.*
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
-import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.content.ContextCompat
 import com.google.android.material.materialswitch.MaterialSwitch
@@ -2335,7 +2340,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var progressRunnable: Runnable? = null
 
     private val prefs by lazy { getSharedPreferences("VoicePrefs", Context.MODE_PRIVATE) }
-    // Safe favorites getter to prevent crashes
     private val favorites: Set<String> get() = try { prefs.getStringSet("favorites", emptySet()) ?: emptySet() } catch (e: Exception) { emptySet() }
 
     private val ELEVENLABS_API_KEY = "sk_YOUR_NEW_API_KEY_HERE"
@@ -2415,7 +2419,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     startAudioRouting()
                 } else {
                     stopAudioRouting()
-                    unmuteLocalSpeaker()
                 }
             }
 
@@ -2522,6 +2525,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         try {
             val all = VoiceDataHelper.getAllVoices(this)
             val favs = favorites
+            // Sorts by favorites first, then A-Z
             voices = all.sortedWith(compareByDescending<File> { favs.contains(it.name) }.thenBy { it.name })
         } catch (e: Exception) {
             voices = emptyList()
@@ -2533,56 +2537,13 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             val favs = favorites.toMutableSet()
             if (favs.contains(file.name)) favs.remove(file.name) else favs.add(file.name)
             prefs.edit().putStringSet("favorites", favs).apply()
+            
+            // Re-load and Re-attach the adapter instantly so it jumps to the top
             loadVoices()
             val themedContext = ContextThemeWrapper(this, R.style.AppTheme)
             gridAdapter = VoiceGridAdapter(voices, themedContext)
             overlayView?.findViewById<GridView>(R.id.lvVoicesFloater)?.adapter = gridAdapter
         } catch (e: Exception) {}
-    }
-
-    private fun muteLocalSpeaker() {
-        try {
-            val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            am.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
-        } catch (e: Exception) {}
-    }
-
-    private fun unmuteLocalSpeaker() {
-        try {
-            val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            val max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-            am.setStreamVolume(AudioManager.STREAM_MUSIC, max / 2, 0)
-        } catch (e: Exception) {}
-    }
-
-    private fun mutePhysicalMic() {
-        Thread {
-            try {
-                val cmd = """
-                    tinymix 2>/dev/null | grep -i "adc" | grep -i "vol" | awk '{print ${'$'}2}' | while read id; do tinymix "${'$'}id" 0; done
-                    tinymix 2>/dev/null | grep -i "mic" | grep -i "vol" | awk '{print ${'$'}2}' | while read id; do tinymix "${'$'}id" 0; done
-                """.trimIndent()
-                val p = Runtime.getRuntime().exec("su")
-                val os = DataOutputStream(p.outputStream)
-                os.writeBytes(cmd + "\n"); os.writeBytes("exit\n"); os.flush(); os.close()
-                p.waitFor()
-            } catch (e: Exception) {}
-        }.start()
-    }
-
-    private fun unmutePhysicalMic() {
-        Thread {
-            try {
-                val cmd = """
-                    tinymix 2>/dev/null | grep -i "adc" | grep -i "vol" | awk '{print ${'$'}2}' | while read id; do tinymix "${'$'}id" 100; done
-                    tinymix 2>/dev/null | grep -i "mic" | grep -i "vol" | awk '{print ${'$'}2}' | while read id; do tinymix "${'$'}id" 100; done
-                """.trimIndent()
-                val p = Runtime.getRuntime().exec("su")
-                val os = DataOutputStream(p.outputStream)
-                os.writeBytes(cmd + "\n"); os.writeBytes("exit\n"); os.flush(); os.close()
-                p.waitFor()
-            } catch (e: Exception) {}
-        }.start()
     }
 
     private fun startAudioRouting() {
@@ -2678,14 +2639,12 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     tempFile.writeBytes(bytes)
                     Handler(Looper.getMainLooper()).post {
                         stopPlayback() 
-                        muteLocalSpeaker()
                         mediaPlayer = MediaPlayer().apply {
                             setAudioStreamType(AudioManager.STREAM_MUSIC)
                             setDataSource(tempFile.absolutePath)
                             prepare()
                             startProgressBar(duration)
                             start()
-                            if (isInjectOn) mutePhysicalMic()
                             setOnCompletionListener { stopPlayback() }
                         }
                     }
@@ -2730,7 +2689,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
             audioRecord?.startRecording()
             audioTrack?.play()
-            muteLocalSpeaker()
 
             liveThread = Thread {
                 val buf = ShortArray(2048)
@@ -2756,7 +2714,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         try { audioRecord?.stop(); audioRecord?.release() } catch (_: Exception) {}
         try { audioTrack?.stop(); audioTrack?.release() } catch (_: Exception) {}
         audioRecord = null; audioTrack = null
-        unmuteLocalSpeaker() 
     }
 
     private fun minimizeFloater(currentParams: WindowManager.LayoutParams) {
@@ -2808,8 +2765,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
     private fun playVoice(file: File) {
         stopPlayback() 
-        muteLocalSpeaker()
-
         try {
             mediaPlayer = MediaPlayer().apply {
                 setAudioStreamType(AudioManager.STREAM_MUSIC)
@@ -2817,12 +2772,10 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 prepare()
                 startProgressBar(duration)
                 start()
-                if (isInjectOn) mutePhysicalMic() 
                 setOnCompletionListener { stopPlayback() }
             }
         } catch (e: Exception) {
             Toast.makeText(this, "Cannot play this file format", Toast.LENGTH_SHORT).show()
-            unmuteLocalSpeaker()
         }
     }
 
@@ -2833,8 +2786,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         }
         mediaPlayer = null 
         stopProgressBar()
-        unmuteLocalSpeaker()
-        if (isInjectOn) unmutePhysicalMic() 
     }
     
     override fun onInit(status: Int) { if (status == TextToSpeech.SUCCESS) { tts?.language = Locale.US; isTtsReady = true } }
@@ -2853,31 +2804,29 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         override fun getItem(p: Int) = items[p]
         override fun getItemId(p: Int) = p.toLong()
         override fun getView(p: Int, cv: View?, parent: ViewGroup): View {
-            try {
-                val v = cv ?: LayoutInflater.from(ctx).inflate(R.layout.item_voice_card_mini, parent, false)
-                val file = items[p]
-                val name = try { file.nameWithoutExtension.ifEmpty { "Sound" } } catch(e: Exception) { "Sound" }
-                
-                v.findViewById<TextView>(R.id.tvLetterMini)?.text = name.take(1).uppercase()
-                v.findViewById<TextView>(R.id.tvNameMini)?.text = if (name.length > 8) name.take(8) + ".." else name
-                
-                val star = v.findViewById<AppCompatImageView>(R.id.btnStarMini)
-                if (star != null) {
-                    if (favorites.contains(file.name)) {
-                        star.setColorFilter(android.graphics.Color.parseColor("#FFD700")) 
-                    } else {
-                        star.setColorFilter(android.graphics.Color.parseColor("#8B949E")) 
-                    }
-                    star.setOnClickListener {
-                        toggleFavorite(file)
-                    }
+            val v = cv ?: LayoutInflater.from(ctx).inflate(R.layout.item_voice_card_mini, parent, false)
+            val file = items[p]
+            val name = file.nameWithoutExtension.ifEmpty { "Sound" }
+            
+            v.findViewById<TextView>(R.id.tvLetterMini)?.text = name.take(1).uppercase()
+            v.findViewById<TextView>(R.id.tvNameMini)?.text = if (name.length > 8) name.take(8) + ".." else name
+            
+            // TEXT STAR LOGIC (Guaranteed to show up)
+            val star = v.findViewById<TextView>(R.id.tvStarMini)
+            if (star != null) {
+                if (favorites.contains(file.name)) {
+                    star.text = "★"
+                    star.setTextColor(android.graphics.Color.parseColor("#FFD700")) // Gold
+                } else {
+                    star.text = "☆"
+                    star.setTextColor(android.graphics.Color.parseColor("#8B949E")) // Grey
                 }
-                return v
-            } catch (e: Exception) {
-                val v = LayoutInflater.from(ctx).inflate(android.R.layout.simple_list_item_1, parent, false)
-                v.findViewById<TextView>(android.R.id.text1)?.text = "Error loading card"
-                return v
+                star.setOnClickListener {
+                    toggleFavorite(file)
+                }
             }
+            
+            return v
         }
     }
 }
