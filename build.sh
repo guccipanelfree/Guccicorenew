@@ -2589,8 +2589,6 @@ package com.example.shtile
 
 import android.Manifest
 import android.app.*
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -2696,36 +2694,29 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             val swInject = overlayView?.findViewById<MaterialSwitch>(R.id.swInject)
             val tvCopy = overlayView?.findViewById<TextView>(R.id.tvCopyMixer)
             
+            // Hide the copy mixer text since we don't need it anymore
+            tvCopy?.visibility = View.GONE
+
             swInject?.setOnCheckedChangeListener(null); isInjectOn = false; swInject?.isChecked = false
             swInject?.setOnCheckedChangeListener { _, on ->
                 isInjectOn = on
                 if (on) {
-                    if (!AudioRouter.isRootAvailable()) {
-                        Toast.makeText(this, "Root required for mic injection", Toast.LENGTH_LONG).show()
+                    if (!AudioRouter.isRootAvailable() && !AudioRouter.isShizukuAvailable()) {
+                        Toast.makeText(this, "Root or Shizuku required", Toast.LENGTH_LONG).show()
                         swInject.isChecked = false
                         return@setOnCheckedChangeListener
                     }
                     AudioRouter.enable(this) { ok, msg ->
                         if (ok) {
                             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-                            tvCopy?.visibility = View.GONE
                         } else {
                             Toast.makeText(this, "❌ Failed: $msg", Toast.LENGTH_LONG).show()
                             swInject.isChecked = false
-                            tvCopy?.visibility = View.VISIBLE
                         }
                     }
                 } else {
                     AudioRouter.disable(this); Toast.makeText(this, "Mic injection OFF", Toast.LENGTH_SHORT).show()
-                    tvCopy?.visibility = View.GONE
                 }
-            }
-
-            tvCopy?.setOnClickListener {
-                val dump = AudioRouter.getMixerDump()
-                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                clipboard.setPrimaryClip(ClipData.newPlainText("Mixer", dump))
-                Toast.makeText(this, "✅ Mixer copied! Send to dev.", Toast.LENGTH_LONG).show()
             }
 
             val swMonitor = overlayView?.findViewById<MaterialSwitch>(R.id.swMonitor)
