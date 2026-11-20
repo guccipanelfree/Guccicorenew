@@ -2770,7 +2770,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         out.start()
         pbPlayback?.visibility = View.VISIBLE
         pbPlayback?.max = samples.size
-        playbackThread = Thread {
+        val t = Thread {
             var idx = 0
             val chunk = 2048
             try {
@@ -2784,9 +2784,14 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             } finally {
                 try { Thread.sleep(300) } catch (_: InterruptedException) {}
                 out.stop()
-                Handler(Looper.getMainLooper()).post { pbPlayback?.visibility = View.INVISIBLE; pbPlayback?.progress = 0 }
+                Handler(Looper.getMainLooper()).post {
+                    pbPlayback?.visibility = View.INVISIBLE
+                    pbPlayback?.progress = 0
+                }
             }
-        }.start()
+        }
+        playbackThread = t
+        t.start()
     }
 
     private fun playVoice(file: File) {
