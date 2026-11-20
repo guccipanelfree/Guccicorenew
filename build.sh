@@ -2028,6 +2028,7 @@ EOF
 cat > app/src/main/java/com/example/shtile/GucciVoiceActivity.kt << 'EOF'
 package com.example.shtile
 
+import android.app.Activity
 import android.content.Intent
 import android.media.MediaPlayer
 import android.net.Uri
@@ -2066,8 +2067,7 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private val personas = listOf(
         VoicePersona("21m00Tcm4TlvDq8ikWAM", "Rachel (Default)"),
         VoicePersona("pNInz6obpgDQGcFmaJgB", "Adam (Default)"),
-        VoicePersona("YOUR_ZARA_ID_HERE", "Zara Gaming"),
-        VoicePersona("YOUR_KT_ID_HERE", "KT GAMERZ")
+        VoicePersona("YOUR_ZARA_ID_HERE", "Zara Gaming")
     )
     private var selectedPersona = personas[0]
 
@@ -2105,13 +2105,22 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             } else { Toast.makeText(this, "Type something first!", Toast.LENGTH_SHORT).show() }
         }
 
+        // 🚀 BULK ADD VOICE BUTTON
         findViewById<MaterialButton>(R.id.btnAddVoice).setOnClickListener {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply { addCategory(Intent.CATEGORY_OPENABLE); type = "audio/*" }
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply { 
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "audio/*" 
+                putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true) // Allows selecting multiple files
+            }
             startActivityForResult(intent, PICK_AUDIO_REQ)
         }
 
         findViewById<MaterialButton>(R.id.btnExtractVideo).setOnClickListener {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply { addCategory(Intent.CATEGORY_OPENABLE); type = "video/*" }
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply { 
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "video/*" 
+                putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+            }
             startActivityForResult(intent, PICK_AUDIO_REQ)
         }
 
@@ -2224,10 +2233,29 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (::voiceAdapter.isInitialized) voiceAdapter.notifyDataSetChanged()
     }
 
+    // 🚀 BULK IMPORT LOGIC HERE
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == PICK_AUDIO_REQ && resultCode == RESULT_OK) {
-            data?.data?.let { uri ->
+            val clipData = data?.clipData
+            if (clipData != null) {
+                // User selected multiple files
+                Toast.makeText(this, "Saving ${clipData.itemCount} files...", Toast.LENGTH_SHORT).show()
+                Thread {
+                    var savedCount = 0
+                    for (i in 0 until clipData.itemCount) {
+                        val uri = clipData.getItemAt(i).uri
+                        val newFile = VoiceDataHelper.saveFromUri(this, uri)
+                        if (newFile != null) savedCount++
+                    }
+                    runOnUiThread {
+                        loadVoices()
+                        Toast.makeText(this, "✅ $savedCount voices added!", Toast.LENGTH_LONG).show()
+                    }
+                }.start()
+            } else if (data?.data != null) {
+                // User selected one file
+                val uri = data.data!!
                 Toast.makeText(this, "Saving file...", Toast.LENGTH_SHORT).show()
                 Thread {
                     val newFile = VoiceDataHelper.saveFromUri(this, uri)
@@ -2309,7 +2337,6 @@ import android.widget.*
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.content.ContextCompat
 import com.google.android.material.materialswitch.MaterialSwitch
-import java.io.DataOutputStream
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
@@ -2544,89 +2571,28 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     }
 
     // ==========================================
-    // 🚀 HARDWARE-LEVEL AUDIO ROUTING (NO VOLUME MUTING)
+    // 🚀 THE SOFTWARE ROUTING TRICK (NO MAGISK NEEDED)
     // ==========================================
     private fun startAudioRouting() {
-        Toast.makeText(this, "Hooking to Mic (Root)...", Toast.LENGTH_SHORT).show()
-        Thread {
-            try {
-                val rootCheck = Runtime.getRuntime().exec("su -c id")
-                val rootOutput = rootCheck.inputStream.bufferedReader().readText()
-                if (!rootOutput.contains("uid=0")) {
-                    Handler(Looper.getMainLooper()).post { 
-                        Toast.makeText(this, "❌ Root Denied! Toggle OFF", Toast.LENGTH_LONG).show() 
-                        overlayView?.findViewById<MaterialSwitch>(R.id.swInject)?.isChecked = false
-                    }
-                    return@Thread
-                }
-
-                // Aggressive OnePlus/Qualcomm loopback routing
-                val cmd = """
-                    # 1. Disconnect Speaker physically
-                    tinymix "SLIMBUS_0_RX Audio Mixer MultiMedia1" 0 2>/dev/null
-                    tinymix "MultiMedia1 Mixer SLIMBUS_0_RX" 0 2>/dev/null
-                    tinymix "RX_1 Mixer MultiMedia1" 0 2>/dev/null
-                    
-                    # 2. Connect directly to the Mic (TX)
-                    tinymix "MultiMedia1 Mixer SLIMBUS_0_TX" 1 2>/dev/null
-                    tinymix "MultiMedia1 Mixer VOC_REC_UL" 1 2>/dev/null
-                    tinymix "MultiMedia1 Mixer VOC_REC_DL" 1 2>/dev/null
-                    tinymix "Capture_IIR_Filter" 1 2>/dev/null
-                    
-                    echo "SUCCESS"
-                """.trimIndent()
-
-                val p = Runtime.getRuntime().exec("su")
-                val os = DataOutputStream(p.outputStream)
-                os.writeBytes(cmd + "\n"); os.writeBytes("exit\n"); os.flush(); os.close()
-                
-                val output = p.inputStream.bufferedReader().readText()
-                p.waitFor()
-                
-                Handler(Looper.getMainLooper()).post { 
-                    if (output.contains("SUCCESS")) {
-                        Toast.makeText(this, "✅ MIC INJECTION ACTIVE", Toast.LENGTH_LONG).show() 
-                    } else {
-                        Toast.makeText(this, "⚠️ Routing Failed, check Root.", Toast.LENGTH_LONG).show() 
-                        overlayView?.findViewById<MaterialSwitch>(R.id.swInject)?.isChecked = false
-                    }
-                }
-            } catch (e: Exception) {
-                Handler(Looper.getMainLooper()).post { 
-                    Toast.makeText(this, "❌ Error: ${e.message}", Toast.LENGTH_LONG).show() 
-                }
-            }
-        }.start()
+        try {
+            val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            // Trick the OS into thinking a voice call is happening
+            am.mode = AudioManager.MODE_IN_COMMUNICATION
+            am.isSpeakerphoneOn = false 
+            am.isMicrophoneMute = false
+            Toast.makeText(this, "✅ Gucci Voice Hooked to Mic", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Routing Error: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun stopAudioRouting() {
-        Toast.makeText(this, "Unhooking Mic...", Toast.LENGTH_SHORT).show()
-        Thread {
-            try {
-                val cmd = """
-                    # Disconnect from mic (TX)
-                    tinymix "MultiMedia1 Mixer SLIMBUS_0_TX" 0 2>/dev/null
-                    tinymix "MultiMedia1 Mixer VOC_REC_UL" 0 2>/dev/null
-                    tinymix "MultiMedia1 Mixer VOC_REC_DL" 0 2>/dev/null
-                    
-                    # Restore Speaker (RX)
-                    tinymix "SLIMBUS_0_RX Audio Mixer MultiMedia1" 1 2>/dev/null
-                    tinymix "MultiMedia1 Mixer SLIMBUS_0_RX" 1 2>/dev/null
-                    tinymix "RX_1 Mixer MultiMedia1" 1 2>/dev/null
-                    
-                    echo "SUCCESS"
-                """.trimIndent()
-
-                val p = Runtime.getRuntime().exec("su")
-                val os = DataOutputStream(p.outputStream)
-                os.writeBytes(cmd + "\n"); os.writeBytes("exit\n"); os.flush(); os.close()
-                p.waitFor()
-                
-                Handler(Looper.getMainLooper()).post { 
-                    Toast.makeText(this, "🎙️ Mic Injection OFF", Toast.LENGTH_SHORT).show() 
-                }
-            } catch (e: Exception) {}
-        }.start()
+        try {
+            val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            am.mode = AudioManager.MODE_NORMAL
+            am.isSpeakerphoneOn = true
+            Toast.makeText(this, "🎙️ Gucci Voice Unhooked", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {}
     }
 
     private fun startProgressBar(duration: Int) {
@@ -2685,7 +2651,11 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     Handler(Looper.getMainLooper()).post {
                         stopPlayback() 
                         mediaPlayer = MediaPlayer().apply {
-                            setAudioStreamType(AudioManager.STREAM_MUSIC)
+                            // This is the secret. It routes the audio into the communication stream
+                            setAudioAttributes(AudioAttributes.Builder()
+                                .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                                .build())
                             setDataSource(tempFile.absolutePath)
                             prepare()
                             startProgressBar(duration)
@@ -2730,7 +2700,15 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         
         try {
             audioRecord = AudioRecord(MediaRecorder.AudioSource.MIC, VoiceProcessor.SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, minBuf * 2)
-            audioTrack = AudioTrack.Builder().setAudioFormat(AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_16BIT).setSampleRate(VoiceProcessor.SAMPLE_RATE).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).build()).setBufferSizeInBytes(minBuf * 2).setTransferMode(AudioTrack.MODE_STREAM).build()
+            
+            // Play the altered voice through the communication stream
+            audioTrack = AudioTrack.Builder()
+                .setAudioAttributes(AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                    .build())
+                .setAudioFormat(AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_16BIT).setSampleRate(VoiceProcessor.SAMPLE_RATE).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).build())
+                .setBufferSizeInBytes(minBuf * 2).setTransferMode(AudioTrack.MODE_STREAM).build()
 
             audioRecord?.startRecording()
             audioTrack?.play()
@@ -2812,7 +2790,11 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         stopPlayback() 
         try {
             mediaPlayer = MediaPlayer().apply {
-                setAudioStreamType(AudioManager.STREAM_MUSIC)
+                // Route card sound to Voice Communication stream
+                setAudioAttributes(AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                    .build())
                 setDataSource(file.absolutePath)
                 prepare()
                 startProgressBar(duration)
