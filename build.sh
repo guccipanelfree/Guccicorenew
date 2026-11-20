@@ -625,11 +625,17 @@ object ShellInjector {
             val addRuleMethod = mixRuleBuilderClass.getMethod("addRule", AudioAttributes::class.java, Int::class.java)
             
             val presetsInt = intArrayOf(1, 5, 6, 7, 9)
+            
+            // Use Reflection for hidden setCapturePreset method
+            val attrBuilderClass = Class.forName("android.media.AudioAttributes\$Builder")
+            val setCapturePresetMethod = attrBuilderClass.getMethod("setCapturePreset", Int::class.java)
 
             for (preset in presetsInt) {
-                val attrBuilder = AudioAttributes.Builder()
-                attrBuilder.setCapturePreset(preset)
-                addRuleMethod.invoke(ruleBuilder, attrBuilder.build(), capturePresetRule)
+                val attrBuilder = attrBuilderClass.getConstructor().newInstance()
+                setCapturePresetMethod.invoke(attrBuilder, preset)
+                val audioAttributes = attrBuilderClass.getMethod("build").invoke(attrBuilder) as AudioAttributes
+                
+                addRuleMethod.invoke(ruleBuilder, audioAttributes, capturePresetRule)
             }
 
             val mixRule = mixRuleBuilderClass.getMethod("build").invoke(ruleBuilder)
@@ -713,8 +719,11 @@ object ShellInjector {
                 System.exit(1)
             }
 
+            // Fix Null Safety for Kotlin
+            val finalTrack = track!!
+
             File(dir, "ready").writeText("1")
-            Thread { commandLoop(track) }.start()
+            Thread { commandLoop(finalTrack) }.start()
             Looper.loop()
 
         } catch (e: Exception) {
@@ -727,7 +736,8 @@ object ShellInjector {
     private fun fakeShellIdentity(context: Context) {
         if (Process.myUid() == 0) return
         try {
-            val opField = Context::class.java.getDeclaredField("mOpPackageName")
+            // Use javaClass on the instance instead of Context::class.java to find the field
+            val opField = context.javaClass.getDeclaredField("mOpPackageName")
             opField.isAccessible = true
             opField.set(context, "com.android.shell")
 
@@ -736,7 +746,7 @@ object ShellInjector {
             attribClass.getMethod("setPackageName", String::class.java).invoke(builder, "com.android.shell")
             val attribSource = attribClass.getMethod("build").invoke(builder)
 
-            val attribField = Context::class.java.getDeclaredField("mAttributionSource")
+            val attribField = context.javaClass.getDeclaredField("mAttributionSource")
             attribField.isAccessible = true
             attribField.set(context, attribSource)
             log("fake identity ok")
