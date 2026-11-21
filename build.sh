@@ -2555,13 +2555,151 @@ class FloaterOverlayService : Service() {
     override fun onDestroy() { panel?.let { runCatching { wm.removeView(it) } }; bubble?.let { runCatching { wm.removeView(it) } }; super.onDestroy() }
 }
 EOF
-cat > app/src/main/java/com/example/shtile/VoicePersona.kt << 'EOF'
+cat > app/src/main/java/com/example/shtile/GucciVoiceCatalog.kt << 'EOF'
 package com.example.shtile
 
-data class VoicePersona(
-    val id: String,   
-    val name: String  
+data class GucciVoicePersona(
+    val id: Int,
+    val name: String,
+    val emoji: String?,
+    val localeTag: String,   // "bn-BD" | "hi-IN" | "en-IN"
+    val pitch: Float,        // 0.5 – 2.0  (1.0 = normal)
+    val rate: Float          // 0.5 – 2.0  (1.0 = normal)
 )
+
+object GucciVoiceCatalog {
+    val ALL: List<GucciVoicePersona> = listOf(
+        GucciVoicePersona(1,  "OmorOnFire",          null,  "bn-BD", 0.90f, 1.00f),
+        GucciVoicePersona(2,  "MR Triple R",         null,  "bn-BD", 1.05f, 1.05f),
+        GucciVoicePersona(3,  "Saikh Munir",         null,  "bn-BD", 0.85f, 0.90f),
+        GucciVoicePersona(4,  "Girl Voice 1",        "🥻",  "bn-BD", 1.20f, 1.00f),
+        GucciVoicePersona(5,  "Zara Gaming",         "🥻",  "bn-BD", 1.15f, 1.05f),
+        GucciVoicePersona(6,  "Ajju Bhai [HINDI]",   null,  "hi-IN", 0.95f, 1.00f),
+        GucciVoicePersona(7,  "KT GAMERZ [Hindi]",   null,  "hi-IN", 1.00f, 1.05f),
+        GucciVoicePersona(8,  "Tarek Rahman",        null,  "bn-BD", 1.00f, 1.00f),
+        GucciVoicePersona(9,  "Sheikh Hasina",       null,  "bn-BD", 1.10f, 0.95f),
+        GucciVoicePersona(10, "Tom FF",              null,  "bn-BD", 1.00f, 1.05f),
+        GucciVoicePersona(11, "Actor",               null,  "bn-BD", 0.95f, 1.00f),
+        GucciVoicePersona(12, "RAISTAR [Hindi]",     null,  "hi-IN", 1.00f, 1.05f),
+        GucciVoicePersona(13, "Amit Bhai [Hindi]",   null,  "hi-IN", 0.90f, 0.95f),
+        GucciVoicePersona(14, "Sooneeta [Hindi]",    null,  "hi-IN", 1.15f, 1.00f),
+        GucciVoicePersona(15, "Girl 02 [BANGLA]",    null,  "bn-BD", 1.20f, 1.05f),
+        GucciVoicePersona(16, "Girl 03 [BANGLA]",    null,  "bn-BD", 1.25f, 1.00f),
+        GucciVoicePersona(17, "Girls 01 [Hindi]",    null,  "hi-IN", 1.15f, 1.05f),
+    )
+}
+EOF
+cat > app/src/main/java/com/example/shtile/GucciTtsGenerator.kt << 'EOF'
+package com.example.shtile
+
+import android.content.Context
+import android.os.Bundle
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
+import android.speech.tts.Voice
+import java.io.File
+import java.util.Locale
+import java.util.UUID
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+
+/**
+ * On-device Text → WAV generator.
+ * Wraps Android's TextToSpeech engine so we can synthesize text to a file
+ * with a specific voice/pitch/rate, then feed that WAV into the existing
+ * playVoice() / AudioRouter pipeline.
+ *
+ * No API keys. No network (after voice packs are installed). No server.
+ */
+class GucciTtsGenerator(private val context: Context) {
+
+    @Volatile private var engine: TextToSpeech? = null
+    @Volatile private var ready = false
+    private val initLock = Object()
+
+    private fun ensureReady(): Boolean {
+        if (engine == null) {
+            synchronized(initLock) {
+                if (engine == null) {
+                    engine = TextToSpeech(context) { status ->
+                        synchronized(initLock) {
+                            ready = status == TextToSpeech.SUCCESS
+                            initLock.notifyAll()
+                        }
+                    }
+                }
+            }
+        }
+        synchronized(initLock) {
+            var waited = 0L
+            while (!ready && waited < 15_000L) {
+                try { initLock.wait(500L) } catch (_: InterruptedException) { return false }
+                waited += 500L
+            }
+        }
+        return ready
+    }
+
+    /**
+     * Synthesize [text] into [outFile] using [persona].
+     * Returns true if the WAV was written and is non-empty.
+     */
+    fun generate(text: String, persona: GucciVoicePersona, outFile: File): Boolean {
+        if (text.isBlank()) return false
+        if (!ensureReady()) return false
+        val tts = engine ?: return false
+
+        val voice = pickBestVoice(tts, persona.localeTag)
+        if (voice != null) {
+            try { tts.voice = voice } catch (_: Exception) {}
+        }
+        try { tts.setPitch(persona.pitch) } catch (_: Exception) {}
+        try { tts.setSpeechRate(persona.rate) } catch (_: Exception) {}
+
+        if (outFile.exists()) outFile.delete()
+        outFile.parentFile?.mkdirs()
+
+        val latch = CountDownLatch(1)
+        val success = AtomicBoolean(false)
+        val uid = "gucci_" + UUID.randomUUID().toString()
+
+        tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {}
+            override fun onDone(utteranceId: String?) { success.set(true); latch.countDown() }
+            @Deprecated("Deprecated in Java")
+            override fun onError(utteranceId: String?) { latch.countDown() }
+            override fun onError(utteranceId: String?, errorCode: Int) { latch.countDown() }
+        })
+
+        val params = Bundle().apply {
+            putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
+        }
+
+        val result = tts.synthesizeToFile(text, params, outFile, uid)
+        if (result != TextToSpeech.SUCCESS) return false
+
+        val finished = latch.await(25, TimeUnit.SECONDS)
+        return finished && success.get() && outFile.exists() && outFile.length() > 44L
+    }
+
+    private fun pickBestVoice(tts: TextToSpeech, localeTag: String): Voice? {
+        val target = Locale.forLanguageTag(localeTag)
+        val voices = try { tts.voices } catch (_: Exception) { null } ?: return null
+        voices.firstOrNull { it.locale == target && !it.isNetworkConnectionRequired }?.let { return it }
+        voices.firstOrNull { it.locale.language == target.language && !it.isNetworkConnectionRequired }?.let { return it }
+        voices.firstOrNull { it.locale == target }?.let { return it }
+        voices.firstOrNull { it.locale.language == target.language }?.let { return it }
+        return null
+    }
+
+    fun shutdown() {
+        try { engine?.stop() } catch (_: Exception) {}
+        try { engine?.shutdown() } catch (_: Exception) {}
+        engine = null
+        ready = false
+    }
+}
 EOF
 cat > app/src/main/res/layout/dialog_record_voice.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
@@ -2823,7 +2961,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
-import android.speech.tts.TextToSpeech
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -2832,18 +2969,16 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import java.io.File
-import java.net.HttpURLConnection
-import java.net.URL
-import java.util.Locale
 
-class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
-    private lateinit var tts: TextToSpeech
+class GucciVoiceActivity : AppCompatActivity() {
     private var mediaPlayer: MediaPlayer? = null
     private lateinit var gridView: GridView
     private lateinit var voiceAdapter: VoiceGridAdapter
     private var voiceList = listOf<File>()
     private var currentPlayingFile: File? = null
     private var volumeLevel = 1.0f
+
+    private lateinit var ttsGenerator: GucciTtsGenerator
 
     private val prefs by lazy { getSharedPreferences("VoicePrefs", MODE_PRIVATE) }
     private val PICK_AUDIO_REQ = 100
@@ -2855,18 +2990,13 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var recordingTimerHandler: Handler? = null
     private var recordingTimerRunnable: Runnable? = null
 
-    private val ELEVENLABS_API_KEY = "sk_YOUR_NEW_API_KEY_HERE"
-    private val personas = listOf(
-        VoicePersona("21m00Tcm4TlvDq8ikWAM", "Rachel (Default)"),
-        VoicePersona("pNInz6obpgDQGcFmaJgB", "Adam (Default)"),
-        VoicePersona("YOUR_ZARA_ID_HERE", "Zara Gaming")
-    )
-    private var selectedPersona = personas[0]
+    private val personas = GucciVoiceCatalog.ALL
+    private var selectedPersona: GucciVoicePersona = personas[0]
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_gucci_voice)
-        tts = TextToSpeech(this, this)
+        ttsGenerator = GucciTtsGenerator(this)
 
         val savedVolume = prefs.getInt("voice_volume", 100).coerceIn(0, 200)
         volumeLevel = savedVolume / 100f
@@ -2904,12 +3034,12 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         findViewById<MaterialButton>(R.id.btnPlayText).setOnClickListener {
             val text = etVoiceText.text.toString().trim()
-            if (text.isNotEmpty()) generateAndPlayElevenLabs(text, selectedPersona)
+            if (text.isNotEmpty()) generateAndPlay(text, selectedPersona)
             else Toast.makeText(this, "Type something first!", Toast.LENGTH_SHORT).show()
         }
         findViewById<MaterialButton>(R.id.btnSaveText).setOnClickListener {
             val text = etVoiceText.text.toString().trim()
-            if (text.isNotEmpty()) { generateAndSaveElevenLabs(text, selectedPersona); etVoiceText.text.clear() }
+            if (text.isNotEmpty()) { generateAndSave(text, selectedPersona); etVoiceText.text.clear() }
             else Toast.makeText(this, "Type something first!", Toast.LENGTH_SHORT).show()
         }
         findViewById<MaterialButton>(R.id.btnAddVoice).setOnClickListener {
@@ -3086,51 +3216,40 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         recordingTimerRunnable = null
     }
 
-    private fun callElevenLabsApi(text: String, voiceId: String, onSuccess: (ByteArray) -> Unit, onError: (String) -> Unit) {
+    private fun generateAndPlay(text: String, persona: GucciVoicePersona) {
+        Toast.makeText(this, "Generating ${persona.name}…", Toast.LENGTH_SHORT).show()
         Thread {
-            try {
-                val conn = URL("https://api.elevenlabs.io/v1/text-to-speech/$voiceId").openConnection() as HttpURLConnection
-                conn.requestMethod = "POST"
-                conn.setRequestProperty("Accept", "audio/mpeg")
-                conn.setRequestProperty("Content-Type", "application/json")
-                conn.setRequestProperty("xi-api-key", ELEVENLABS_API_KEY)
-                conn.doOutput = true
-                conn.outputStream.write("""{"text": "${text.replace("\"", "\\\"")}", "model_id": "eleven_multilingual_v2", "voice_settings": {"stability": 0.5, "similarity_boost": 0.75}}""".toByteArray())
-                if (conn.responseCode == 200) {
-                    val b = conn.inputStream.readBytes()
-                    Handler(Looper.getMainLooper()).post { onSuccess(b) }
+            val tempFile = File(cacheDir, "tts_play_${System.currentTimeMillis()}.wav")
+            val ok = ttsGenerator.generate(text, persona, tempFile)
+            runOnUiThread {
+                if (ok) {
+                    playVoice(tempFile)
                 } else {
-                    val err = conn.errorStream.bufferedReader().readText()
-                    Handler(Looper.getMainLooper()).post { onError("API Error: ${conn.responseCode} - $err") }
+                    Toast.makeText(
+                        this,
+                        "TTS failed. Install ${persona.localeTag} voice data in Settings → TTS.",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
-            } catch (e: Exception) { Handler(Looper.getMainLooper()).post { onError(e.message ?: "Unknown Error") } }
+            }
         }.start()
     }
 
-    private fun generateAndPlayElevenLabs(text: String, persona: VoicePersona) {
-        Toast.makeText(this, "Generating ${persona.name}...", Toast.LENGTH_SHORT).show()
-        callElevenLabsApi(text, persona.id, { bytes ->
-            Thread {
-                try {
-                    val tempFile = File(cacheDir, "temp_play.mp3")
-                    tempFile.writeBytes(bytes)
-                    Handler(Looper.getMainLooper()).post { playVoice(tempFile) }
-                } catch (e: Exception) { Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Playback Error", Toast.LENGTH_SHORT).show() } }
-            }.start()
-        }, { error -> Toast.makeText(this, error, Toast.LENGTH_LONG).show() })
-    }
-
-    private fun generateAndSaveElevenLabs(text: String, persona: VoicePersona) {
-        Toast.makeText(this, "Saving ${persona.name}...", Toast.LENGTH_SHORT).show()
-        callElevenLabsApi(text, persona.id, { bytes ->
-            Thread {
-                try {
-                    val file = File(VoiceDataHelper.getVoicesDir(this), "${persona.name.replace(" ", "_")}_${System.currentTimeMillis()}.mp3")
-                    file.writeBytes(bytes)
-                    runOnUiThread { loadVoices(); Toast.makeText(this, "Saved to Cards!", Toast.LENGTH_SHORT).show() }
-                } catch (e: Exception) { runOnUiThread { Toast.makeText(this, "Save Error", Toast.LENGTH_SHORT).show() } }
-            }.start()
-        }, { error -> Toast.makeText(this, error, Toast.LENGTH_LONG).show() })
+    private fun generateAndSave(text: String, persona: GucciVoicePersona) {
+        Toast.makeText(this, "Saving ${persona.name}…", Toast.LENGTH_SHORT).show()
+        Thread {
+            val safeName = persona.name.replace("[^a-zA-Z0-9]".toRegex(), "_")
+            val out = File(VoiceDataHelper.getVoicesDir(this), "${safeName}_${System.currentTimeMillis()}.wav")
+            val ok = ttsGenerator.generate(text, persona, out)
+            runOnUiThread {
+                if (ok) {
+                    loadVoices()
+                    Toast.makeText(this, "✅ Saved to cards!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Save failed — TTS error", Toast.LENGTH_LONG).show()
+                }
+            }
+        }.start()
     }
 
     private fun loadVoices() {
@@ -3140,10 +3259,6 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         findViewById<TextView>(R.id.tvVoiceCount).text = "🎧 My voices (${voiceList.size})"
     }
 
-    /**
-     * FAST PATH: at ≤100% volume → direct MediaPlayer from original file, zero decode, instant start.
-     * SLOW PATH: at >100% → decode once, boost with soft-clip, cache boosted WAV, replay cached instantly.
-     */
     private fun playVoice(file: File) {
         stopPlayback()
         currentPlayingFile = file
@@ -3243,8 +3358,11 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
     }
 
-    override fun onInit(status: Int) { if (status == TextToSpeech.SUCCESS) tts.language = Locale.US }
-    override fun onDestroy() { tts.stop(); tts.shutdown(); stopPlayback(); stopRecordingInternal(); super.onDestroy() }
+    override fun onDestroy() {
+        if (::ttsGenerator.isInitialized) ttsGenerator.shutdown()
+        stopPlayback(); stopRecordingInternal()
+        super.onDestroy()
+    }
 
     inner class VoiceGridAdapter(private val items: List<File>) : BaseAdapter() {
         override fun getCount() = items.size
@@ -3292,7 +3410,6 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.provider.Settings
-import android.speech.tts.TextToSpeech
 import android.view.*
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
@@ -3301,15 +3418,11 @@ import androidx.core.content.ContextCompat
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.materialswitch.MaterialSwitch
 import java.io.File
-import java.net.HttpURLConnection
-import java.net.URL
-import java.util.Locale
 
-class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
+class GucciVoiceService : Service() {
     private lateinit var windowManager: WindowManager
     private var overlayView: View? = null
     private var bubbleView: View? = null
-    private var tts: TextToSpeech? = null
     private var isInjectOn = false
     private var isLiveOn = false
     private var audioRecord: AudioRecord? = null
@@ -3325,6 +3438,8 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var pbPlayback: ProgressBar? = null
     private var tvVolume: TextView? = null
     private var volumeLevel = 1.0f
+
+    private lateinit var ttsGenerator: GucciTtsGenerator
 
     private val progressHandler = Handler(Looper.getMainLooper())
     private var progressRunnable: Runnable? = null
@@ -3344,12 +3459,8 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         }
     }
 
-    private val ELEVENLABS_API_KEY = "sk_YOUR_NEW_API_KEY_HERE"
-    private val personas = listOf(
-        VoicePersona("21m00Tcm4TlvDq8ikWAM", "Rachel"),
-        VoicePersona("YOUR_ZARA_ID_HERE", "Zara Gaming")
-    )
-    private var selectedPersona = personas[0]
+    private val personas = GucciVoiceCatalog.ALL
+    private var selectedPersona: GucciVoicePersona = personas[0]
 
     override fun onCreate() {
         super.onCreate()
@@ -3358,7 +3469,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             volumeLevel = saved / 100f
             prefs.registerOnSharedPreferenceChangeListener(volumePrefListener)
             startForegroundServiceNotification()
-            tts = TextToSpeech(this, this)
+            ttsGenerator = GucciTtsGenerator(this)
             windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
             if (Settings.canDrawOverlays(this)) showFloaterSafely()
             else { Toast.makeText(this, "Overlay Permission missing", Toast.LENGTH_SHORT).show(); stopSelf() }
@@ -3485,10 +3596,10 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 }
             }
             overlayView?.findViewById<Button>(R.id.btnOverlaySend)?.setOnClickListener {
-                val txt = etType?.text.toString(); if (txt.isNotEmpty()) generateAndPlayOverlay(txt, selectedPersona)
+                val txt = etType?.text.toString(); if (txt.isNotEmpty()) generateAndPlay(txt, selectedPersona)
             }
             overlayView?.findViewById<Button>(R.id.btnOverlaySave)?.setOnClickListener {
-                val txt = etType?.text.toString(); if (txt.isNotEmpty()) { generateAndSaveOverlay(txt, selectedPersona); etType?.text?.clear() }
+                val txt = etType?.text.toString(); if (txt.isNotEmpty()) { generateAndSave(txt, selectedPersona); etType?.text?.clear() }
             }
 
             val swLive = overlayView?.findViewById<MaterialSwitch>(R.id.swLiveMic)
@@ -3540,13 +3651,11 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         gridAdapter?.playingFilePath = file.absolutePath
         gridAdapter?.notifyDataSetChanged()
 
-        // FAST PATH: at ≤100% and no inject → direct file play, no decode
         if (volumeLevel <= 1.0f && !isInjectOn) {
             playDirect(file, file)
             return
         }
 
-        // Need boost and/or inject → decode + boost
         pbPlayback?.visibility = View.VISIBLE
         pbPlayback?.progress = 0
         Thread {
@@ -3573,7 +3682,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 Handler(Looper.getMainLooper()).post {
                     if (gridAdapter?.playingFilePath != file.absolutePath) return@post
                     startProgressBar(durationMs)
-                    AudioRouter.stopAudio(this) // cancel any in-flight
+                    AudioRouter.stopAudio(this)
                     Handler(Looper.getMainLooper()).postDelayed({ AudioRouter.injectAudio(this, bytes) }, 120)
                     Handler(Looper.getMainLooper()).postDelayed({
                         if (gridAdapter?.playingFilePath == file.absolutePath) stopPlayback()
@@ -3651,47 +3760,41 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         pbPlayback?.progress = 0
     }
 
-    private fun callElevenLabsApi(text: String, voiceId: String, onSuccess: (ByteArray) -> Unit, onError: (String) -> Unit) {
+    private fun generateAndPlay(text: String, persona: GucciVoicePersona) {
+        Toast.makeText(this, "Generating ${persona.name}…", Toast.LENGTH_SHORT).show()
         Thread {
-            try {
-                val conn = URL("https://api.elevenlabs.io/v1/text-to-speech/$voiceId").openConnection() as HttpURLConnection
-                conn.requestMethod = "POST"
-                conn.setRequestProperty("Accept", "audio/mpeg")
-                conn.setRequestProperty("Content-Type", "application/json")
-                conn.setRequestProperty("xi-api-key", ELEVENLABS_API_KEY)
-                conn.doOutput = true
-                conn.outputStream.write("""{"text": "${text.replace("\"", "\\\"")}", "model_id": "eleven_multilingual_v2", "voice_settings": {"stability": 0.5, "similarity_boost": 0.75}}""".toByteArray())
-                if (conn.responseCode == 200) {
-                    val bytes = conn.inputStream.readBytes()
-                    Handler(Looper.getMainLooper()).post { onSuccess(bytes) }
-                } else Handler(Looper.getMainLooper()).post { onError("API Error: ${conn.responseCode}") }
-            } catch (e: Exception) { Handler(Looper.getMainLooper()).post { onError(e.message ?: "Err") } }
+            val tempFile = File(cacheDir, "tts_overlay_${System.currentTimeMillis()}.wav")
+            val ok = ttsGenerator.generate(text, persona, tempFile)
+            Handler(Looper.getMainLooper()).post {
+                if (ok) {
+                    playVoice(tempFile)
+                } else {
+                    Toast.makeText(
+                        this,
+                        "TTS failed. Install ${persona.localeTag} voice data.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
         }.start()
     }
 
-    private fun generateAndPlayOverlay(text: String, persona: VoicePersona) {
-        Toast.makeText(this, "Generating ${persona.name}...", Toast.LENGTH_SHORT).show()
-        callElevenLabsApi(text, persona.id, { bytes ->
-            Thread {
-                try {
-                    val f = File(cacheDir, "temp_overlay.mp3"); f.writeBytes(bytes)
-                    playVoice(f)
-                } catch (_: Exception) {}
-            }.start()
-        }, { err -> Toast.makeText(this, err, Toast.LENGTH_LONG).show() })
-    }
-
-    private fun generateAndSaveOverlay(text: String, persona: VoicePersona) {
-        Toast.makeText(this, "Saving...", Toast.LENGTH_SHORT).show()
-        callElevenLabsApi(text, persona.id, { bytes ->
-            Thread {
-                try {
-                    val f = File(VoiceDataHelper.getVoicesDir(this), "${persona.name.replace(" ", "_")}_${System.currentTimeMillis()}.mp3")
-                    f.writeBytes(bytes); loadVoices()
-                    Handler(Looper.getMainLooper()).post { gridAdapter?.notifyDataSetChanged(); Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT).show() }
-                } catch (_: Exception) { Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Save Error", Toast.LENGTH_SHORT).show() } }
-            }.start()
-        }, { err -> Toast.makeText(this, err, Toast.LENGTH_LONG).show() })
+    private fun generateAndSave(text: String, persona: GucciVoicePersona) {
+        Toast.makeText(this, "Saving ${persona.name}…", Toast.LENGTH_SHORT).show()
+        Thread {
+            val safeName = persona.name.replace("[^a-zA-Z0-9]".toRegex(), "_")
+            val out = File(VoiceDataHelper.getVoicesDir(this), "${safeName}_${System.currentTimeMillis()}.wav")
+            val ok = ttsGenerator.generate(text, persona, out)
+            Handler(Looper.getMainLooper()).post {
+                if (ok) {
+                    loadVoices()
+                    gridAdapter?.notifyDataSetChanged()
+                    Toast.makeText(this, "✅ Saved!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Save failed", Toast.LENGTH_LONG).show()
+                }
+            }
+        }.start()
     }
 
     private fun startLiveMic() {
@@ -3768,19 +3871,17 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         val mp = mediaPlayer
         mediaPlayer = null
         try { mp?.setOnCompletionListener(null); mp?.stop(); mp?.release() } catch (_: Exception) {}
-        // 👇 Also cancel any in-flight injector playback so it doesn't keep the buffer alive
         try { AudioRouter.stopAudio(this) } catch (_: Exception) {}
         stopProgressBar()
         gridAdapter?.playingFilePath = null
         gridAdapter?.notifyDataSetChanged()
     }
 
-    override fun onInit(status: Int) { if (status == TextToSpeech.SUCCESS) { tts?.language = Locale.US } }
-
     override fun onDestroy() {
         super.onDestroy()
         try { prefs.unregisterOnSharedPreferenceChangeListener(volumePrefListener) } catch (_: Exception) {}
-        stopPlayback(); stopLiveMic(); tts?.shutdown()
+        stopPlayback(); stopLiveMic()
+        if (::ttsGenerator.isInitialized) ttsGenerator.shutdown()
         if (isInjectOn) stopAudioRouting()
         overlayView?.let { runCatching { windowManager.removeView(it) } }
         bubbleView?.let { runCatching { windowManager.removeView(it) } }
