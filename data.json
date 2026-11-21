@@ -43,19 +43,6 @@
       "allowVoice": true,
       "reboot_now_time": 0,
       "reboot_timer": 0
-    },
-    "ROHIT": {
-      "deviceIds": [],
-      "hwidNames": {},
-      "maxDevices": 0,
-      "revoked": false,
-      "expiresAt": 1797874492917,
-      "allowInx": false,
-      "allowFloater": false,
-      "allowKernel": false,
-      "allowVoice": true,
-      "reboot_now_time": 0,
-      "reboot_timer": 0
     }
   },
   "reboot_global_time": 0,
