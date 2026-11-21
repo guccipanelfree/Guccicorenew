@@ -553,126 +553,50 @@ cat > app/src/main/res/layout/item_voice_card.xml << 'EOF'
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/cardMain" android:layout_width="match_parent" android:layout_height="150dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="16dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
     <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
         
-        <!-- FULL BACKGROUND IMAGE -->
         <ImageView android:id="@+id/ivCardPhoto" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:visibility="gone"/>
 
-        <!-- LETTER TEXT (If no photo) -->
         <TextView android:id="@+id/tvLetter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="40sp" android:textStyle="bold" android:layout_centerInParent="true"/>
 
-        <!-- DARK GRADIENT FOR TEXT READABILITY -->
-        <View android:layout_width="match_parent" android:layout_height="60dp" android:layout_alignParentBottom="true" android:background="#CC000000"/>
-
-        <!-- TOP ICONS -->
-        <TextView android:id="@+id/tvStar" android:layout_width="32dp" android:layout_height="32dp" android:text="☆" android:textColor="#FFD700" android:textSize="26sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentStart="true" android:padding="4dp"/>
+        <TextView android:id="@+id/tvStar" android:layout_width="32dp" android:layout_height="32dp" android:text="☆" android:textColor="#FFD700" android:textSize="26sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentStart="true" android:padding="4dp"
+            android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="4"/>
         
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentTop="true" android:layout_alignParentEnd="true" android:orientation="horizontal" android:padding="6dp">
-            <ImageView android:id="@+id/btnAddPhoto" android:layout_width="28dp" android:layout_height="28dp" android:src="@android:drawable/ic_menu_camera" app:tint="#FFD700" android:padding="2dp" android:layout_marginEnd="8dp"/>
+            <ImageView android:id="@+id/btnAddPhoto" android:layout_width="28dp" android:layout_height="28dp" android:src="@android:drawable/ic_menu_camera" app:tint="#FFD700" android:padding="2dp" android:layout_marginEnd="8dp"
+                android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="4"/>
             <ImageView android:id="@+id/btnDelete" android:layout_width="28dp" android:layout_height="28dp" android:src="@drawable/ic_close" app:tint="#FFFFFF" android:padding="2dp"/>
         </LinearLayout>
 
-        <!-- BOTTOM CONTROLS -->
-        <TextView android:id="@+id/tvPlayTime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0:00 / 0:00" android:textColor="#00E5A0" android:textSize="10sp" android:textStyle="bold" android:layout_above="@+id/pbCardProgress" android:layout_alignParentStart="true" android:layout_marginStart="8dp" android:visibility="gone"/>
+        <!-- PROGRESS LINE & TIME TEXT TOGETHER -->
+        <FrameLayout android:layout_width="match_parent" android:layout_height="20dp" android:layout_alignParentBottom="true" android:layout_marginBottom="28dp" android:layout_marginStart="8dp" android:layout_marginEnd="48dp">
+            <ProgressBar android:id="@+id/pbCardProgress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="match_parent" android:progressTint="#00E5A0" android:progressBackgroundTint="#44FFFFFF" android:visibility="gone"/>
+            <TextView android:id="@+id/tvPlayTime" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="0:00 / 0:00" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" android:visibility="gone" android:shadowColor="#000000" android:shadowDx="1.5" android:shadowDy="1.5" android:shadowRadius="3"/>
+        </FrameLayout>
 
-        <ProgressBar android:id="@+id/pbCardProgress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="4dp" android:progressTint="#00E5A0" android:progressBackgroundTint="#44FFFFFF" android:layout_alignParentBottom="true" android:visibility="gone" android:layout_marginBottom="2dp"/>
-
-        <TextView android:id="@+id/tvName" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" android:layout_alignParentBottom="true" android:layout_toStartOf="@+id/btnPlay" android:layout_toEndOf="@+id/tvStar" android:layout_marginStart="8dp" android:layout_marginBottom="12dp"/>
+        <TextView android:id="@+id/tvName" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" android:layout_alignParentBottom="true" android:layout_toStartOf="@+id/btnPlay" android:layout_toEndOf="@+id/tvStar" android:layout_marginStart="8dp" android:layout_marginBottom="8dp"
+            android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="4"/>
         
-        <ImageView android:id="@+id/btnPlay" android:layout_width="40dp" android:layout_height="40dp" android:src="@android:drawable/ic_media_play" app:tint="#00E5A0" android:layout_alignParentBottom="true" android:layout_alignParentEnd="true" android:layout_marginEnd="8dp" android:layout_marginBottom="8dp"/>
+        <ImageView android:id="@+id/btnPlay" android:layout_width="40dp" android:layout_height="40dp" android:src="@android:drawable/ic_media_play" app:tint="#00E5A0" android:layout_alignParentBottom="true" android:layout_alignParentEnd="true" android:layout_marginEnd="8dp" android:layout_marginBottom="4dp"
+            android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="4"/>
     </RelativeLayout>
-</com.google.android.material.card.MaterialCardView>
-EOF
-cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="240dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="12dp" app:cardElevation="10dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="8dp">
-    <LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp">
-        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="👑 GUCCI VOICES" android:textColor="#4FC3F7" android:textStyle="bold" android:textSize="11sp" android:fontFamily="sans-serif-black"/>
-        <ImageButton android:id="@+id/btnMinimize" android:layout_width="20dp" android:layout_height="20dp" android:padding="2dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#8B949E" android:layout_marginEnd="4dp"/>
-        <ImageButton android:id="@+id/btnClose" android:layout_width="20dp" android:layout_height="20dp" android:padding="2dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
-    </LinearLayout>
-    
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="4dp" android:layout_marginBottom="6dp">
-        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="INJECT GUCCI VOICES" android:textColor="#00E5A0" android:textSize="9sp" android:textStyle="bold"/>
-        <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/swInject" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="false"/>
-    </LinearLayout>
-    
-    <TextView android:id="@+id/tvCopyMixer" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ Routing failed. Tap here to copy Mixer Log." android:textColor="#FF4D4D" android:textSize="9sp" android:textStyle="bold" android:gravity="center" android:padding="4dp" android:visibility="gone"/>
-    
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="6dp">
-        <LinearLayout android:id="@+id/tabCards" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="2dp">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎵" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold"/>
-        </LinearLayout>
-        <LinearLayout android:id="@+id/tabType" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="2dp">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💬" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold"/>
-        </LinearLayout>
-        <LinearLayout android:id="@+id/tabLive" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:gravity="center" android:background="#12161F">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔴" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold"/>
-        </LinearLayout>
-    </LinearLayout>
-    
-    <LinearLayout android:id="@+id/pageCards" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="visible">
-        <GridView android:id="@+id/lvVoicesFloater" android:layout_width="match_parent" android:layout_height="130dp" android:numColumns="3" android:verticalSpacing="2dp" android:horizontalSpacing="2dp"/>
-        
-        <!-- VOLUME SLIDER -->
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="4dp" android:paddingEnd="4dp" android:layout_marginBottom="2dp">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Vol: " android:textColor="#8B949E" android:textSize="8sp"/>
-            <SeekBar android:id="@+id/sbVolume" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:max="200" android:progress="100" android:minHeight="12dp" android:maxHeight="12dp"/>
-            <TextView android:id="@+id/tvVolume" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="100%" android:textColor="#00E5A0" android:textSize="8sp"/>
-        </LinearLayout>
-
-        <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="3dp" android:layout_marginTop="2dp" android:layout_marginBottom="2dp" android:progressTint="#00E5A0" android:visibility="invisible"/>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayRefresh" android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp" android:text="REFRESH" android:textColor="#000000" app:backgroundTint="#3B82F6" app:cornerRadius="4dp" android:textSize="8sp" android:layout_marginEnd="2dp" android:insetTop="0dp" android:insetBottom="0dp"/>
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayStop" android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp" android:text="STOP" android:textColor="#FFFFFF" app:backgroundTint="#FF4D4D" app:cornerRadius="4dp" android:textSize="8sp" android:insetTop="0dp" android:insetBottom="0dp"/>
-        </LinearLayout>
-    </LinearLayout>
-    
-    <LinearLayout android:id="@+id/pageType" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
-        <Spinner android:id="@+id/spinnerVoiceSelectFloater" android:layout_width="match_parent" android:layout_height="28dp" android:layout_marginBottom="4dp" android:backgroundTint="#00E5A0"/>
-        <EditText android:id="@+id/etTypeHere" android:layout_width="match_parent" android:layout_height="32dp" android:hint="Type here..." android:textColor="#FFFFFF" android:textColorHint="#8B949E" android:background="#12161F" android:padding="4dp" android:textSize="10sp" android:layout_marginBottom="4dp"/>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySend" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:text="Play" android:textColor="#000000" app:backgroundTint="#00E5A0" app:cornerRadius="4dp" android:textSize="9sp" android:layout_marginEnd="2dp" android:insetTop="0dp" android:insetBottom="0dp"/>
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySave" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:text="Save" android:textColor="#FFFFFF" app:backgroundTint="#8B5CF6" app:cornerRadius="4dp" android:textSize="9sp" android:insetTop="0dp" android:insetBottom="0dp"/>
-        </LinearLayout>
-    </LinearLayout>
-    
-    <LinearLayout android:id="@+id/pageLive" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ Headphones recommended." android:textColor="#FF4D4D" android:textSize="8sp" android:textStyle="bold" android:layout_marginBottom="2dp" android:gravity="center"/>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="4dp" android:layout_marginBottom="4dp">
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="🎤 Live Mode" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold"/>
-            <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/swLiveMic" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-        </LinearLayout>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="#12161F" android:padding="4dp" android:layout_marginBottom="4dp">
-            <TextView android:id="@+id/tvPitch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Pitch: 0" android:textColor="#8B949E" android:textSize="8sp"/>
-            <SeekBar android:id="@+id/sbPitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="24" android:progress="12"/>
-            <TextView android:id="@+id/tvEcho" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Echo: 0ms" android:textColor="#8B949E" android:textSize="8sp"/>
-            <SeekBar android:id="@+id/sbEcho" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="50" android:progress="0"/>
-        </LinearLayout>
-    </LinearLayout>
-</LinearLayout>
 </com.google.android.material.card.MaterialCardView>
 EOF
 cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/cardMini" android:layout_width="match_parent" android:layout_height="80dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="8dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/cardMini" android:layout_width="match_parent" android:layout_height="85dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="8dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
     <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
         
-        <!-- BACKGROUND IMAGE -->
         <ImageView android:id="@+id/ivCardPhotoMini" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:visibility="gone"/>
-
-        <!-- DARK GRADIENT -->
-        <View android:layout_width="match_parent" android:layout_height="35dp" android:layout_alignParentBottom="true" android:background="#CC000000"/>
-
+        <View android:layout_width="match_parent" android:layout_height="45dp" android:layout_alignParentBottom="true" android:background="#CC000000"/>
         <TextView android:id="@+id/tvStarMini" android:layout_width="24dp" android:layout_height="24dp" android:text="☆" android:textColor="#FFD700" android:textSize="18sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentEnd="true" android:padding="2dp"/>
-        
         <TextView android:id="@+id/tvLetterMini" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="24sp" android:textStyle="bold" android:layout_centerInParent="true"/>
-        
-        <TextView android:id="@+id/tvNameMini" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold" android:maxLines="1" android:layout_alignParentBottom="true" android:gravity="center" android:layout_toStartOf="@+id/btnPlayMini" android:layout_toEndOf="@+id/tvStarMini" android:layout_marginBottom="8dp"/>
-        
+        <TextView android:id="@+id/tvNameMini" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold" android:maxLines="1" android:layout_alignParentBottom="true" android:gravity="center" android:layout_toStartOf="@+id/btnPlayMini" android:layout_toEndOf="@+id/tvStarMini" android:layout_marginBottom="14dp"/>
         <ImageView android:id="@+id/btnPlayMini" android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_media_play" app:tint="#00E5A0" android:layout_alignParentBottom="true" android:layout_alignParentStart="true" android:layout_margin="2dp"/>
 
-        <!-- PROGRESS LINE -->
-        <ProgressBar android:id="@+id/pbMiniProgress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="3dp" android:progressTint="#00E5A0" android:progressBackgroundTint="#44FFFFFF" android:layout_alignParentBottom="true" android:visibility="gone"/>
+        <!-- PROGRESS LINE & TIME TEXT TOGETHER -->
+        <FrameLayout android:layout_width="match_parent" android:layout_height="12dp" android:layout_alignParentBottom="true">
+            <ProgressBar android:id="@+id/pbMiniProgress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="match_parent" android:progressTint="#00E5A0" android:progressBackgroundTint="#44FFFFFF" android:visibility="gone"/>
+            <TextView android:id="@+id/tvTimeMini" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="0:00 / 0:00" android:textColor="#FFFFFF" android:textSize="7sp" android:textStyle="bold" android:visibility="gone"/>
+        </FrameLayout>
     </RelativeLayout>
 </com.google.android.material.card.MaterialCardView>
 EOF
@@ -2956,14 +2880,18 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
     <LinearLayout android:id="@+id/pageCards" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="visible">
         <GridView android:id="@+id/lvVoicesFloater" android:layout_width="match_parent" android:layout_height="130dp" android:numColumns="3" android:verticalSpacing="2dp" android:horizontalSpacing="2dp"/>
         
-        <!-- VOLUME SLIDER -->
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="4dp" android:paddingEnd="4dp" android:layout_marginBottom="2dp">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Vol: " android:textColor="#8B949E" android:textSize="8sp"/>
             <SeekBar android:id="@+id/sbVolume" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:max="200" android:progress="100" android:minHeight="12dp" android:maxHeight="12dp"/>
             <TextView android:id="@+id/tvVolume" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="100%" android:textColor="#00E5A0" android:textSize="8sp"/>
         </LinearLayout>
 
-        <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="3dp" android:layout_marginTop="2dp" android:layout_marginBottom="2dp" android:progressTint="#00E5A0" android:visibility="invisible"/>
+        <!-- PROGRESS LINE & TIME TEXT TOGETHER -->
+        <FrameLayout android:layout_width="match_parent" android:layout_height="16dp" android:layout_marginTop="2dp" android:layout_marginBottom="2dp">
+            <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="match_parent" android:progressTint="#00E5A0" android:visibility="invisible"/>
+            <TextView android:id="@+id/tvFloaterTime" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="0:00 / 0:00" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold" android:visibility="gone"/>
+        </FrameLayout>
+        
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
             <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayRefresh" android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp" android:text="REFRESH" android:textColor="#000000" app:backgroundTint="#3B82F6" app:cornerRadius="4dp" android:textSize="8sp" android:layout_marginEnd="2dp" android:insetTop="0dp" android:insetBottom="0dp"/>
             <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayStop" android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp" android:text="STOP" android:textColor="#FFFFFF" app:backgroundTint="#FF4D4D" app:cornerRadius="4dp" android:textSize="8sp" android:insetTop="0dp" android:insetBottom="0dp"/>
@@ -3412,7 +3340,6 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             else Toast.makeText(this, "Type something first!", Toast.LENGTH_SHORT).show()
         }
         
-        // RESTORED: Add Option (Audio Only vs Audio + Photo)
         findViewById<MaterialButton>(R.id.btnAddVoice).setOnClickListener {
             AlertDialog.Builder(this)
                 .setTitle("Add Voice")
@@ -3435,7 +3362,6 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE); type = "video/*"; putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
             }
-            // Reusing PICK_AUDIO_ONLY_REQ for video extraction (saves as audio)
             startActivityForResult(intent, PICK_AUDIO_ONLY_REQ)
         }
         findViewById<MaterialButton>(R.id.btnRecordVoice).setOnClickListener { openRecordDialog() }
@@ -3735,7 +3661,6 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
     }
 
-    // FIX: Only update the specific card that is playing
     private fun startCardProgressTimer(durationMs: Int) {
         cardProgressRunnable?.let { cardProgressHandler.removeCallbacks(it) }
         cardProgressRunnable = object : Runnable {
@@ -3749,7 +3674,6 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     
                     for (i in 0 until gridView.childCount) {
                         val child = gridView.getChildAt(i)
-                        // Check tag to ensure we only update the playing card
                         if (child.tag == currentPlayingFile?.absolutePath) {
                             val progressBar = child.findViewById<ProgressBar>(R.id.pbCardProgress)
                             val tvTime = child.findViewById<TextView>(R.id.tvPlayTime)
@@ -3834,7 +3758,7 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             if (resultCode == RESULT_OK && data?.data != null) {
                 saveImageToCard(data.data!!, editingVoiceFile)
             } else {
-                loadVoices() // Audio saved, but no photo chosen
+                loadVoices() 
                 Toast.makeText(this, "Audio saved without photo", Toast.LENGTH_SHORT).show()
             }
             editingVoiceFile = null
@@ -3938,7 +3862,7 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             val v = cv ?: LayoutInflater.from(this@GucciVoiceActivity).inflate(R.layout.item_voice_card, parent, false)
             val file = items[p]
             
-            v.tag = file.absolutePath // Important: Tag used for timer updates
+            v.tag = file.absolutePath
             
             val card = v.findViewById<MaterialCardView>(R.id.cardMain)
             val tvStar = v.findViewById<TextView>(R.id.tvStar)
@@ -4076,7 +4000,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var params: WindowManager.LayoutParams? = null
     private var pbPlayback: ProgressBar? = null
     private var tvVolume: TextView? = null
-    private var btnStop: Button? = null
+    private var tvFloaterTime: TextView? = null 
     private var volumeLevel = 1.0f
 
     private val progressHandler = Handler(Looper.getMainLooper())
@@ -4177,7 +4101,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             val pageLive = overlayView?.findViewById<LinearLayout>(R.id.pageLive)
             pbPlayback = overlayView?.findViewById(R.id.pbPlayback)
             pbPlayback?.visibility = View.INVISIBLE
-            btnStop = overlayView?.findViewById(R.id.btnOverlayStop)
+            tvFloaterTime = overlayView?.findViewById(R.id.tvFloaterTime)
 
             tvVolume = overlayView?.findViewById(R.id.tvVolume)
             val sbVolume = overlayView?.findViewById<SeekBar>(R.id.sbVolume)
@@ -4259,7 +4183,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             swLive?.isChecked = isLiveOn
             swLive?.setOnCheckedChangeListener { _, on -> if (on) startLiveMic() else stopLiveMic() }
 
-            btnStop?.setOnClickListener {
+            overlayView?.findViewById<Button>(R.id.btnOverlayStop)?.setOnClickListener {
                 stopPlayback(); stopLiveMic(); swLive?.isChecked = false
                 Toast.makeText(this, "Stopped", Toast.LENGTH_SHORT).show()
             }
@@ -4349,7 +4273,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 Handler(Looper.getMainLooper()).post {
                     if (gridAdapter?.playingFilePath != thisFile.absolutePath) return@post
                     
-                    // WAIT 500ms for injector to clear old buffer
                     Handler(Looper.getMainLooper()).postDelayed({
                         AudioRouter.injectAudio(this, bytes)
                     }, 500) 
@@ -4404,23 +4327,72 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private fun startProgressBar(durationMs: Int) {
         if (durationMs <= 0) return
         pbPlayback?.visibility = View.VISIBLE
+        tvFloaterTime?.visibility = View.VISIBLE
         pbPlayback?.max = durationMs
         pbPlayback?.progress = 0
         var elapsed = 0
         
-        btnStop?.text = "STOP"
-        
         progressRunnable = object : Runnable {
             override fun run() {
                 if (mediaPlayer?.isPlaying == true) {
-                    pbPlayback?.progress = mediaPlayer!!.currentPosition
-                    progressHandler.postDelayed(this, 50)
+                    val curr = mediaPlayer!!.currentPosition
+                    pbPlayback?.progress = curr
+                    
+                    val currSec = curr / 1000
+                    val totalSec = durationMs / 1000
+                    val timeStr = "${currSec / 60}:${String.format("%02d", currSec % 60)} / ${totalSec / 60}:${String.format("%02d", totalSec % 60)}"
+                    tvFloaterTime?.text = timeStr
+                    
+                    val gridView = overlayView?.findViewById<GridView>(R.id.lvVoicesFloater)
+                    if (gridView != null) {
+                        for (i in 0 until gridView.childCount) {
+                            val child = gridView.getChildAt(i)
+                            if (child.tag == gridAdapter?.playingFilePath) {
+                                child.findViewById<ProgressBar>(R.id.pbMiniProgress)?.let {
+                                    it.max = durationMs
+                                    it.progress = curr
+                                    it.visibility = View.VISIBLE
+                                }
+                                child.findViewById<TextView>(R.id.tvTimeMini)?.let {
+                                    it.text = timeStr
+                                    it.visibility = View.VISIBLE
+                                }
+                            }
+                        }
+                    }
+                    
+                    progressHandler.postDelayed(this, 100)
                 } else if (isInjectOn && elapsed < durationMs) {
-                    elapsed += 50
+                    elapsed += 100
                     pbPlayback?.progress = elapsed
-                    progressHandler.postDelayed(this, 50)
+                    
+                    val currSec = elapsed / 1000
+                    val totalSec = durationMs / 1000
+                    val timeStr = "${currSec / 60}:${String.format("%02d", currSec % 60)} / ${totalSec / 60}:${String.format("%02d", totalSec % 60)}"
+                    tvFloaterTime?.text = timeStr
+                    
+                    val gridView = overlayView?.findViewById<GridView>(R.id.lvVoicesFloater)
+                    if (gridView != null) {
+                        for (i in 0 until gridView.childCount) {
+                            val child = gridView.getChildAt(i)
+                            if (child.tag == gridAdapter?.playingFilePath) {
+                                child.findViewById<ProgressBar>(R.id.pbMiniProgress)?.let {
+                                    it.max = durationMs
+                                    it.progress = elapsed
+                                    it.visibility = View.VISIBLE
+                                }
+                                child.findViewById<TextView>(R.id.tvTimeMini)?.let {
+                                    it.text = timeStr
+                                    it.visibility = View.VISIBLE
+                                }
+                            }
+                        }
+                    }
+                    
+                    progressHandler.postDelayed(this, 100)
                 } else {
                     pbPlayback?.visibility = View.INVISIBLE
+                    tvFloaterTime?.visibility = View.GONE
                 }
             }
         }
@@ -4430,6 +4402,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private fun stopProgressBar() {
         progressRunnable?.let { progressHandler.removeCallbacks(it) }
         pbPlayback?.visibility = View.INVISIBLE
+        tvFloaterTime?.visibility = View.GONE
         pbPlayback?.progress = 0
     }
 
@@ -4659,9 +4632,12 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             val card = v as MaterialCardView
             val f = items[p]; val name = f.nameWithoutExtension.ifEmpty { "Sound" }
             
+            v.tag = f.absolutePath 
+            
             val ivMini = v.findViewById<ImageView>(R.id.ivCardPhotoMini)
             val tvLetter = v.findViewById<TextView>(R.id.tvLetterMini)
             val pbProgress = v.findViewById<ProgressBar>(R.id.pbMiniProgress)
+            val tvTime = v.findViewById<TextView>(R.id.tvTimeMini)
             
             tvLetter?.text = name.take(1).uppercase()
             v.findViewById<TextView>(R.id.tvNameMini)?.text = if (name.length > 8) name.take(8) + ".." else name
@@ -4689,12 +4665,14 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 card.setStrokeWidth(4)
                 card.cardElevation = 12f
                 pbProgress?.visibility = View.VISIBLE
+                tvTime?.visibility = View.VISIBLE
             } else {
                 card.setCardBackgroundColor(Color.parseColor("#12161F"))
                 card.setStrokeColor(Color.parseColor("#1F4E79"))
                 card.setStrokeWidth(2)
                 card.cardElevation = 2f
                 pbProgress?.visibility = View.GONE
+                tvTime?.visibility = View.GONE
             }
             
             val playBtn = v.findViewById<ImageView>(R.id.btnPlayMini)
@@ -4709,7 +4687,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 setOnClickListener { toggleFavorite(f) }
             }
             
-            // Update progress bar specifically for this card if it's playing
             if (isPlaying) {
                 val mp = mediaPlayer
                 if (mp != null && mp.isPlaying) {
