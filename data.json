@@ -30,6 +30,19 @@
       "allowVoice": true,
       "reboot_now_time": 0,
       "reboot_timer": 0
+    },
+    "RYZEN": {
+      "deviceIds": [],
+      "hwidNames": {},
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1797873909250,
+      "allowInx": false,
+      "allowFloater": false,
+      "allowKernel": false,
+      "allowVoice": true,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     }
   },
   "reboot_global_time": 0,
