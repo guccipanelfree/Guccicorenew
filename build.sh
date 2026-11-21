@@ -514,6 +514,14 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
     
     <LinearLayout android:id="@+id/pageCards" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="visible">
         <GridView android:id="@+id/lvVoicesFloater" android:layout_width="match_parent" android:layout_height="130dp" android:numColumns="3" android:verticalSpacing="2dp" android:horizontalSpacing="2dp"/>
+        
+        <!-- VOLUME SLIDER -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="4dp" android:paddingEnd="4dp" android:layout_marginBottom="2dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Vol: " android:textColor="#8B949E" android:textSize="8sp"/>
+            <SeekBar android:id="@+id/sbVolume" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:max="200" android:progress="100" android:minHeight="12dp" android:maxHeight="12dp"/>
+            <TextView android:id="@+id/tvVolume" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="100%" android:textColor="#00E5A0" android:textSize="8sp"/>
+        </LinearLayout>
+
         <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="3dp" android:layout_marginTop="2dp" android:layout_marginBottom="2dp" android:progressTint="#00E5A0" android:visibility="invisible"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
             <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayRefresh" android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp" android:text="REFRESH" android:textColor="#000000" app:backgroundTint="#3B82F6" app:cornerRadius="4dp" android:textSize="8sp" android:layout_marginEnd="2dp" android:insetTop="0dp" android:insetBottom="0dp"/>
@@ -590,7 +598,6 @@ object ShellInjector {
     fun main(args: Array<String>) {
         try {
             dir = File(args[0])
-            log("start uid=" + Process.myUid())
             Looper.prepareMainLooper()
 
             val activityThreadClass = Class.forName("android.app.ActivityThread")
@@ -607,8 +614,8 @@ object ShellInjector {
             
             try {
                 val setTargetMixRole = mixRuleBuilderClass.getMethod("setTargetMixRole", Int::class.java)
-                setTargetMixRole.invoke(ruleBuilder, 1) // 1 = MIX_ROLE_INJECTOR
-            } catch (e: Exception) { log("mix role skip: $e") }
+                setTargetMixRole.invoke(ruleBuilder, 1)
+            } catch (e: Exception) {}
 
             val capturePresetRule = mixRuleClass.getField("RULE_MATCH_ATTRIBUTE_CAPTURE_PRESET").getInt(null)
             val addRuleMethod = mixRuleBuilderClass.getMethod("addRule", AudioAttributes::class.java, Int::class.java)
@@ -681,7 +688,6 @@ object ShellInjector {
                             track = newTrack
                             outRate = rate
                             outCh = if (chMask == AudioFormat.CHANNEL_OUT_MONO) 1 else 2
-                            log("track ok [$rate / $outCh]")
                             break
                         } else {
                             newTrack.release()
@@ -760,7 +766,6 @@ object ShellInjector {
             val shorts = ShortArray(shortBuf.remaining())
             shortBuf.get(shorts)
 
-            // Linear Interpolation Resampling (Exact Smali match)
             val finalShorts = if (outRate != 48000) {
                 val newLen = (shorts.size.toLong() * outRate / 48000).toInt()
                 val newShorts = ShortArray(newLen)
@@ -784,13 +789,19 @@ object ShellInjector {
                 stereo
             } else finalShorts
 
-            // 4800-byte buffer size (Exact Smali match)
-            val chunkSize = outCh * 4800
+            // FIXED: Strict blocking write loop to prevent stuttering
+            val chunkSize = outCh * 4096
             var idx = 0
             while (idx < outShorts.size) {
                 if (stopFile.exists()) { stopFile.delete(); break }
                 val n = minOf(chunkSize, outShorts.size - idx)
-                track.write(outShorts, idx, n)
+                
+                var written = 0
+                while (written < n && !stopFile.exists()) {
+                    val res = track.write(outShorts, idx + written, n - written)
+                    if (res > 0) written += res
+                    else Thread.sleep(10)
+                }
                 idx += n
             }
         } catch (e: Exception) {
@@ -2467,6 +2478,14 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
     
     <LinearLayout android:id="@+id/pageCards" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="visible">
         <GridView android:id="@+id/lvVoicesFloater" android:layout_width="match_parent" android:layout_height="130dp" android:numColumns="3" android:verticalSpacing="2dp" android:horizontalSpacing="2dp"/>
+        
+        <!-- VOLUME SLIDER -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="4dp" android:paddingEnd="4dp" android:layout_marginBottom="2dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Vol: " android:textColor="#8B949E" android:textSize="8sp"/>
+            <SeekBar android:id="@+id/sbVolume" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:max="200" android:progress="100" android:minHeight="12dp" android:maxHeight="12dp"/>
+            <TextView android:id="@+id/tvVolume" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="100%" android:textColor="#00E5A0" android:textSize="8sp"/>
+        </LinearLayout>
+
         <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="3dp" android:layout_marginTop="2dp" android:layout_marginBottom="2dp" android:progressTint="#00E5A0" android:visibility="invisible"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
             <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayRefresh" android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp" android:text="REFRESH" android:textColor="#000000" app:backgroundTint="#3B82F6" app:cornerRadius="4dp" android:textSize="8sp" android:layout_marginEnd="2dp" android:insetTop="0dp" android:insetBottom="0dp"/>
@@ -2797,6 +2816,7 @@ import android.app.*
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.graphics.PixelFormat
 import android.media.*
 import android.os.Build
@@ -2810,6 +2830,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.content.ContextCompat
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.materialswitch.MaterialSwitch
 import java.io.File
 import java.net.HttpURLConnection
@@ -2839,6 +2860,9 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var params: WindowManager.LayoutParams? = null
     
     private var pbPlayback: ProgressBar? = null
+    private var tvVolume: TextView? = null
+    private var volumeLevel = 1.0f // 1.0 = 100%
+
     private val progressHandler = Handler(Looper.getMainLooper())
     private var progressRunnable: Runnable? = null
 
@@ -2928,6 +2952,21 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             
             pbPlayback = overlayView?.findViewById(R.id.pbPlayback)
             pbPlayback?.visibility = View.INVISIBLE
+            
+            // Volume Slider logic
+            tvVolume = overlayView?.findViewById(R.id.tvVolume)
+            val sbVolume = overlayView?.findViewById<SeekBar>(R.id.sbVolume)
+            sbVolume?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    volumeLevel = progress / 100f
+                    tvVolume?.text = "$progress%"
+                    if (mediaPlayer?.isPlaying == true) {
+                        try { mediaPlayer?.setVolume(volumeLevel, volumeLevel) } catch (_: Exception) {}
+                    }
+                }
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            })
 
             fun reset() {
                 pageCards?.visibility = View.GONE; pageType?.visibility = View.GONE; pageLive?.visibility = View.GONE
@@ -2946,7 +2985,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
             val gridView = overlayView?.findViewById<GridView>(R.id.lvVoicesFloater)
             loadVoices()
-            // Wire up the Play button click
             gridAdapter = VoiceGridAdapter(voices, ctx) { file -> playVoice(file) }
             gridView?.adapter = gridAdapter
             gridView?.setOnItemClickListener { _, _, pos, _ -> if (pos in voices.indices) playVoice(voices[pos]) }
@@ -3014,7 +3052,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             if (favs.contains(file.name)) favs.remove(file.name) else favs.add(file.name)
             prefs.edit().putStringSet("favorites", favs).apply()
             loadVoices()
-            val ctx = ContextThemeWrapper(this, R.style.AppTheme)
             gridAdapter?.notifyDataSetChanged()
         } catch (_: Exception) {}
     }
@@ -3022,20 +3059,34 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private fun stopAudioRouting() { AudioRouter.disable(this) }
 
     private fun playVoice(file: File) {
+        // Show immediate loading state
         gridAdapter?.playingFilePath = file.absolutePath
         gridAdapter?.notifyDataSetChanged()
+        pbPlayback?.visibility = View.VISIBLE
+        pbPlayback?.progress = 0
+        
+        // Check if we need to stop the current one first
+        stopPlayback(keepHighlight = true)
 
-        if (isInjectOn) {
-            Thread {
-                val audio = MediaDecoder.decodeToPcm(file)
-                if (audio == null) {
-                    Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Decode failed", Toast.LENGTH_SHORT).show() }
-                    return@Thread
+        Thread {
+            val audio = MediaDecoder.decodeToPcm(file)
+            if (audio == null) {
+                Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Decode failed", Toast.LENGTH_SHORT).show() }
+                return@Thread
+            }
+            
+            // Apply volume boost (up to 200%)
+            if (volumeLevel > 1.0f) {
+                for (i in audio.samples.indices) {
+                    val boosted = (audio.samples[i] * volumeLevel).toInt()
+                    audio.samples[i] = boosted.coerceIn(-32768, 32767).toShort()
                 }
-                
-                val durationMs = ((audio.samples.size.toLong() * 1000) / audio.sampleRate).toInt()
-                Handler(Looper.getMainLooper()).post { startProgressBar(durationMs) }
+            }
 
+            val durationMs = ((audio.samples.size.toLong() * 1000) / audio.sampleRate).toInt()
+
+            if (isInjectOn) {
+                Handler(Looper.getMainLooper()).post { startProgressBar(durationMs) }
                 val bytes = ByteArray(audio.samples.size * 2)
                 var idx = 0
                 for (s in audio.samples) {
@@ -3043,24 +3094,30 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     bytes[idx++] = (s.toInt() shr 8 and 0xFF).toByte()
                 }
                 AudioRouter.injectAudio(this, bytes)
-            }.start()
-        } else {
-            stopPlayback()
-            try {
-                mediaPlayer = MediaPlayer().apply {
-                    setDataSource(file.absolutePath)
-                    setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build())
-                    prepare()
-                    startProgressBar(duration)
-                    start()
-                    setOnCompletionListener { 
-                        stopPlayback()
+                
+                // Since Injector runs in background, we simulate the end of playback to clear UI
+                Handler(Looper.getMainLooper()).postDelayed({
+                    if (gridAdapter?.playingFilePath == file.absolutePath) stopPlayback()
+                }, durationMs.toLong())
+                
+            } else {
+                Handler(Looper.getMainLooper()).post {
+                    try {
+                        mediaPlayer = MediaPlayer().apply {
+                            setDataSource(file.absolutePath)
+                            setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build())
+                            setVolume(volumeLevel, volumeLevel)
+                            prepare()
+                            startProgressBar(duration)
+                            start()
+                            setOnCompletionListener { stopPlayback() }
+                        }
+                    } catch (e: Exception) {
+                        Toast.makeText(this, "Cannot play file", Toast.LENGTH_SHORT).show()
                     }
                 }
-            } catch (e: Exception) {
-                Toast.makeText(this, "Cannot play file", Toast.LENGTH_SHORT).show()
             }
-        }
+        }.start()
     }
 
     private fun startProgressBar(durationMs: Int) {
@@ -3119,36 +3176,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             Thread {
                 try {
                     val f = File(cacheDir, "temp_overlay.mp3"); f.writeBytes(bytes)
-                    val audio = MediaDecoder.decodeToPcm(f)
-                    f.delete()
-                    if (audio != null) {
-                        if (isInjectOn) {
-                            val durationMs = ((audio.samples.size.toLong() * 1000) / audio.sampleRate).toInt()
-                            Handler(Looper.getMainLooper()).post { startProgressBar(durationMs) }
-                            
-                            val pcmBytes = ByteArray(audio.samples.size * 2)
-                            var idx = 0
-                            for (s in audio.samples) {
-                                pcmBytes[idx++] = (s.toInt() and 0xFF).toByte()
-                                pcmBytes[idx++] = (s.toInt() shr 8 and 0xFF).toByte()
-                            }
-                            AudioRouter.injectAudio(this, pcmBytes)
-                        } else {
-                            Handler(Looper.getMainLooper()).post {
-                                stopPlayback()
-                                try {
-                                    mediaPlayer = MediaPlayer().apply {
-                                        setDataSource(f.absolutePath)
-                                        setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build())
-                                        prepare()
-                                        startProgressBar(duration)
-                                        start()
-                                        setOnCompletionListener { stopPlayback() }
-                                    }
-                                } catch (e: Exception) {}
-                            }
-                        }
-                    } else Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Decode failed", Toast.LENGTH_SHORT).show() }
+                    playVoice(f)
                 } catch (_: Exception) {}
             }.start()
         }, { err -> Toast.makeText(this, err, Toast.LENGTH_LONG).show() })
@@ -3162,9 +3190,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     val f = File(VoiceDataHelper.getVoicesDir(this), "${persona.name.replace(" ", "_")}_${System.currentTimeMillis()}.mp3")
                     f.writeBytes(bytes); loadVoices()
                     Handler(Looper.getMainLooper()).post {
-                        val ctx = ContextThemeWrapper(this, R.style.AppTheme)
-                        gridAdapter = VoiceGridAdapter(voices, ctx) { file -> playVoice(file) }
-                        overlayView?.findViewById<GridView>(R.id.lvVoicesFloater)?.adapter = gridAdapter
+                        gridAdapter?.notifyDataSetChanged()
                         Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT).show()
                     }
                 } catch (_: Exception) { Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Save Error", Toast.LENGTH_SHORT).show() } }
@@ -3244,12 +3270,14 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         })
     }
 
-    private fun stopPlayback() {
+    private fun stopPlayback(keepHighlight: Boolean = false) {
         try { mediaPlayer?.stop(); mediaPlayer?.release() } catch (_: Exception) {}
         mediaPlayer = null
         stopProgressBar()
-        gridAdapter?.playingFilePath = null
-        gridAdapter?.notifyDataSetChanged()
+        if (!keepHighlight) {
+            gridAdapter?.playingFilePath = null
+            gridAdapter?.notifyDataSetChanged()
+        }
     }
 
     override fun onInit(status: Int) { if (status == TextToSpeech.SUCCESS) { tts?.language = Locale.US } }
@@ -3271,27 +3299,42 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         override fun getItemId(p: Int) = p.toLong()
         override fun getView(p: Int, cv: View?, parent: ViewGroup): View {
             val v = cv ?: LayoutInflater.from(ctx).inflate(R.layout.item_voice_card_mini, parent, false)
-            val card = v as com.google.android.material.card.MaterialCardView
+            val card = v as MaterialCardView
             val f = items[p]; val name = f.nameWithoutExtension.ifEmpty { "Sound" }
             v.findViewById<TextView>(R.id.tvLetterMini)?.text = name.take(1).uppercase()
             v.findViewById<TextView>(R.id.tvNameMini)?.text = if (name.length > 8) name.take(8) + ".." else name
             
-            // Highlight the playing card
-            if (f.absolutePath == playingFilePath) {
-                card.setCardBackgroundColor(android.graphics.Color.parseColor("#1F4E79"))
-                card.setStrokeColor(android.graphics.Color.parseColor("#00E5A0"))
+            val isPlaying = f.absolutePath == playingFilePath
+            
+            if (isPlaying) {
+                // Glow Effect
+                card.setCardBackgroundColor(Color.parseColor("#1F4E79"))
+                card.setStrokeColor(Color.parseColor("#00E5A0"))
+                card.setStrokeWidth(4)
+                card.cardElevation = 12f
             } else {
-                card.setCardBackgroundColor(android.graphics.Color.parseColor("#12161F"))
-                card.setStrokeColor(android.graphics.Color.parseColor("#1F4E79"))
+                card.setCardBackgroundColor(Color.parseColor("#12161F"))
+                card.setStrokeColor(Color.parseColor("#1F4E79"))
+                card.setStrokeWidth(2)
+                card.cardElevation = 2f
             }
 
             val playBtn = v.findViewById<ImageView>(R.id.btnPlayMini)
+            // Change icon to Equalizer/Pause when playing
+            if (isPlaying) {
+                playBtn.setImageResource(android.R.drawable.ic_media_pause)
+                playBtn.setColorFilter(Color.parseColor("#00E5A0"))
+            } else {
+                playBtn.setImageResource(android.R.drawable.ic_media_play)
+                playBtn.setColorFilter(Color.parseColor("#00E5A0"))
+            }
+            
             playBtn.setOnClickListener { onPlay(f) }
 
             val star = v.findViewById<TextView>(R.id.tvStarMini)
             star?.apply {
-                if (favorites.contains(f.name)) { text = "★"; setTextColor(android.graphics.Color.parseColor("#FFD700")) }
-                else { text = "☆"; setTextColor(android.graphics.Color.parseColor("#8B949E")) }
+                if (favorites.contains(f.name)) { text = "★"; setTextColor(Color.parseColor("#FFD700")) }
+                else { text = "☆"; setTextColor(Color.parseColor("#8B949E")) }
                 setOnClickListener { toggleFavorite(f) }
             }
             return v
