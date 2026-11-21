@@ -7,25 +7,23 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #0a0e14; color: #ffffff; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 650px; }
-        
+        .container { width: 100%; max-width: 600px; }
+
         .card { background-color: #11161f; padding: 24px; border-radius: 12px; border: 1px solid #1f2633; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         h2 { color: #2dd4a7; margin-bottom: 20px; font-size: 22px; }
         h3 { color: #ffffff; margin-bottom: 15px; font-size: 18px; }
-        
+
         .input-group { margin-bottom: 15px; }
-        .row { display: flex; gap: 10px; }
-        .row .input-group { flex: 1; }
         label { display: block; margin-bottom: 5px; font-size: 14px; color: #8b949e; }
         input, select { width: 100%; padding: 12px; background-color: #1a222c; border: 1px solid #2a3645; border-radius: 8px; color: white; font-size: 15px; outline: none; }
         input:focus, select:focus { border-color: #2dd4a7; }
-        
+
         button { width: 100%; padding: 14px; background-color: #2dd4a7; color: #000000; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
         button:hover { background-color: #24b78f; }
         button.danger { background-color: #ff4d4d; color: white; margin-top: 10px; }
         button.danger:hover { background-color: #e60000; }
         button.refresh { background-color: #1a222c; color: #2dd4a7; border: 1px solid #2dd4a7; margin-bottom: 15px; }
-        
+
         .hidden { display: none !important; }
         .msg { margin-top: 10px; font-size: 14px; text-align: center; font-weight: bold; }
         .msg.success { color: #2dd4a7; }
@@ -38,17 +36,63 @@
         .status-bound { background-color: rgba(45, 212, 167, 0.2); color: #2dd4a7; }
         .status-unbound { background-color: rgba(255, 77, 77, 0.2); color: #ff4d4d; }
         .status-revoked { background-color: #333; color: #888; }
-        .key-details { font-size: 12px; color: #8b949e; line-height: 1.6; }
-        
-        .hwid-list { margin-top: 8px; background: #0a0e14; padding: 8px; border-radius: 6px; }
-        .hwid-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; border-bottom: 1px solid #1f2633; padding-bottom: 4px; }
-        .hwid-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .btn-small { width: auto; padding: 4px 8px; font-size: 11px; border-radius: 4px; margin-left: 5px; }
-        
+        .key-details { font-size: 12px; color: #8b949e; line-height: 1.5; }
+
         .btn-revoke { background-color: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; padding: 6px 12px; width: auto; font-size: 12px; border-radius: 4px; }
         .btn-revoke:hover { background-color: rgba(255, 77, 77, 0.1); }
-        .btn-add { background-color: #3b82f6; color: white; border: none; padding: 6px 12px; width: auto; font-size: 12px; border-radius: 4px; }
-        .btn-add:hover { background-color: #2563eb; }
+
+        /* ===== NEW STYLES ONLY ADDED ===== */
+        textarea {
+            width: 100%;
+            padding: 12px;
+            background-color: #1a222c;
+            border: 1px solid #2a3645;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            font-family: inherit;
+            resize: vertical;
+        }
+        textarea:focus { border-color: #2dd4a7; }
+
+        .device-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            background: #0f141c;
+            border: 1px solid #1f2633;
+            border-radius: 6px;
+            padding: 6px 8px;
+            margin-top: 6px;
+        }
+        .device-info { display: flex; flex-direction: column; min-width: 0; }
+        .dev-name { font-size: 13px; color: #c9d1d9; word-break: break-word; }
+        .dev-hwid { font-size: 11px; color: #6e7681; word-break: break-all; }
+        .chips { margin-top: 6px; }
+        .chip {
+            display: inline-block;
+            font-size: 11px;
+            background: #0f141c;
+            border: 1px solid #2a3645;
+            color: #8b949e;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin: 2px 4px 0 0;
+            word-break: break-all;
+        }
+        .btn-mini {
+            width: auto;
+            padding: 5px 9px;
+            font-size: 11px;
+            border-radius: 4px;
+            background: #0f141c;
+            color: #ff4d4d;
+            border: 1px solid #5a1f1f;
+            font-weight: 600;
+        }
+        .btn-mini:hover { background: rgba(255, 77, 77, 0.1); }
     </style>
 </head>
 <body>
@@ -78,27 +122,40 @@
             <button class="btn-revoke" style="color: #8b949e; border-color: #8b949e;" onclick="logout()">Logout</button>
         </div>
 
-        <div class="row">
-            <div class="input-group">
-                <label>Key Duration</label>
-                <select id="keyDuration">
-                    <option value="1">1 Day</option>
-                    <option value="7">7 Days</option>
-                    <option value="30">30 Days</option>
-                    <option value="0">Lifetime</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label>Max Devices Allowed</label>
-                <select id="keyMaxDevices">
-                    <option value="1">1 Device</option>
-                    <option value="2">2 Devices</option>
-                    <option value="3">3 Devices</option>
-                    <option value="5">5 Devices</option>
-                    <option value="9999">Unlimited</option>
-                </select>
-            </div>
+        <div class="input-group">
+            <label>Key Duration</label>
+            <select id="keyDuration">
+                <option value="1">1 Day</option>
+                <option value="7">7 Days</option>
+                <option value="30">30 Days</option>
+                <option value="0">Lifetime</option>
+            </select>
         </div>
+
+        <!-- ===== NEW: DEVICE LIMIT ===== -->
+        <div class="input-group">
+            <label>Max Devices (1, 2, 3, 4, Unlimited, or Custom)</label>
+            <select id="maxDevicesSel" onchange="toggleCustomMax()">
+                <option value="1">1 Device</option>
+                <option value="2">2 Devices</option>
+                <option value="3">3 Devices</option>
+                <option value="4">4 Devices</option>
+                <option value="0">Unlimited</option>
+                <option value="custom">Custom...</option>
+            </select>
+        </div>
+
+        <div class="input-group hidden" id="customMaxWrap">
+            <label>Custom device limit</label>
+            <input type="number" id="customMax" min="1" value="2">
+        </div>
+
+        <!-- ===== NEW: HWID WHITELIST ===== -->
+        <div class="input-group">
+            <label>HWID Whitelist (optional — one per line or comma separated; empty = any HWID)</label>
+            <textarea id="hwidWhitelist" rows="3" placeholder="ABC123...&#10;DEF456..."></textarea>
+        </div>
+
         <button onclick="generateKey()">Generate New Key</button>
         <div id="genMsg" class="msg"></div>
 
@@ -148,15 +205,60 @@
         });
     }
 
+    /* ===== NEW HELPERS ===== */
+    function toggleCustomMax() {
+        const sel = document.getElementById('maxDevicesSel');
+        const wrap = document.getElementById('customMaxWrap');
+        if (!sel || !wrap) return;
+        wrap.classList.toggle('hidden', sel.value !== 'custom');
+    }
+
+    function getSelectedMaxDevices() {
+        const sel = document.getElementById('maxDevicesSel');
+        if (!sel) return 1;
+
+        if (sel.value === 'custom') {
+            const n = parseInt(document.getElementById('customMax').value, 10);
+            return (isNaN(n) || n < 1) ? 1 : n;
+        }
+        return parseInt(sel.value, 10);
+    }
+
+    function parseHwidList(text) {
+        return [...new Set(
+            String(text || '').split(/[\s,;]+/).map(s => s.trim()).filter(Boolean)
+        )];
+    }
+
+    function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    function escapeAttr(value) {
+        return escapeHtml(value);
+    }
+
     function generateKey() {
         const days = parseInt(document.getElementById('keyDuration').value);
-        const maxDevices = parseInt(document.getElementById('keyMaxDevices').value);
+        const maxDevices = getSelectedMaxDevices();
+        const allowedHwids = parseHwidList(document.getElementById('hwidWhitelist').value);
+
         const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
         const newKey = "GUCCI-" + randomStr;
         let expiresAt = days > 0 ? Date.now() + (days * 24 * 60 * 60 * 1000) : 0;
 
         if(!currentJson.keys) currentJson.keys = {};
-        currentJson.keys[newKey] = { "deviceIds": [], "maxDevices": maxDevices, "revoked": false, "expiresAt": expiresAt };
+
+        currentJson.keys[newKey] = {
+            "deviceIds": [],
+            "maxDevices": maxDevices,
+            "revoked": false,
+            "expiresAt": expiresAt,
+            "allowedHwids": allowedHwids,
+            "hwidNames": {}
+        };
 
         saveToGitHub(`Generated key ${newKey}`, document.getElementById('genMsg'));
     }
@@ -167,32 +269,52 @@
         saveToGitHub(`Revoked key ${keyName}`);
     }
 
-    function addManualHwid(keyName) {
-        const hwid = prompt("Enter the HWID (Device ID) to manually authorize:");
-        if(!hwid || hwid.trim() === "") return;
-        
-        const keyData = currentJson.keys[keyName];
-        if(!keyData.deviceIds) keyData.deviceIds = [];
-        
-        if(keyData.deviceIds.length >= keyData.maxDevices && keyData.maxDevices !== 9999) {
-            alert(`Cannot add! This key is limited to ${keyData.maxDevices} device(s).`);
-            return;
-        }
-        
-        if(keyData.deviceIds.includes(hwid.trim())) {
-            alert("This HWID is already added to this key.");
-            return;
+    /* ===== NEW: MANUAL HWID BIND / UNBIND ===== */
+    function bindHwid(keyName) {
+        const data = currentJson.keys[keyName];
+        if(!data) return;
+
+        if(!data.deviceIds) data.deviceIds = [];
+        if(!data.hwidNames) data.hwidNames = {};
+        if(!data.allowedHwids) data.allowedHwids = [];
+        if(typeof data.maxDevices !== 'number') data.maxDevices = 1;
+
+        const hwid = prompt("Enter the HWID you want to allow:");
+        if(!hwid) return;
+        const cleanHwid = hwid.trim();
+        if(!cleanHwid) return;
+
+        if(data.deviceIds.includes(cleanHwid)) {
+            return alert("This HWID is already bound.");
         }
 
-        keyData.deviceIds.push(hwid.trim());
-        saveToGitHub(`Manually added HWID to ${keyName}`);
+        if(data.maxDevices !== 0 && data.deviceIds.length >= data.maxDevices) {
+            return alert(`Device limit reached (${data.maxDevices}).`);
+        }
+
+        if(data.allowedHwids.length && !data.allowedHwids.includes(cleanHwid)) {
+            return alert("This HWID is not in the HWID whitelist for this key.");
+        }
+
+        const name = prompt("Device name (optional):", "");
+        if(name === null) return;
+
+        data.deviceIds.push(cleanHwid);
+        data.hwidNames[cleanHwid] = name.trim() || "Manual entry";
+
+        saveToGitHub(`Bound ${cleanHwid} to ${keyName}`);
     }
 
-    function removeHwid(keyName, hwid) {
-        if(!confirm(`Remove device ${hwid} from ${keyName}?`)) return;
-        const keyData = currentJson.keys[keyName];
-        keyData.deviceIds = keyData.deviceIds.filter(id => id !== hwid);
-        saveToGitHub(`Removed HWID from ${keyName}`);
+    function unbindHwid(keyName, hwid) {
+        const data = currentJson.keys[keyName];
+        if(!data) return;
+
+        if(!confirm(`Unbind this device from ${keyName}?\n\n${hwid}`)) return;
+
+        data.deviceIds = data.deviceIds.filter(x => x !== hwid);
+        if(data.hwidNames) delete data.hwidNames[hwid];
+
+        saveToGitHub(`Unbound ${hwid} from ${keyName}`);
     }
 
     function saveToGitHub(commitMsg, msgElement) {
@@ -217,53 +339,85 @@
         const keys = currentJson.keys || {};
         const keyNames = Object.keys(keys).reverse();
 
-        if(keyNames.length === 0) { container.innerHTML = "<p style='color:#8b949e; font-size:14px;'>No keys generated yet.</p>"; return; }
+        if(keyNames.length === 0) {
+            container.innerHTML = "<p style='color:#8b949e; font-size:14px;'>No keys generated yet.</p>";
+            return;
+        }
 
         keyNames.forEach(k => {
             const data = keys[k];
-            if (!data.deviceIds) data.deviceIds = []; // Safety for old keys
-            
-            let statusHtml = data.revoked ? `<span class="key-status status-revoked">REVOKED</span>` : 
-                             (data.deviceIds.length > 0 ? `<span class="key-status status-bound">${data.deviceIds.length} / ${data.maxDevices === 9999 ? '∞' : data.maxDevices} BOUND</span>` : `<span class="key-status status-unbound">UNBOUND</span>`);
-            
-            let expiryText = data.expiresAt === 0 ? "Lifetime" : new Date(data.expiresAt).toLocaleString();
-            
-            // Generate the HWID list
-            let hwidHtml = `<div class="hwid-list">`;
-            if (data.deviceIds.length === 0) {
-                hwidHtml += `<div style="color:#8b949e; font-size:12px; text-align:center;">Waiting for login...</div>`;
-            } else {
-                data.deviceIds.forEach(hwid => {
-                    hwidHtml += `<div class="hwid-row">
-                        <span style="font-family:monospace; font-size:12px; color:#2dd4a7;">${hwid}</span>
-                        ${data.revoked ? '' : `<button class="danger btn-small" onclick="removeHwid('${k}', '${hwid}')">X</button>`}
-                    </div>`;
-                });
-            }
-            hwidHtml += `</div>`;
 
-            let actionBtns = data.revoked ? "" : `
-                <div style="display:flex; gap:5px; margin-top:10px;">
-                    <button class="btn-add" onclick="addManualHwid('${k}')">+ Add HWID</button>
-                    <button class="btn-revoke" onclick="revokeKey('${k}')">Revoke Key</button>
-                </div>
-            `;
+            if(!data.deviceIds) data.deviceIds = [];
+            if(!data.hwidNames) data.hwidNames = {};
+            if(!data.allowedHwids) data.allowedHwids = [];
+            if(typeof data.maxDevices !== 'number') data.maxDevices = 1;
+            if(typeof data.expiresAt !== 'number') data.expiresAt = 0;
+
+            const bound = data.deviceIds.length;
+            const maxDevices = data.maxDevices;
+
+            let statusHtml = data.revoked
+                ? `<span class="key-status status-revoked">REVOKED</span>`
+                : (bound > 0
+                    ? `<span class="key-status status-bound">BOUND</span>`
+                    : `<span class="key-status status-unbound">UNBOUND</span>`);
+
+            let expiryText = data.expiresAt === 0
+                ? "Lifetime"
+                : new Date(data.expiresAt).toLocaleString();
+
+            let revokeBtn = data.revoked
+                ? ""
+                : `<button class="btn-revoke" onclick="revokeKey('${k}')">Revoke</button>`;
+
+            let bindBtn = `<button class="btn-revoke" style="color:#2dd4a7; border-color:#2dd4a7; margin-left:6px;" onclick="bindHwid('${k}')">Bind HWID</button>`;
+
+            let deviceHtml = "";
+            if(bound > 0) {
+                deviceHtml = data.deviceIds.map(hwid => {
+                    const name = data.hwidNames[hwid] || "Unknown device";
+                    return `
+                        <div class="device-row">
+                            <div class="device-info">
+                                <span class="dev-name">${escapeHtml(name)}</span>
+                                <code class="dev-hwid">${escapeHtml(hwid)}</code>
+                            </div>
+                            <button class="btn-mini" data-unbind-key="${escapeAttr(k)}" data-unbind-hwid="${escapeAttr(hwid)}">Unbind</button>
+                        </div>`;
+                }).join("");
+            } else {
+                deviceHtml = `<div style="font-size:12px; color:#8b949e; margin-top:6px;">Waiting for login...</div>`;
+            }
+
+            let whitelistHtml = "";
+            if(data.allowedHwids.length > 0) {
+                whitelistHtml = `
+                    <div class="key-details" style="margin-top:8px;"><b>HWID Whitelist:</b></div>
+                    <div class="chips">
+                        ${data.allowedHwids.map(h => `<span class="chip">${escapeHtml(h)}</span>`).join("")}
+                    </div>`;
+            }
 
             container.innerHTML += `
-                <div class="key-item" style="border-left-color: ${data.revoked ? '#888' : (data.deviceIds.length > 0 ? '#2dd4a7' : '#ff4d4d')}">
-                    <div class="key-header">
-                        <span class="key-title">${k}</span>
-                        ${statusHtml}
-                    </div>
+                <div class="key-item" style="border-left-color: ${data.revoked ? '#888' : (bound > 0 ? '#2dd4a7' : '#ff4d4d')}">
+                    <div class="key-header"><span class="key-title">${k}</span>${statusHtml}</div>
                     <div class="key-details">
-                        <b>Expires:</b> ${expiryText} <br>
-                        <b>Max Devices:</b> ${data.maxDevices === 9999 ? 'Unlimited' : data.maxDevices} <br>
+                        <b>Devices:</b> ${bound} / ${maxDevices === 0 ? 'Unlimited' : maxDevices}
+                        <br><b>Expires:</b> ${expiryText}
                     </div>
-                    ${hwidHtml}
-                    ${actionBtns}
+                    ${deviceHtml}
+                    ${whitelistHtml}
+                    <div style="margin-top:10px;">${revokeBtn}${bindBtn}</div>
                 </div>`;
         });
     }
+
+    /* ===== NEW: HANDLE UNBIND BUTTONS ===== */
+    document.getElementById('keysContainer').addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-unbind-key]');
+        if(!btn) return;
+        unbindHwid(btn.getAttribute('data-unbind-key'), btn.getAttribute('data-unbind-hwid'));
+    });
 
     function logout() { location.reload(); }
 </script>
