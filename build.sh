@@ -473,7 +473,6 @@ cat > app/src/main/res/layout/activity_gucci_voice.xml << 'EOF'
         <com.google.android.material.button.MaterialButton android:id="@+id/btnMaxVolume" android:layout_width="0dp" android:layout_weight="1" android:layout_height="50dp" android:text="🔊 Max volume (200%)" android:textColor="#FFFFFF" app:backgroundTint="#8B5CF6" app:cornerRadius="12dp" android:layout_marginEnd="8dp"/>
         <com.google.android.material.button.MaterialButton android:id="@+id/btnStopAll" android:layout_width="0dp" android:layout_weight="1" android:layout_height="50dp" android:text="⏹️ Stop all" android:textColor="#FFFFFF" app:backgroundTint="#EF4444" app:cornerRadius="12dp"/>
     </LinearLayout>
-    <!-- ===== NEW: VOLUME SLIDER (saves automatically) ===== -->
     <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="12dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp" android:layout_marginBottom="16dp">
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
@@ -2557,7 +2556,6 @@ cat > app/src/main/res/layout/activity_gucci_voice.xml << 'EOF'
         <com.google.android.material.button.MaterialButton android:id="@+id/btnMaxVolume" android:layout_width="0dp" android:layout_weight="1" android:layout_height="50dp" android:text="🔊 Max volume (200%)" android:textColor="#FFFFFF" app:backgroundTint="#8B5CF6" app:cornerRadius="12dp" android:layout_marginEnd="8dp"/>
         <com.google.android.material.button.MaterialButton android:id="@+id/btnStopAll" android:layout_width="0dp" android:layout_weight="1" android:layout_height="50dp" android:text="⏹️ Stop all" android:textColor="#FFFFFF" app:backgroundTint="#EF4444" app:cornerRadius="12dp"/>
     </LinearLayout>
-    <!-- ===== NEW: VOLUME SLIDER (saves automatically) ===== -->
     <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="12dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp" android:layout_marginBottom="16dp">
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
@@ -2707,7 +2705,6 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         setContentView(R.layout.activity_gucci_voice)
         tts = TextToSpeech(this, this)
 
-        // Load saved volume from the same prefs key the overlay uses
         val savedVolume = prefs.getInt("voice_volume", 100).coerceIn(0, 200)
         volumeLevel = savedVolume / 100f
 
@@ -2715,7 +2712,6 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val spinner = findViewById<Spinner>(R.id.spinnerVoiceSelect)
         gridView = findViewById(R.id.gridVoices)
 
-        // ===== NEW: Volume slider wiring =====
         val sbMainVolume = findViewById<SeekBar>(R.id.sbMainVolume)
         val tvMainVolume = findViewById<TextView>(R.id.tvMainVolume)
         sbMainVolume.progress = savedVolume
@@ -2726,13 +2722,6 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 tvMainVolume.text = "$progress%"
                 if (fromUser) {
                     prefs.edit().putInt("voice_volume", progress).apply()
-                    // Sync to the running overlay service (if any)
-                    try {
-                        val i = Intent(this@GucciVoiceActivity, GucciVoiceService::class.java).apply {
-                            action = "SET_VOLUME"; putExtra("volume", progress)
-                        }
-                        startService(i)
-                    } catch (_: Exception) {}
                     if (mediaPlayer?.isPlaying == true) {
                         try { mediaPlayer?.setVolume(volumeLevel.coerceAtMost(1f), volumeLevel.coerceAtMost(1f)) } catch (_: Exception) {}
                     }
@@ -2782,22 +2771,23 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
         }
 
-        // ===== NEW: Max volume button now sets 200% AND saves + syncs =====
         findViewById<MaterialButton>(R.id.btnMaxVolume).setOnClickListener {
             sbMainVolume.progress = 200
             volumeLevel = 2.0f
             prefs.edit().putInt("voice_volume", 200).apply()
             tvMainVolume.text = "200%"
-            try {
-                val i = Intent(this, GucciVoiceService::class.java).apply {
-                    action = "SET_VOLUME"; putExtra("volume", 200)
-                }
-                startService(i)
-            } catch (_: Exception) {}
             Toast.makeText(this, "🔊 Volume set to 200% (saved)", Toast.LENGTH_SHORT).show()
         }
 
         findViewById<MaterialButton>(R.id.btnStopAll).setOnClickListener { stopPlayback() }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val v = prefs.getInt("voice_volume", 100).coerceIn(0, 200)
+        volumeLevel = v / 100f
+        findViewById<SeekBar>(R.id.sbMainVolume)?.progress = v
+        findViewById<TextView>(R.id.tvMainVolume)?.text = "$v%"
     }
 
     private fun callElevenLabsApi(text: String, voiceId: String, onSuccess: (ByteArray) -> Unit, onError: (String) -> Unit) {
@@ -2854,7 +2844,6 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         findViewById<TextView>(R.id.tvVoiceCount).text = "🎧 My voices (${voiceList.size})"
     }
 
-    // ===== NEW: boost applies to preview via temp WAV =====
     private fun playVoice(file: File) {
         stopPlayback()
         currentPlayingFile = file
@@ -2869,7 +2858,6 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             } catch (e: Exception) { Toast.makeText(this, "Cannot play this file", Toast.LENGTH_SHORT).show() }
             return
         }
-        // Boosted preview: decode → scale → temp WAV → MediaPlayer
         Thread {
             val audio = MediaDecoder.decodeToPcm(file)
             if (audio == null) {
@@ -2968,6 +2956,7 @@ import android.Manifest
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.PixelFormat
@@ -3009,13 +2998,25 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var params: WindowManager.LayoutParams? = null
     private var pbPlayback: ProgressBar? = null
     private var tvVolume: TextView? = null
-    private var volumeLevel = 1.0f // will be loaded from prefs in onCreate
+    private var volumeLevel = 1.0f
 
     private val progressHandler = Handler(Looper.getMainLooper())
     private var progressRunnable: Runnable? = null
 
     private val prefs by lazy { getSharedPreferences("VoicePrefs", Context.MODE_PRIVATE) }
     private val favorites: Set<String> get() = try { prefs.getStringSet("favorites", emptySet()) ?: emptySet() } catch (e: Exception) { emptySet() }
+
+    private val volumePrefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == "voice_volume") {
+            val v = prefs.getInt("voice_volume", 100).coerceIn(0, 200)
+            volumeLevel = v / 100f
+            overlayView?.findViewById<SeekBar>(R.id.sbVolume)?.progress = v
+            tvVolume?.text = "$v%"
+            if (mediaPlayer?.isPlaying == true) {
+                try { mediaPlayer?.setVolume(volumeLevel.coerceAtMost(1f), volumeLevel.coerceAtMost(1f)) } catch (_: Exception) {}
+            }
+        }
+    }
 
     private val ELEVENLABS_API_KEY = "sk_YOUR_NEW_API_KEY_HERE"
     private val personas = listOf(
@@ -3027,9 +3028,10 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     override fun onCreate() {
         super.onCreate()
         try {
-            // ===== NEW: restore saved volume BEFORE any UI is inflated =====
             val saved = prefs.getInt("voice_volume", 100).coerceIn(0, 200)
             volumeLevel = saved / 100f
+
+            prefs.registerOnSharedPreferenceChangeListener(volumePrefListener)
 
             startForegroundServiceNotification()
             tts = TextToSpeech(this, this)
@@ -3039,18 +3041,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         } catch (e: Exception) {
             Toast.makeText(this, "Service Error: ${e.message}", Toast.LENGTH_LONG).show(); stopSelf()
         }
-    }
-
-    // ===== NEW: allows GucciVoiceActivity to sync volume live =====
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == "SET_VOLUME") {
-            val v = intent.getIntExtra("volume", 100).coerceIn(0, 200)
-            volumeLevel = v / 100f
-            prefs.edit().putInt("voice_volume", v).apply()
-            overlayView?.findViewById<SeekBar>(R.id.sbVolume)?.progress = v
-            tvVolume?.text = "$v%"
-        }
-        return START_STICKY
     }
 
     private fun startForegroundServiceNotification() {
@@ -3113,7 +3103,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             pbPlayback = overlayView?.findViewById(R.id.pbPlayback)
             pbPlayback?.visibility = View.INVISIBLE
 
-            // ===== NEW: restore slider position from prefs (before attaching listener) =====
             tvVolume = overlayView?.findViewById(R.id.tvVolume)
             val sbVolume = overlayView?.findViewById<SeekBar>(R.id.sbVolume)
             val savedPercent = prefs.getInt("voice_volume", 100).coerceIn(0, 200)
@@ -3125,7 +3114,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                     volumeLevel = progress / 100f
                     tvVolume?.text = "$progress%"
-                    // ===== NEW: persist on every user change =====
                     if (fromUser) prefs.edit().putInt("voice_volume", progress).apply()
                     if (mediaPlayer?.isPlaying == true) {
                         try { mediaPlayer?.setVolume(volumeLevel.coerceAtMost(1f), volumeLevel.coerceAtMost(1f)) } catch (_: Exception) {}
@@ -3236,7 +3224,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Decode failed", Toast.LENGTH_SHORT).show() }
                 return@Thread
             }
-            // Apply volume boost (>100%) on samples
             if (volumeLevel > 1.0f) {
                 for (i in audio.samples.indices) {
                     val boosted = (audio.samples[i] * volumeLevel).toInt()
@@ -3258,7 +3245,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     if (gridAdapter?.playingFilePath == file.absolutePath) stopPlayback()
                 }, durationMs.toLong())
             } else {
-                // ===== NEW: preview path uses boosted WAV so >100% actually works =====
                 Handler(Looper.getMainLooper()).post {
                     try {
                         val playbackFile = if (volumeLevel > 1.0f) {
@@ -3437,6 +3423,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
     override fun onDestroy() {
         super.onDestroy()
+        try { prefs.unregisterOnSharedPreferenceChangeListener(volumePrefListener) } catch (_: Exception) {}
         stopPlayback(); stopLiveMic(); tts?.shutdown()
         if (isInjectOn) stopAudioRouting()
         overlayView?.let { runCatching { windowManager.removeView(it) } }
