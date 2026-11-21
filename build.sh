@@ -3295,9 +3295,11 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private val prefs by lazy { getSharedPreferences("VoicePrefs", MODE_PRIVATE) }
     private val favorites: Set<String> get() = try { prefs.getStringSet("favorites", emptySet()) ?: emptySet() } catch (e: Exception) { emptySet() }
 
+    // ALL REQUEST CODES DEFINED HERE
     private val PICK_AUDIO_REQ = 100
     private val PICK_MULTI_REQ = 101
-    private val PICK_IMAGE_REQ_EDIT = 102
+    private val PICK_IMAGE_REQ_NEW = 102 // Fixed: Missing constant added
+    private val PICK_IMAGE_REQ_EDIT = 103 
     private val CREATE_PACK_REQ = 200
     private val IMPORT_PACK_REQ = 201
     private val REC_PERM_REQ = 300
@@ -3403,7 +3405,6 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
         findViewById<MaterialButton>(R.id.btnStopAll).setOnClickListener { stopPlayback() }
         
-        // EXPORT PACK
         findViewById<MaterialButton>(R.id.btnExportPack).setOnClickListener {
             val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
@@ -3413,7 +3414,6 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             startActivityForResult(intent, CREATE_PACK_REQ)
         }
         
-        // IMPORT PACK
         findViewById<MaterialButton>(R.id.btnImportPack).setOnClickListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
@@ -3868,7 +3868,7 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 tvStar.setTextColor(Color.parseColor("#FFD700"))
             } else {
                 tvStar.text = "☆"
-                tvStar.setTextColor(Color.ParseColor("#8B949E"))
+                tvStar.setTextColor(Color.parseColor("#8B949E"))
             }
             tvStar.setOnClickListener { toggleFavorite(file) }
             
