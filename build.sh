@@ -30,6 +30,11 @@ android.nonTransitiveRClass=true
 org.gradle.jvmargs=-Xmx2048m
 EOF
 
+# Generate a permanent keystore if it doesn't exist
+if [ ! -f "my-release-key.jks" ]; then
+    keytool -genkey -v -keystore my-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias my-alias -storepass password123 -keypass password123 -dname "CN=Gucci, OU=Dev, O=Gucci, L=City, S=State, C=US"
+fi
+
 cat > app/build.gradle << 'EOF'
 plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
 android {
@@ -38,6 +43,23 @@ android {
     defaultConfig { applicationId "com.example.shtile"; minSdk 24; targetSdk 34; versionCode 76; versionName "76.0" }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = '17' }
+    
+    signingConfigs {
+        release {
+            storeFile file("../my-release-key.jks")
+            storePassword "password123"
+            keyAlias "my-alias"
+            keyPassword "password123"
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
 }
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -50,7 +72,6 @@ dependencies {
     implementation 'dev.rikka.shizuku:provider:13.1.5'
 }
 EOF
-
 cat > app/src/main/AndroidManifest.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
