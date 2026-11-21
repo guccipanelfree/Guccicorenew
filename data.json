@@ -6,7 +6,7 @@
       ],
       "hwidNames": {},
       "maxDevices": 1,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 0,
       "allowInx": true,
       "allowFloater": true,
