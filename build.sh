@@ -3657,9 +3657,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             volumeLevel = v / 100f
             overlayView?.findViewById<SeekBar>(R.id.sbVolume)?.progress = v
             tvVolume?.text = "$v%"
-            if (mediaPlayer?.isPlaying == true && volumeLevel <= 1.0f) {
-                try { mediaPlayer?.setVolume(volumeLevel, volumeLevel) } catch (_: Exception) {}
-            }
         }
     }
 
@@ -3667,7 +3664,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var selectedPitch = EdgeTtsHelper.ALL_VOICES[0].pitchHz
     private var selectedRate  = EdgeTtsHelper.ALL_VOICES[0].ratePercent
 
-    // NEW: SpeechRecognition state for Live parrot mode
     private var speechRecognizer: SpeechRecognizer? = null
     private var isLiveVoiceActive = false
     private var liveVoiceHandler: Handler? = null
@@ -3760,9 +3756,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     volumeLevel = progress / 100f
                     tvVolume?.text = "$progress%"
                     if (fromUser) prefs.edit().putInt("voice_volume", progress).apply()
-                    if (mediaPlayer?.isPlaying == true && volumeLevel <= 1.0f) {
-                        try { mediaPlayer?.setVolume(volumeLevel, volumeLevel) } catch (_: Exception) {}
-                    }
                 }
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {}
                 override fun onStopTrackingTouch(seekBar: SeekBar?) {}
@@ -3811,28 +3804,14 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 }
             }
             overlayView?.findViewById<Button>(R.id.btnOverlaySend)?.setOnClickListener {
-                val txt = etType?.text.toString(); if (txt.isNotEmpty()) generateAndPlayOverlay(txt)
+                val txt = etType?.text.toString(); if (txt.isNotEmpty()) generateAndPlayNativeOverlay(txt)
             }
             overlayView?.findViewById<Button>(R.id.btnOverlaySave)?.setOnClickListener {
-                val txt = etType?.text.toString(); if (txt.isNotEmpty()) { generateAndSaveOverlay(txt); etType?.text?.clear() }
+                val txt = etType?.text.toString(); if (txt.isNotEmpty()) { generateAndSaveNativeOverlay(txt); etType?.text?.clear() }
             }
 
             val swLive = overlayView?.findViewById<MaterialSwitch>(R.id.swLiveMic)
             swLive?.isChecked = isLiveOn
-            val sbPitch = overlayView?.findViewById<SeekBar>(R.id.sbPitch)
-            val sbEcho = overlayView?.findViewById<SeekBar>(R.id.sbEcho)
-            val tvPitch = overlayView?.findViewById<TextView>(R.id.tvPitch)
-            val tvEcho = overlayView?.findViewById<TextView>(R.id.tvEcho)
-            sbPitch?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) { pitchSemitones = (p - 12).toFloat(); tvPitch?.text = "Pitch: ${pitchSemitones.toInt()}" }
-                override fun onStartTrackingTouch(s: SeekBar?) {}; override fun onStopTrackingTouch(s: SeekBar?) {}
-            })
-            sbEcho?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) { echoMs = p * 10; tvEcho?.text = "Echo: ${echoMs}ms" }
-                override fun onStartTrackingTouch(s: SeekBar?) {}; override fun onStopTrackingTouch(s: SeekBar?) {}
-            })
-
-            // Live tab now uses STT -> Edge TTS parrot mode
             swLive?.setOnCheckedChangeListener { _, on -> if (on) startLiveMic() else stopLiveMic() }
 
             overlayView?.findViewById<Button>(R.id.btnOverlayStop)?.setOnClickListener {
@@ -3864,6 +3843,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private fun stopAudioRouting() { AudioRouter.disable(this) }
 
     private fun playVoice(file: File) {
+        try { AudioRouter.stopAudio(this) } catch (_: Exception) {}
         cancelMediaPlayer()
         gridAdapter?.playingFilePath = file.absolutePath
         gridAdapter?.notifyDataSetChanged()
@@ -3898,8 +3878,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 }
                 boosted = VoiceProcessor.applyBoost(audio.samples, volumeLevel)
                 sr = audio.sampleRate
-                val buf = java.nio.ByteBuffer.allocate(boosted.size * 2)
-                    .order(java.nio.ByteOrder.LITTLE_ENDIAN)
+                val buf = java.nio.ByteBuffer.allocate(boosted.size * 2).order(java.nio.ByteOrder.LITTLE_ENDIAN)
                 for (s in boosted) buf.putShort(s)
                 cachedPcm.writeBytes(buf.array())
             }
@@ -3913,13 +3892,18 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     bytes[i++] = (s.toInt() and 0xFF).toByte()
                     bytes[i++] = (s.toInt() shr 8 and 0xFF).toByte()
                 }
+                
                 Handler(Looper.getMainLooper()).post {
                     if (gridAdapter?.playingFilePath != thisFile.absolutePath) return@post
-                    AudioRouter.injectAudio(this, bytes)
+                    
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        AudioRouter.injectAudio(this, bytes)
+                    }, 500) 
+                    
                     startProgressBar(durationMs)
                     Handler(Looper.getMainLooper()).postDelayed({
                         if (gridAdapter?.playingFilePath == thisFile.absolutePath) stopPlayback()
-                    }, durationMs.toLong() + 300L)
+                    }, durationMs.toLong() + 800L)
                 }
             } else {
                 val boostFile = File(cacheDir, "boost_$boostKey.wav")
@@ -3942,7 +3926,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun playDirect(fileToPlay: File, originalRef: File) {
-        try { mediaPlayer?.release() } catch (_: Exception) {}
+        cancelMediaPlayer()
         val mp = MediaPlayer()
         mediaPlayer = mp
         try {
@@ -3950,13 +3934,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             mp.setDataSource(fileToPlay.absolutePath)
             if (volumeLevel <= 1.0f) mp.setVolume(volumeLevel, volumeLevel) else mp.setVolume(1.0f, 1.0f)
             mp.setOnCompletionListener {
-                if (mediaPlayer === mp && gridAdapter?.playingFilePath == originalRef.absolutePath) {
-                    stopPlayback()
-                }
-            }
-            mp.setOnErrorListener { _, _, _ ->
-                if (mediaPlayer === mp) stopPlayback()
-                true
+                if (mediaPlayer === mp && gridAdapter?.playingFilePath == originalRef.absolutePath) stopPlayback()
             }
             mp.setOnPreparedListener { p ->
                 if (mediaPlayer !== mp) { try { p.release() } catch (_: Exception) {} ; return@setOnPreparedListener }
@@ -3965,8 +3943,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             }
             mp.prepareAsync()
         } catch (e: Exception) {
-            try { mp.release() } catch (_: Exception) {}
-            Toast.makeText(this, "Cannot play: ${e.message}", Toast.LENGTH_SHORT).show()
             stopPlayback()
         }
     }
@@ -4000,51 +3976,55 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         pbPlayback?.progress = 0
     }
 
-    private fun generateAndPlayOverlay(text: String) {
+    private fun generateAndPlayNativeOverlay(text: String) {
         Toast.makeText(this, "Generating voice...", Toast.LENGTH_SHORT).show()
-        EdgeTtsHelper.callEdgeTts(text, selectedVoiceId, selectedPitch, selectedRate, { bytes ->
-            Thread {
-                try {
-                    val f = File(cacheDir, "temp_overlay.mp3")
-                    f.writeBytes(bytes)
-                    Handler(Looper.getMainLooper()).post { playVoice(f) }
-                } catch (_: Exception) {}
-            }.start()
-        }, { err ->
-            Handler(Looper.getMainLooper()).post { Toast.makeText(this, err, Toast.LENGTH_LONG).show() }
-        })
-    }
+        val tempFile = File(cacheDir, "temp_overlay.wav")
+        val params = Bundle()
+        params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "play_id")
 
-    private fun generateAndSaveOverlay(text: String) {
-        Toast.makeText(this, "Saving...", Toast.LENGTH_SHORT).show()
-        EdgeTtsHelper.callEdgeTts(text, selectedVoiceId, selectedPitch, selectedRate, { bytes ->
-            Thread {
-                try {
-                    val f = File(VoiceDataHelper.getVoicesDir(this), "Edge_${System.currentTimeMillis()}.mp3")
-                    f.writeBytes(bytes); loadVoices()
-                    Handler(Looper.getMainLooper()).post {
-                        gridAdapter?.notifyDataSetChanged()
-                        Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT).show()
-                    }
-                } catch (_: Exception) {
-                    Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Save Error", Toast.LENGTH_SHORT).show() }
+        tts?.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {}
+            override fun onDone(utteranceId: String?) {
+                if (utteranceId == "play_id") {
+                    Handler(Looper.getMainLooper()).post { playVoice(tempFile) }
                 }
-            }.start()
-        }, { err ->
-            Handler(Looper.getMainLooper()).post { Toast.makeText(this, err, Toast.LENGTH_LONG).show() }
+            }
+            override fun onError(utteranceId: String?) {
+                Handler(Looper.getMainLooper()).post { Toast.makeText(this@GucciVoiceService, "TTS Error", Toast.LENGTH_SHORT).show() }
+            }
         })
+        tts?.synthesizeToFile(text, params, tempFile, "play_id")
     }
 
-    // ============================================================
-    // LIVE MODE (parrot) - STT -> Edge TTS -> inject
-    // ============================================================
+    private fun generateAndSaveNativeOverlay(text: String) {
+        Toast.makeText(this, "Saving...", Toast.LENGTH_SHORT).show()
+        val voiceName = "NativeTTS_${System.currentTimeMillis()}.wav"
+        val file = File(VoiceDataHelper.getVoicesDir(this), voiceName)
+        val params = Bundle()
+        params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "save_id")
+
+        tts?.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {}
+            override fun onDone(utteranceId: String?) {
+                if (utteranceId == "save_id") {
+                    loadVoices()
+                    Handler(Looper.getMainLooper()).post { gridAdapter?.notifyDataSetChanged(); Toast.makeText(this@GucciVoiceService, "Saved!", Toast.LENGTH_SHORT).show() }
+                }
+            }
+            override fun onError(utteranceId: String?) {
+                Handler(Looper.getMainLooper()).post { Toast.makeText(this@GucciVoiceService, "Save Error", Toast.LENGTH_SHORT).show() }
+            }
+        })
+        tts?.synthesizeToFile(text, params, file, "save_id")
+    }
+
     private fun startLiveMic() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "Grant Microphone permission first!", Toast.LENGTH_LONG).show()
             return
         }
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            Toast.makeText(this, "Speech recognition not available on this device", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Speech recognition not available", Toast.LENGTH_LONG).show()
             return
         }
 
@@ -4062,18 +4042,12 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     override fun onBufferReceived(buffer: ByteArray?) {}
                     override fun onEndOfSpeech() {}
                     override fun onError(error: Int) {
-                        if (isLiveVoiceActive) {
-                            liveVoiceHandler?.postDelayed({ restartListening() }, 500)
-                        }
+                        if (isLiveVoiceActive) liveVoiceHandler?.postDelayed({ restartListening() }, 500)
                     }
                     override fun onResults(results: Bundle?) {
                         val text = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
-                        if (!text.isNullOrBlank() && isLiveVoiceActive) {
-                            speakWithEdge(text)
-                        }
-                        if (isLiveVoiceActive) {
-                            liveVoiceHandler?.postDelayed({ restartListening() }, 200)
-                        }
+                        if (!text.isNullOrBlank() && isLiveVoiceActive) speakWithNative(text)
+                        if (isLiveVoiceActive) liveVoiceHandler?.postDelayed({ restartListening() }, 200)
                     }
                     override fun onPartialResults(partialResults: Bundle?) {}
                     override fun onEvent(eventType: Int, params: Bundle?) {}
@@ -4081,7 +4055,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 restartListening()
                 Toast.makeText(this, "Live mode ON — speak now", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
-                Toast.makeText(this, "STT error: ${e.message}", Toast.LENGTH_LONG).show()
                 stopLiveMic()
             }
         }
@@ -4102,22 +4075,24 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         } catch (_: Exception) {}
     }
 
-    private fun speakWithEdge(text: String) {
-        EdgeTtsHelper.callEdgeTts(text, selectedVoiceId, selectedPitch, selectedRate, { bytes ->
-            Thread {
-                try {
-                    val f = File(cacheDir, "live_edge_${System.currentTimeMillis()}.mp3")
-                    f.writeBytes(bytes)
+    private fun speakWithNative(text: String) {
+        val tempFile = File(cacheDir, "live_tts_${System.currentTimeMillis()}.wav")
+        val params = Bundle()
+        val id = "live_${System.currentTimeMillis()}"
+        params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, id)
+
+        tts?.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {}
+            override fun onDone(utteranceId: String?) {
+                if (utteranceId == id) {
                     Handler(Looper.getMainLooper()).post {
-                        if (isLiveVoiceActive) playVoice(f)
+                        if (isLiveVoiceActive) playVoice(tempFile)
                     }
-                } catch (_: Exception) {}
-            }.start()
-        }, { err ->
-            Handler(Looper.getMainLooper()).post {
-                Toast.makeText(this, "TTS error: $err", Toast.LENGTH_SHORT).show()
+                }
             }
+            override fun onError(utteranceId: String?) {}
         })
+        tts?.synthesizeToFile(text, params, tempFile, id)
     }
 
     private fun stopLiveMic() {
@@ -4135,7 +4110,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             speechRecognizer = null
         }
 
-        // Legacy cleanup (not used in new mode, kept harmless)
         liveThread?.join(500); liveThread = null
         try { audioRecord?.stop(); audioRecord?.release() } catch (_: Exception) {}
         audioRecord = null
