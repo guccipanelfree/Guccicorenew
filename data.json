@@ -27,7 +27,9 @@
       "reboot_timer": 0
     },
     "GUCCI-922E86": {
-      "deviceIds": [],
+      "deviceIds": [
+        "14a923e58db73f7choliOnePlusOP5958L1CPH2467"
+      ],
       "hwidNames": {},
       "maxDevices": 4,
       "revoked": false,
