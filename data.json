@@ -245,7 +245,9 @@
       "reboot_timer": 0
     },
     "GUCCI 3": {
-      "deviceIds": [],
+      "deviceIds": [
+        "5dfdded486ef8a8bholiOnePlusOP5958L1CPH2467"
+      ],
       "maxDevices": 1,
       "revoked": false,
       "expiresAt": 0,
