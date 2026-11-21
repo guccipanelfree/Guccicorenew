@@ -70,6 +70,9 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
     implementation 'dev.rikka.shizuku:api:13.1.5'
     implementation 'dev.rikka.shizuku:provider:13.1.5'
+
+    // NEW — needed for Edge TTS WebSocket (EdgeTtsHelper.kt)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }
 EOF
 cat > app/src/main/AndroidManifest.xml << 'EOF'
@@ -2904,8 +2907,11 @@ EOF
 cat > app/src/main/java/com/example/shtile/EdgeTtsHelper.kt << 'EOF'
 package com.example.shtile
 
-import java.net.HttpURLConnection
-import java.net.URL
+import okhttp3.*
+import okio.ByteString
+import java.io.ByteArrayOutputStream
+import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 object EdgeTtsHelper {
 
@@ -2917,90 +2923,89 @@ object EdgeTtsHelper {
         val ratePercent: Int = 0
     )
 
+    // Your full voice list — unchanged
     val ALL_VOICES: List<VoiceOption> = listOf(
-
-        // ===== MEN (Natural / Clear) =====
-        VoiceOption("en-US-AndrewNeural",       "Men", "Andrew (Warm, Natural)"),
-        VoiceOption("en-US-GuyNeural",          "Men", "Guy (Warm Narrator)"),
-        VoiceOption("en-US-BrianNeural",        "Men", "Brian (Casual)"),
-        VoiceOption("en-US-ChristopherNeural",  "Men", "Christopher (News)"),
-        VoiceOption("en-US-EricNeural",         "Men", "Eric (Rational)"),
-        VoiceOption("en-GB-RyanNeural",         "Men", "Ryan (British)"),
-
-        // ===== BOYS (Young / Child) =====
-        VoiceOption("en-GB-AlfieNeural",  "Boys", "Alfie (UK Boy)"),
+        // Men
+        VoiceOption("en-US-AndrewNeural", "Men", "Andrew (Warm, Natural)"),
+        VoiceOption("en-US-GuyNeural", "Men", "Guy (Warm Narrator)"),
+        VoiceOption("en-US-BrianNeural", "Men", "Brian (Casual)"),
+        VoiceOption("en-US-ChristopherNeural", "Men", "Christopher (News)"),
+        VoiceOption("en-US-EricNeural", "Men", "Eric (Rational)"),
+        VoiceOption("en-GB-RyanNeural", "Men", "Ryan (British)"),
+        // Boys
+        VoiceOption("en-GB-AlfieNeural", "Boys", "Alfie (UK Boy)"),
         VoiceOption("en-GB-ElliotNeural", "Boys", "Elliot (UK Boy)"),
-        VoiceOption("en-GB-EthanNeural",  "Boys", "Ethan (UK Boy)"),
-        VoiceOption("en-GB-NoahNeural",   "Boys", "Noah (UK Boy)"),
+        VoiceOption("en-GB-EthanNeural", "Boys", "Ethan (UK Boy)"),
+        VoiceOption("en-GB-NoahNeural", "Boys", "Noah (UK Boy)"),
         VoiceOption("en-GB-OliverNeural", "Boys", "Oliver (UK Boy)"),
-        VoiceOption("en-US-BrianNeural",  "Boys", "Brian (Youthful)", pitchHz = 12),
-
-        // ===== GIRLS (Young / Natural) =====
-        VoiceOption("en-US-EmmaNeural",     "Girls", "Emma (Cheerful)"),
-        VoiceOption("en-US-AvaNeural",      "Girls", "Ava (Expressive)"),
-        VoiceOption("en-US-AriaNeural",     "Girls", "Aria (Confident)"),
+        VoiceOption("en-US-BrianNeural", "Boys", "Brian (Youthful)", pitchHz = 12),
+        // Girls
+        VoiceOption("en-US-EmmaNeural", "Girls", "Emma (Cheerful)"),
+        VoiceOption("en-US-AvaNeural", "Girls", "Ava (Expressive)"),
+        VoiceOption("en-US-AriaNeural", "Girls", "Aria (Confident)"),
         VoiceOption("en-US-MichelleNeural", "Girls", "Michelle (Pleasant)"),
-        VoiceOption("en-US-SaraNeural",     "Girls", "Sara (Cheerful)"),
-        VoiceOption("en-US-JaneNeural",     "Girls", "Jane (Varied)"),
-        VoiceOption("en-GB-LibbyNeural",    "Girls", "Libby (UK, Bright)"),
-        VoiceOption("en-US-AnaNeural",      "Girls", "Ana (Child, Cute)"),
-        VoiceOption("en-GB-MaisieNeural",   "Girls", "Maisie (UK Child)"),
-        VoiceOption("en-GB-BellaNeural",    "Girls", "Bella (UK Child)"),
-        VoiceOption("en-GB-HollieNeural",   "Girls", "Hollie (UK Child)"),
-        VoiceOption("en-GB-OliviaNeural",   "Girls", "Olivia (UK Child)"),
-
-        // ===== AUNTIES (Mature / Warm) — same base voice, pitch/rate tweaked =====
-        VoiceOption("en-US-JennyNeural",    "Aunties", "Jenny (Warm)",        pitchHz = -5,  ratePercent = -3),
-        VoiceOption("en-US-JennyNeural",    "Aunties", "Jenny (Older Aunty)", pitchHz = -15, ratePercent = -8),
-        VoiceOption("en-US-MichelleNeural", "Aunties", "Michelle (Pleasant)", pitchHz = -8,  ratePercent = -3),
-        VoiceOption("en-US-NancyNeural",    "Aunties", "Nancy (Warm)",        pitchHz = -6,  ratePercent = -3),
-        VoiceOption("en-GB-SoniaNeural",    "Aunties", "Sonia (British)",     pitchHz = -8,  ratePercent = -4),
-
-        // ===== OLD MEN =====
-        VoiceOption("en-US-RogerNeural",  "Old Men", "Roger (Elderly)"),
-        VoiceOption("en-US-RogerNeural",  "Old Men", "Roger (Very Old)", pitchHz = -15, ratePercent = -10),
+        VoiceOption("en-US-SaraNeural", "Girls", "Sara (Cheerful)"),
+        VoiceOption("en-US-JaneNeural", "Girls", "Jane (Varied)"),
+        VoiceOption("en-GB-LibbyNeural", "Girls", "Libby (UK, Bright)"),
+        VoiceOption("en-US-AnaNeural", "Girls", "Ana (Child, Cute)"),
+        VoiceOption("en-GB-MaisieNeural", "Girls", "Maisie (UK Child)"),
+        VoiceOption("en-GB-BellaNeural", "Girls", "Bella (UK Child)"),
+        VoiceOption("en-GB-HollieNeural", "Girls", "Hollie (UK Child)"),
+        VoiceOption("en-GB-OliviaNeural", "Girls", "Olivia (UK Child)"),
+        // Aunties
+        VoiceOption("en-US-JennyNeural", "Aunties", "Jenny (Warm)", pitchHz = -5, ratePercent = -3),
+        VoiceOption("en-US-JennyNeural", "Aunties", "Jenny (Older Aunty)", pitchHz = -15, ratePercent = -8),
+        VoiceOption("en-US-MichelleNeural", "Aunties", "Michelle (Pleasant)", pitchHz = -8, ratePercent = -3),
+        VoiceOption("en-US-NancyNeural", "Aunties", "Nancy (Warm)", pitchHz = -6, ratePercent = -3),
+        VoiceOption("en-GB-SoniaNeural", "Aunties", "Sonia (British)", pitchHz = -8, ratePercent = -4),
+        // Old Men
+        VoiceOption("en-US-RogerNeural", "Old Men", "Roger (Elderly)"),
+        VoiceOption("en-US-RogerNeural", "Old Men", "Roger (Very Old)", pitchHz = -15, ratePercent = -10),
         VoiceOption("en-GB-ThomasNeural", "Old Men", "Thomas (UK Elderly)"),
-
-        // ===== FUNNY / CHARACTER =====
-        VoiceOption("en-US-SteffanNeural",  "Funny", "Steffan (Snarky)"),
-        VoiceOption("en-US-TonyNeural",     "Funny", "Tony (Silly)",        pitchHz = 5,  ratePercent = 10),
-        VoiceOption("en-US-JasonNeural",    "Funny", "Jason (Cartoonish)",  pitchHz = 8,  ratePercent = 15),
-        VoiceOption("en-US-DavisNeural",    "Funny", "Davis (Wacky)",       pitchHz = 6,  ratePercent = 12),
-        VoiceOption("en-US-MichelleNeural", "Funny", "Michelle (Hyper)",    pitchHz = 12, ratePercent = 15),
-        VoiceOption("en-US-SaraNeural",     "Funny", "Sara (Bubbly)",       pitchHz = 10, ratePercent = 10),
-        VoiceOption("en-US-AnaNeural",      "Funny", "Ana (Silly Kid)",     pitchHz = 6,  ratePercent = 10),
-
-        // ===== DESI GIRLS (South Asian) =====
-        VoiceOption("en-IN-NeerjaNeural",  "Desi Girls", "Neerja (Indian English)"),
-        VoiceOption("hi-IN-SwaraNeural",   "Desi Girls", "Swara (Hindi)"),
-        VoiceOption("hi-IN-SwaraNeural",   "Desi Girls", "Swara (Hindi, Soft)", pitchHz = -5),
-        VoiceOption("bn-IN-TanishaaNeural","Desi Girls", "Tanishaa (Bengali IN)"),
-        VoiceOption("bn-BD-NabanitaNeural","Desi Girls", "Nabanita (Bengali BD)"),
+        // Funny
+        VoiceOption("en-US-SteffanNeural", "Funny", "Steffan (Snarky)"),
+        VoiceOption("en-US-TonyNeural", "Funny", "Tony (Silly)", pitchHz = 5, ratePercent = 10),
+        VoiceOption("en-US-JasonNeural", "Funny", "Jason (Cartoonish)", pitchHz = 8, ratePercent = 15),
+        VoiceOption("en-US-DavisNeural", "Funny", "Davis (Wacky)", pitchHz = 6, ratePercent = 12),
+        VoiceOption("en-US-MichelleNeural", "Funny", "Michelle (Hyper)", pitchHz = 12, ratePercent = 15),
+        VoiceOption("en-US-SaraNeural", "Funny", "Sara (Bubbly)", pitchHz = 10, ratePercent = 10),
+        VoiceOption("en-US-AnaNeural", "Funny", "Ana (Silly Kid)", pitchHz = 6, ratePercent = 10),
+        // Desi Girls
+        VoiceOption("en-IN-NeerjaNeural", "Desi Girls", "Neerja (Indian English)"),
+        VoiceOption("hi-IN-SwaraNeural", "Desi Girls", "Swara (Hindi)"),
+        VoiceOption("hi-IN-SwaraNeural", "Desi Girls", "Swara (Hindi, Soft)", pitchHz = -5),
+        VoiceOption("bn-IN-TanishaaNeural", "Desi Girls", "Tanishaa (Bengali IN)"),
+        VoiceOption("bn-BD-NabanitaNeural", "Desi Girls", "Nabanita (Bengali BD)"),
         VoiceOption("ta-IN-PallaviNeural", "Desi Girls", "Pallavi (Tamil)"),
-        VoiceOption("te-IN-ShrutiNeural",  "Desi Girls", "Shruti (Telugu)"),
-        VoiceOption("ur-IN-GulNeural",     "Desi Girls", "Gul (Urdu IN)"),
-        VoiceOption("ur-PK-UzmaNeural",    "Desi Girls", "Uzma (Urdu PK)"),
+        VoiceOption("te-IN-ShrutiNeural", "Desi Girls", "Shruti (Telugu)"),
+        VoiceOption("ur-IN-GulNeural", "Desi Girls", "Gul (Urdu IN)"),
+        VoiceOption("ur-PK-UzmaNeural", "Desi Girls", "Uzma (Urdu PK)"),
         VoiceOption("ne-NP-HemkalaNeural", "Desi Girls", "Hemkala (Nepali)"),
         VoiceOption("si-LK-ThiliniNeural", "Desi Girls", "Thilini (Sinhala)"),
-
-        // ===== DESI MEN (South Asian) =====
+        // Desi Men
         VoiceOption("en-IN-PrabhatNeural", "Desi Men", "Prabhat (Indian English)"),
-        VoiceOption("hi-IN-MadhurNeural",  "Desi Men", "Madhur (Hindi)"),
+        VoiceOption("hi-IN-MadhurNeural", "Desi Men", "Madhur (Hindi)"),
         VoiceOption("bn-IN-BashkarNeural", "Desi Men", "Bashkar (Bengali IN)"),
         VoiceOption("bn-BD-PradeepNeural", "Desi Men", "Pradeep (Bengali BD)"),
-        VoiceOption("ta-IN-ValluvarNeural","Desi Men", "Valluvar (Tamil)"),
-        VoiceOption("te-IN-MohanNeural",   "Desi Men", "Mohan (Telugu)"),
-        VoiceOption("ur-IN-SalmanNeural",  "Desi Men", "Salman (Urdu IN)"),
-        VoiceOption("ur-PK-AsadNeural",    "Desi Men", "Asad (Urdu PK)"),
-        VoiceOption("ne-NP-SagarNeural",   "Desi Men", "Sagar (Nepali)"),
+        VoiceOption("ta-IN-ValluvarNeural", "Desi Men", "Valluvar (Tamil)"),
+        VoiceOption("te-IN-MohanNeural", "Desi Men", "Mohan (Telugu)"),
+        VoiceOption("ur-IN-SalmanNeural", "Desi Men", "Salman (Urdu IN)"),
+        VoiceOption("ur-PK-AsadNeural", "Desi Men", "Asad (Urdu PK)"),
+        VoiceOption("ne-NP-SagarNeural", "Desi Men", "Sagar (Nepali)"),
         VoiceOption("si-LK-SameeraNeural", "Desi Men", "Sameera (Sinhala)")
     )
 
     fun displayLabels(): List<String> = ALL_VOICES.map { "${it.category}  •  ${it.displayName}" }
 
+    // OkHttp client for WebSocket
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .build()
+
     /**
-     * Calls Microsoft Edge's consumer neural-TTS endpoint.
-     * No API key needed. Returns MP3 bytes on success (24 kHz mono).
+     * Calls Microsoft Edge TTS via the new WebSocket endpoint.
+     * Returns MP3 bytes on success.
      */
     fun callEdgeTts(
         text: String,
@@ -3012,41 +3017,64 @@ object EdgeTtsHelper {
     ) {
         Thread {
             try {
-                val url = URL(
-                    "https://speech.platform.bing.com/consumer/speech/synthesize/" +
-                    "readaloud/edge/v1?TrustedClientToken=6A5AA1D4EAFF4E9FB37E23D68491D6F4"
-                )
-                val conn = url.openConnection() as HttpURLConnection
-                conn.requestMethod = "POST"
-                conn.connectTimeout = 15000
-                conn.readTimeout = 20000
-                conn.setRequestProperty("Content-Type", "application/ssml+xml")
-                conn.setRequestProperty("X-Microsoft-OutputFormat", "audio-24khz-48kbitrate-mono-mp3")
-                conn.setRequestProperty("User-Agent", "Mozilla/5.0")
-                conn.doOutput = true
+                // 1. New WebSocket URL (replaces old HTTP endpoint)
+                val token = "6A5AA1D4EAFF4E9FB37E23D68491D6F4"
+                val url = "wss://api.msedgeservices.com/tts/cognitiveservices/websocket/v1" +
+                          "?Ocp-Apim-Subscription-Key=$token"
 
+                // 2. Build SSML
                 val pitchStr = (if (pitchHz >= 0) "+" else "") + pitchHz + "Hz"
                 val rateStr  = (if (ratePercent >= 0) "+" else "") + ratePercent + "%"
-                val safe = text
-                    .replace("&", "&amp;")
-                    .replace("<", "&lt;")
-                    .replace(">", "&gt;")
+                val safe = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
                 val ssml = "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>" +
-                           "<voice name='$voiceId'>" +
-                           "<prosody rate='$rateStr' pitch='$pitchStr'>$safe</prosody>" +
-                           "</voice></speak>"
+                           "<voice name='$voiceId'><prosody rate='$rateStr' pitch='$pitchStr'>$safe</prosody></voice></speak>"
 
-                conn.outputStream.use { it.write(ssml.toByteArray(Charsets.UTF_8)) }
+                // 3. Config JSON (mandatory first message)
+                val configJson = """{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"false"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}"""
 
-                if (conn.responseCode == 200) {
-                    val bytes = conn.inputStream.readBytes()
-                    onSuccess(bytes)
-                } else {
-                    onError("Edge TTS ${conn.responseCode}: ${conn.responseMessage}")
-                }
+                // 4. WebSocket request with Edge User-Agent
+                val request = Request.Builder()
+                    .url(url)
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0")
+                    .build()
+
+                val audioBuffer = ByteArrayOutputStream()
+
+                client.newWebSocket(request, object : WebSocketListener() {
+                    override fun onOpen(webSocket: WebSocket, response: Response) {
+                        webSocket.send(configJson)
+                        val ssmlMessage = "X-RequestId:${UUID.randomUUID()}\r\n" +
+                                          "Content-Type:application/ssml+xml\r\n" +
+                                          "X-Timestamp:${System.currentTimeMillis()}\r\n" +
+                                          "Path:ssml\r\n\r\n" +
+                                          ssml
+                        webSocket.send(ssmlMessage)
+                    }
+
+                    override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+                        val data = bytes.toByteArray()
+                        if (data.size > 2) {
+                            audioBuffer.write(data, 2, data.size - 2) // skip 2-byte header
+                        }
+                    }
+
+                    override fun onMessage(webSocket: WebSocket, text: String) {
+                        if (text.contains("turn.end")) {
+                            webSocket.close(1000, "Done")
+                            val audioBytes = audioBuffer.toByteArray()
+                            if (audioBytes.isNotEmpty()) onSuccess(audioBytes)
+                            else onError("Edge TTS returned no audio")
+                        }
+                    }
+
+                    override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                        onError("WebSocket failed: ${t.message} (HTTP ${response?.code})")
+                    }
+                })
+
             } catch (e: Exception) {
-                onError("Edge TTS: ${e.message}")
+                onError("Edge TTS Exception: ${e.message}")
             }
         }.start()
     }
