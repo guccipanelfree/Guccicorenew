@@ -15,19 +15,6 @@
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
-    "GUCCI 2": {
-      "deviceIds": [],
-      "hwidNames": {},
-      "maxDevices": 0,
-      "revoked": false,
-      "expiresAt": 1795351499685,
-      "allowInx": true,
-      "allowFloater": true,
-      "allowKernel": true,
-      "allowVoice": true,
-      "reboot_now_time": 0,
-      "reboot_timer": 0
-    },
     "GUCCI-922E86": {
       "deviceIds": [
         "14a923e58db73f7choliOnePlusOP5958L1CPH2467"
