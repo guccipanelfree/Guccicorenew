@@ -7,13 +7,15 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #0a0e14; color: #ffffff; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 600px; }
+        .container { width: 100%; max-width: 650px; }
         
         .card { background-color: #11161f; padding: 24px; border-radius: 12px; border: 1px solid #1f2633; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         h2 { color: #2dd4a7; margin-bottom: 20px; font-size: 22px; }
         h3 { color: #ffffff; margin-bottom: 15px; font-size: 18px; }
         
         .input-group { margin-bottom: 15px; }
+        .row { display: flex; gap: 10px; }
+        .row .input-group { flex: 1; }
         label { display: block; margin-bottom: 5px; font-size: 14px; color: #8b949e; }
         input, select { width: 100%; padding: 12px; background-color: #1a222c; border: 1px solid #2a3645; border-radius: 8px; color: white; font-size: 15px; outline: none; }
         input:focus, select:focus { border-color: #2dd4a7; }
@@ -36,17 +38,16 @@
         .status-bound { background-color: rgba(45, 212, 167, 0.2); color: #2dd4a7; }
         .status-unbound { background-color: rgba(255, 77, 77, 0.2); color: #ff4d4d; }
         .status-revoked { background-color: #333; color: #888; }
-        .key-details { font-size: 12px; color: #8b949e; line-height: 1.5; }
+        .key-details { font-size: 12px; color: #8b949e; line-height: 1.6; }
         
-        .btn-revoke { background-color: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; padding: 6px 12px; width: auto; font-size: 12px; border-radius: 4px; margin-top: 10px; }
-        .btn-revoke:hover { background-color: rgba(255, 77, 77, 0.1); }
-
-        /* NEW CSS for HWID List */
-        .hwid-list { margin-top: 10px; background: #0a0e14; border-radius: 6px; padding: 8px; border: 1px solid #1f2633; }
-        .hwid-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border-bottom: 1px solid #1a222c; padding-bottom: 6px; }
+        .hwid-list { margin-top: 8px; background: #0a0e14; padding: 8px; border-radius: 6px; }
+        .hwid-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; border-bottom: 1px solid #1f2633; padding-bottom: 4px; }
         .hwid-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .btn-small { width: auto; padding: 4px 8px; font-size: 11px; border-radius: 4px; margin: 0; }
-        .btn-add { background-color: #3b82f6; color: white; padding: 6px 12px; width: auto; font-size: 12px; border-radius: 4px; margin-top: 10px; margin-right: 10px;}
+        .btn-small { width: auto; padding: 4px 8px; font-size: 11px; border-radius: 4px; margin-left: 5px; }
+        
+        .btn-revoke { background-color: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; padding: 6px 12px; width: auto; font-size: 12px; border-radius: 4px; }
+        .btn-revoke:hover { background-color: rgba(255, 77, 77, 0.1); }
+        .btn-add { background-color: #3b82f6; color: white; border: none; padding: 6px 12px; width: auto; font-size: 12px; border-radius: 4px; }
         .btn-add:hover { background-color: #2563eb; }
     </style>
 </head>
@@ -74,30 +75,30 @@
     <div class="card hidden" id="dashboardCard">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2 style="margin: 0;">Admin Dashboard</h2>
-            <button class="btn-revoke" style="color: #8b949e; border-color: #8b949e; margin: 0;" onclick="logout()">Logout</button>
+            <button class="btn-revoke" style="color: #8b949e; border-color: #8b949e;" onclick="logout()">Logout</button>
         </div>
 
-        <!-- Added Max Devices Dropdown alongside Key Duration -->
-        <div class="input-group">
-            <label>Key Duration</label>
-            <select id="keyDuration">
-                <option value="1">1 Day</option>
-                <option value="7">7 Days</option>
-                <option value="30">30 Days</option>
-                <option value="0">Lifetime</option>
-            </select>
+        <div class="row">
+            <div class="input-group">
+                <label>Key Duration</label>
+                <select id="keyDuration">
+                    <option value="1">1 Day</option>
+                    <option value="7">7 Days</option>
+                    <option value="30">30 Days</option>
+                    <option value="0">Lifetime</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Max Devices Allowed</label>
+                <select id="keyMaxDevices">
+                    <option value="1">1 Device</option>
+                    <option value="2">2 Devices</option>
+                    <option value="3">3 Devices</option>
+                    <option value="5">5 Devices</option>
+                    <option value="9999">Unlimited</option>
+                </select>
+            </div>
         </div>
-        <div class="input-group">
-            <label style="color: #2dd4a7; font-weight: bold;">Max Devices Allowed</label>
-            <select id="keyMaxDevices">
-                <option value="1">1 Device</option>
-                <option value="2">2 Devices</option>
-                <option value="3">3 Devices</option>
-                <option value="5">5 Devices</option>
-                <option value="9999">Unlimited</option>
-            </select>
-        </div>
-
         <button onclick="generateKey()">Generate New Key</button>
         <div id="genMsg" class="msg"></div>
 
@@ -177,8 +178,9 @@
             alert(`Cannot add! This key is limited to ${keyData.maxDevices} device(s).`);
             return;
         }
+        
         if(keyData.deviceIds.includes(hwid.trim())) {
-            alert("This HWID is already added.");
+            alert("This HWID is already added to this key.");
             return;
         }
 
@@ -219,39 +221,44 @@
 
         keyNames.forEach(k => {
             const data = keys[k];
-            if (!data.deviceIds) data.deviceIds = []; // Fix for older keys
+            if (!data.deviceIds) data.deviceIds = []; // Safety for old keys
             
-            // Your exact original status HTML
             let statusHtml = data.revoked ? `<span class="key-status status-revoked">REVOKED</span>` : 
-                             (data.deviceIds.length > 0 ? `<span class="key-status status-bound">BOUND (${data.deviceIds.length}/${data.maxDevices === 9999 ? '∞' : data.maxDevices})</span>` : `<span class="key-status status-unbound">UNBOUND</span>`);
+                             (data.deviceIds.length > 0 ? `<span class="key-status status-bound">${data.deviceIds.length} / ${data.maxDevices === 9999 ? '∞' : data.maxDevices} BOUND</span>` : `<span class="key-status status-unbound">UNBOUND</span>`);
             
             let expiryText = data.expiresAt === 0 ? "Lifetime" : new Date(data.expiresAt).toLocaleString();
             
-            // Generate the HWID list using your exact styles
+            // Generate the HWID list
             let hwidHtml = `<div class="hwid-list">`;
             if (data.deviceIds.length === 0) {
-                hwidHtml += `<div style="color:#8b949e; font-size:12px;">Waiting for login...</div>`;
+                hwidHtml += `<div style="color:#8b949e; font-size:12px; text-align:center;">Waiting for login...</div>`;
             } else {
                 data.deviceIds.forEach(hwid => {
                     hwidHtml += `<div class="hwid-row">
                         <span style="font-family:monospace; font-size:12px; color:#2dd4a7;">${hwid}</span>
-                        ${data.revoked ? '' : `<button class="danger btn-small" onclick="removeHwid('${k}', '${hwid}')">Remove</button>`}
+                        ${data.revoked ? '' : `<button class="danger btn-small" onclick="removeHwid('${k}', '${hwid}')">X</button>`}
                     </div>`;
                 });
             }
             hwidHtml += `</div>`;
 
-            // Your exact Revoke button + the new Add button
             let actionBtns = data.revoked ? "" : `
-                <button class="btn-add" onclick="addManualHwid('${k}')">+ Add HWID</button>
-                <button class="btn-revoke" onclick="revokeKey('${k}')">Revoke Key</button>
+                <div style="display:flex; gap:5px; margin-top:10px;">
+                    <button class="btn-add" onclick="addManualHwid('${k}')">+ Add HWID</button>
+                    <button class="btn-revoke" onclick="revokeKey('${k}')">Revoke Key</button>
+                </div>
             `;
 
-            // Your exact original HTML layout
             container.innerHTML += `
                 <div class="key-item" style="border-left-color: ${data.revoked ? '#888' : (data.deviceIds.length > 0 ? '#2dd4a7' : '#ff4d4d')}">
-                    <div class="key-header"><span class="key-title">${k}</span>${statusHtml}</div>
-                    <div class="key-details"><b>Expires:</b> ${expiryText} <br><b>Max Devices:</b> ${data.maxDevices === 9999 ? 'Unlimited' : data.maxDevices}</div>
+                    <div class="key-header">
+                        <span class="key-title">${k}</span>
+                        ${statusHtml}
+                    </div>
+                    <div class="key-details">
+                        <b>Expires:</b> ${expiryText} <br>
+                        <b>Max Devices:</b> ${data.maxDevices === 9999 ? 'Unlimited' : data.maxDevices} <br>
+                    </div>
                     ${hwidHtml}
                     ${actionBtns}
                 </div>`;
