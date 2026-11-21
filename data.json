@@ -10,7 +10,7 @@
       "allowKernel": false,
       "reboot_now_time": 0,
       "reboot_timer": 0,
-      "allowVoice": true
+      "allowVoice": false
     },
     "RYZEN": {
       "deviceIds": [
