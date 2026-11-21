@@ -45,7 +45,9 @@
       "reboot_timer": 0
     },
     "ROHIT": {
-      "deviceIds": [],
+      "deviceIds": [
+        "d2c14738b789fdf8holiOnePlusOP5958L1CPH2467"
+      ],
       "hwidNames": {},
       "maxDevices": 99,
       "revoked": false,
