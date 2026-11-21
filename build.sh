@@ -502,17 +502,34 @@ cat > app/src/main/res/layout/activity_gucci_voice.xml << 'EOF'
         <com.google.android.material.button.MaterialButton android:id="@+id/btnExtractVideo" android:layout_width="0dp" android:layout_weight="1" android:layout_height="42dp" android:text="🎬 Video" android:textColor="#FFFFFF" app:backgroundTint="#3B82F6" app:cornerRadius="8dp" android:textSize="12sp" android:layout_marginEnd="4dp"/>
         <com.google.android.material.button.MaterialButton android:id="@+id/btnRecordVoice" android:layout_width="0dp" android:layout_weight="1" android:layout_height="42dp" android:text="🎤 Record" android:textColor="#FFFFFF" app:backgroundTint="#EF4444" app:cornerRadius="8dp" android:textSize="12sp"/>
     </LinearLayout>
-    <GridView android:id="@+id/gridVoices" android:layout_width="match_parent" android:layout_height="wrap_content" android:numColumns="2" android:verticalSpacing="12dp" android:horizontalSpacing="12dp"/>
+    
+    <!-- HERE IS THE MAGIC FIX FOR SCROLLING -->
+    <com.example.shtile.NonScrollGridView
+        android:id="@+id/gridVoices"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:numColumns="2"
+        android:verticalSpacing="12dp"
+        android:horizontalSpacing="12dp" />
+        
 </LinearLayout>
 </ScrollView>
 EOF
 cat > app/src/main/res/layout/item_voice_card.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="140dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="16dp">
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/cardMain" android:layout_width="match_parent" android:layout_height="140dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="16dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
     <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp">
+        
+        <!-- STAR ICON -->
+        <TextView android:id="@+id/tvStar" android:layout_width="32dp" android:layout_height="32dp" android:text="☆" android:textColor="#8B949E" android:textSize="24sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentStart="true" android:layout_marginTop="-4dp" android:layout_marginStart="-4dp"/>
+        
+        <!-- DELETE ICON -->
         <ImageView android:id="@+id/btnDelete" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_close" app:tint="#8B949E" android:layout_alignParentTop="true" android:layout_alignParentEnd="true"/>
+        
         <TextView android:id="@+id/tvLetter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="36sp" android:textStyle="bold" android:layout_centerInParent="true"/>
-        <TextView android:id="@+id/tvName" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="11sp" android:maxLines="1" android:layout_alignParentBottom="true" android:layout_toStartOf="@+id/btnPlay"/>
+        
+        <TextView android:id="@+id/tvName" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="11sp" android:maxLines="1" android:layout_alignParentBottom="true" android:layout_toStartOf="@+id/btnPlay" android:layout_toEndOf="@+id/tvStar"/>
+        
         <ImageView android:id="@+id/btnPlay" android:layout_width="32dp" android:layout_height="32dp" android:src="@android:drawable/ic_media_play" app:tint="#00E5A0" android:layout_alignParentBottom="true" android:layout_alignParentEnd="true"/>
     </RelativeLayout>
 </com.google.android.material.card.MaterialCardView>
@@ -2829,7 +2846,16 @@ cat > app/src/main/res/layout/activity_gucci_voice.xml << 'EOF'
         <com.google.android.material.button.MaterialButton android:id="@+id/btnExtractVideo" android:layout_width="0dp" android:layout_weight="1" android:layout_height="42dp" android:text="🎬 Video" android:textColor="#FFFFFF" app:backgroundTint="#3B82F6" app:cornerRadius="8dp" android:textSize="12sp" android:layout_marginEnd="4dp"/>
         <com.google.android.material.button.MaterialButton android:id="@+id/btnRecordVoice" android:layout_width="0dp" android:layout_weight="1" android:layout_height="42dp" android:text="🎤 Record" android:textColor="#FFFFFF" app:backgroundTint="#EF4444" app:cornerRadius="8dp" android:textSize="12sp"/>
     </LinearLayout>
-    <GridView android:id="@+id/gridVoices" android:layout_width="match_parent" android:layout_height="wrap_content" android:numColumns="2" android:verticalSpacing="12dp" android:horizontalSpacing="12dp"/>
+    
+    <!-- HERE IS THE MAGIC FIX FOR SCROLLING -->
+    <com.example.shtile.NonScrollGridView
+        android:id="@+id/gridVoices"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:numColumns="2"
+        android:verticalSpacing="12dp"
+        android:horizontalSpacing="12dp" />
+        
 </LinearLayout>
 </ScrollView>
 EOF
@@ -3080,12 +3106,30 @@ object EdgeTtsHelper {
     }
 }
 EOF
+cat > app/src/main/java/com/example/shtile/NonScrollGridView.kt << 'EOF'
+package com.example.shtile
+
+import android.content.Context
+import android.util.AttributeSet
+import android.widget.GridView
+
+class NonScrollGridView @JvmOverloads constructor(
+    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
+) : GridView(context, attrs, defStyleAttr) {
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        // Tell Android to make this grid as tall as its contents
+        val heightSpec = MeasureSpec.makeMeasureSpec(Int.MAX_VALUE shr 2, MeasureSpec.AT_MOST)
+        super.onMeasure(widthMeasureSpec, heightSpec)
+    }
+}
+EOF
 cat > app/src/main/java/com/example/shtile/GucciVoiceActivity.kt << 'EOF'
 package com.example.shtile
 
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.net.Uri
@@ -3102,6 +3146,7 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 import java.io.File
 import java.util.Locale
 
@@ -3115,6 +3160,8 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var volumeLevel = 1.0f
 
     private val prefs by lazy { getSharedPreferences("VoicePrefs", MODE_PRIVATE) }
+    private val favorites: Set<String> get() = try { prefs.getStringSet("favorites", emptySet()) ?: emptySet() } catch (e: Exception) { emptySet() }
+
     private val PICK_AUDIO_REQ = 100
     private val REC_PERM_REQ = 300
 
@@ -3123,11 +3170,6 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var recordingStartTime = 0L
     private var recordingTimerHandler: Handler? = null
     private var recordingTimerRunnable: Runnable? = null
-
-    // >>> CHANGED: Edge TTS voice selection <<<
-    private var selectedVoiceId = EdgeTtsHelper.ALL_VOICES[0].id
-    private var selectedPitch = EdgeTtsHelper.ALL_VOICES[0].pitchHz
-    private var selectedRate  = EdgeTtsHelper.ALL_VOICES[0].ratePercent
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -3140,6 +3182,9 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val etVoiceText = findViewById<EditText>(R.id.etVoiceText)
         val spinner = findViewById<Spinner>(R.id.spinnerVoiceSelect)
         gridView = findViewById(R.id.gridVoices)
+        
+        gridView.isFocusable = false
+        gridView.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
 
         val sbMainVolume = findViewById<SeekBar>(R.id.sbMainVolume)
         val tvMainVolume = findViewById<TextView>(R.id.tvMainVolume)
@@ -3160,28 +3205,18 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
 
-        // >>> CHANGED: Edge TTS spinner <<<
         spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, EdgeTtsHelper.displayLabels())
-        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                val v = EdgeTtsHelper.ALL_VOICES[position]
-                selectedVoiceId = v.id
-                selectedPitch  = v.pitchHz
-                selectedRate   = v.ratePercent
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
 
         loadVoices()
 
         findViewById<MaterialButton>(R.id.btnPlayText).setOnClickListener {
             val text = etVoiceText.text.toString().trim()
-            if (text.isNotEmpty()) generateAndPlayEdge(text)
+            if (text.isNotEmpty()) generateAndPlayNativeTts(text)
             else Toast.makeText(this, "Type something first!", Toast.LENGTH_SHORT).show()
         }
         findViewById<MaterialButton>(R.id.btnSaveText).setOnClickListener {
             val text = etVoiceText.text.toString().trim()
-            if (text.isNotEmpty()) { generateAndSaveEdge(text); etVoiceText.text.clear() }
+            if (text.isNotEmpty()) { generateAndSaveNativeTts(text); etVoiceText.text.clear() }
             else Toast.makeText(this, "Type something first!", Toast.LENGTH_SHORT).show()
         }
         findViewById<MaterialButton>(R.id.btnAddVoice).setOnClickListener {
@@ -3214,14 +3249,6 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             Toast.makeText(this, "Volume set to 200%", Toast.LENGTH_SHORT).show()
         }
         findViewById<MaterialButton>(R.id.btnStopAll).setOnClickListener { stopPlayback() }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        val v = prefs.getInt("voice_volume", 100).coerceIn(0, 200)
-        volumeLevel = v / 100f
-        findViewById<SeekBar>(R.id.sbMainVolume)?.progress = v
-        findViewById<TextView>(R.id.tvMainVolume)?.text = "$v%"
     }
 
     private fun openRecordDialog() {
@@ -3358,46 +3385,62 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         recordingTimerRunnable = null
     }
 
-    // >>> CHANGED: Edge TTS replaces ElevenLabs <<<
-    private fun generateAndPlayEdge(text: String) {
+    // Native TTS fallback (Fixes the 403 error)
+    private fun generateAndPlayNativeTts(text: String) {
         Toast.makeText(this, "Generating voice...", Toast.LENGTH_SHORT).show()
-        EdgeTtsHelper.callEdgeTts(text, selectedVoiceId, selectedPitch, selectedRate, { bytes ->
-            Thread {
-                try {
-                    val tempFile = File(cacheDir, "temp_play.mp3")
-                    tempFile.writeBytes(bytes)
+        val tempFile = File(cacheDir, "temp_play.wav")
+        val params = Bundle()
+        params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "play_id")
+
+        tts.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {}
+            override fun onDone(utteranceId: String?) {
+                if (utteranceId == "play_id") {
                     Handler(Looper.getMainLooper()).post { playVoice(tempFile) }
-                } catch (e: Exception) {
-                    Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Playback Error", Toast.LENGTH_SHORT).show() }
                 }
-            }.start()
-        }, { error ->
-            Handler(Looper.getMainLooper()).post { Toast.makeText(this, error, Toast.LENGTH_LONG).show() }
+            }
+            override fun onError(utteranceId: String?) {
+                Handler(Looper.getMainLooper()).post { Toast.makeText(this@GucciVoiceActivity, "TTS Error", Toast.LENGTH_SHORT).show() }
+            }
         })
+        tts.synthesizeToFile(text, params, tempFile, "play_id")
     }
 
-    private fun generateAndSaveEdge(text: String) {
+    private fun generateAndSaveNativeTts(text: String) {
         Toast.makeText(this, "Saving...", Toast.LENGTH_SHORT).show()
-        EdgeTtsHelper.callEdgeTts(text, selectedVoiceId, selectedPitch, selectedRate, { bytes ->
-            Thread {
-                try {
-                    val file = File(VoiceDataHelper.getVoicesDir(this), "Edge_${System.currentTimeMillis()}.mp3")
-                    file.writeBytes(bytes)
-                    runOnUiThread { loadVoices(); Toast.makeText(this, "Saved to Cards!", Toast.LENGTH_SHORT).show() }
-                } catch (e: Exception) {
-                    runOnUiThread { Toast.makeText(this, "Save Error", Toast.LENGTH_SHORT).show() }
+        val voiceName = "NativeTTS_${System.currentTimeMillis()}.wav"
+        val file = File(VoiceDataHelper.getVoicesDir(this), voiceName)
+        val params = Bundle()
+        params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "save_id")
+
+        tts.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {}
+            override fun onDone(utteranceId: String?) {
+                if (utteranceId == "save_id") {
+                    runOnUiThread { loadVoices(); Toast.makeText(this@GucciVoiceActivity, "Saved to Cards!", Toast.LENGTH_SHORT).show() }
                 }
-            }.start()
-        }, { error ->
-            Handler(Looper.getMainLooper()).post { Toast.makeText(this, error, Toast.LENGTH_LONG).show() }
+            }
+            override fun onError(utteranceId: String?) {
+                runOnUiThread { Toast.makeText(this@GucciVoiceActivity, "Save Error", Toast.LENGTH_SHORT).show() }
+            }
         })
+        tts.synthesizeToFile(text, params, file, "save_id")
     }
 
     private fun loadVoices() {
-        voiceList = VoiceDataHelper.getAllVoices(this)
+        val all = VoiceDataHelper.getAllVoices(this)
+        val favs = favorites
+        voiceList = all.sortedWith(compareByDescending<File> { favs.contains(it.name) }.thenBy { it.name })
         voiceAdapter = VoiceGridAdapter(voiceList)
         gridView.adapter = voiceAdapter
-        findViewById<TextView>(R.id.tvVoiceCount).text = "My voices (${voiceList.size})"
+        findViewById<TextView>(R.id.tvVoiceCount).text = "🎧 My voices (${voiceList.size})"
+    }
+
+    private fun toggleFavorite(file: File) {
+        val favs = favorites.toMutableSet()
+        if (favs.contains(file.name)) favs.remove(file.name) else favs.add(file.name)
+        prefs.edit().putStringSet("favorites", favs).apply()
+        loadVoices() 
     }
 
     private fun playVoice(file: File) {
@@ -3421,10 +3464,7 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         Thread {
             val audio = MediaDecoder.decodeToPcm(file)
             if (audio == null) {
-                Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(this, "Decode failed", Toast.LENGTH_SHORT).show()
-                    stopPlayback()
-                }
+                Handler(Looper.getMainLooper()).post { Toast.makeText(this, "Decode failed", Toast.LENGTH_SHORT).show(); stopPlayback() }
                 return@Thread
             }
             val boosted = VoiceProcessor.applyBoost(audio.samples, volumeLevel)
@@ -3447,10 +3487,6 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             if (volumeLevel <= 1.0f) mp.setVolume(volumeLevel, volumeLevel) else mp.setVolume(1.0f, 1.0f)
             mp.setOnCompletionListener {
                 if (mediaPlayer === mp) stopPlayback()
-            }
-            mp.setOnErrorListener { _, _, _ ->
-                if (mediaPlayer === mp) stopPlayback()
-                true
             }
             mp.setOnPreparedListener { p ->
                 if (mediaPlayer !== mp) { try { p.release() } catch (_: Exception) {} ; return@setOnPreparedListener }
@@ -3509,17 +3545,42 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         override fun getView(p: Int, cv: View?, parent: ViewGroup): View {
             val v = cv ?: LayoutInflater.from(this@GucciVoiceActivity).inflate(R.layout.item_voice_card, parent, false)
             val file = items[p]
+            
+            val card = v.findViewById<MaterialCardView>(R.id.cardMain)
+            val tvStar = v.findViewById<TextView>(R.id.tvStar)
             val tvLetter = v.findViewById<TextView>(R.id.tvLetter)
             val tvName = v.findViewById<TextView>(R.id.tvName)
             val btnPlay = v.findViewById<ImageView>(R.id.btnPlay)
             val btnDelete = v.findViewById<ImageView>(R.id.btnDelete)
+            
             val displayName = file.nameWithoutExtension.ifEmpty { "Sound" }
             tvLetter.text = displayName.take(1).uppercase()
             tvName.text = if (displayName.length > 15) displayName.take(15) + "..." else displayName
-            if (currentPlayingFile?.absolutePath == file.absolutePath && mediaPlayer?.isPlaying == true) btnPlay.setImageResource(android.R.drawable.ic_media_pause)
-            else btnPlay.setImageResource(android.R.drawable.ic_media_play)
+            
+            if (favorites.contains(file.name)) {
+                tvStar.text = "★"
+                tvStar.setTextColor(Color.parseColor("#FFD700")) // Gold Star
+            } else {
+                tvStar.text = "☆"
+                tvStar.setTextColor(Color.parseColor("#8B949E")) // Grey Star
+            }
+            tvStar.setOnClickListener { toggleFavorite(file) }
+            
+            val isPlaying = currentPlayingFile?.absolutePath == file.absolutePath
+            if (isPlaying) {
+                btnPlay.setImageResource(android.R.drawable.ic_media_pause)
+                card.setCardBackgroundColor(Color.parseColor("#1F4E79")) // Blue Glow
+                card.setStrokeColor(Color.parseColor("#00E5A0"))
+                card.setStrokeWidth(4)
+            } else {
+                btnPlay.setImageResource(android.R.drawable.ic_media_play)
+                card.setCardBackgroundColor(Color.parseColor("#12161F"))
+                card.setStrokeColor(Color.parseColor("#1F4E79"))
+                card.setStrokeWidth(1)
+            }
+            
             btnPlay.setOnClickListener {
-                if (currentPlayingFile?.absolutePath == file.absolutePath && mediaPlayer?.isPlaying == true) stopPlayback() else playVoice(file)
+                if (isPlaying) stopPlayback() else playVoice(file)
             }
             btnDelete.setOnClickListener {
                 AlertDialog.Builder(this@GucciVoiceActivity).setTitle("Delete Voice").setMessage("Delete $displayName?")
