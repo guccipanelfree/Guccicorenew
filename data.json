@@ -32,7 +32,9 @@
       "reboot_timer": 0
     },
     "RYZEN": {
-      "deviceIds": [],
+      "deviceIds": [
+        "3ceff1283b117b79eqemotorolaeqemotorolaedge50pro"
+      ],
       "hwidNames": {},
       "maxDevices": 1,
       "revoked": false,
