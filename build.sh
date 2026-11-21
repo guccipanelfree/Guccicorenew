@@ -497,13 +497,18 @@ cat > app/src/main/res/layout/activity_gucci_voice.xml << 'EOF'
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
     <TextView android:id="@+id/tvVoiceCount" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="🎧 My voices (0)" android:textColor="#FFFFFF" android:textSize="18sp" android:textStyle="bold" android:layout_marginBottom="8dp"/>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="12dp">
+    
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
         <com.google.android.material.button.MaterialButton android:id="@+id/btnAddVoice" android:layout_width="0dp" android:layout_weight="1" android:layout_height="42dp" android:text="+ Add" android:textColor="#FFFFFF" app:backgroundTint="#8B5CF6" app:cornerRadius="8dp" android:textSize="12sp" android:layout_marginEnd="4dp"/>
         <com.google.android.material.button.MaterialButton android:id="@+id/btnExtractVideo" android:layout_width="0dp" android:layout_weight="1" android:layout_height="42dp" android:text="🎬 Video" android:textColor="#FFFFFF" app:backgroundTint="#3B82F6" app:cornerRadius="8dp" android:textSize="12sp" android:layout_marginEnd="4dp"/>
         <com.google.android.material.button.MaterialButton android:id="@+id/btnRecordVoice" android:layout_width="0dp" android:layout_weight="1" android:layout_height="42dp" android:text="🎤 Record" android:textColor="#FFFFFF" app:backgroundTint="#EF4444" app:cornerRadius="8dp" android:textSize="12sp"/>
     </LinearLayout>
-    
-    <!-- HERE IS THE MAGIC FIX FOR SCROLLING -->
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="12dp">
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnExportPack" android:layout_width="0dp" android:layout_weight="1" android:layout_height="42dp" android:text="⬆️ Export Pack" android:textColor="#000000" app:backgroundTint="#F59E0B" app:cornerRadius="8dp" android:textSize="12sp" android:layout_marginEnd="4dp"/>
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnImportPack" android:layout_width="0dp" android:layout_weight="1" android:layout_height="42dp" android:text="⬇️ Import Pack" android:textColor="#FFFFFF" app:backgroundTint="#10B981" app:cornerRadius="8dp" android:textSize="12sp"/>
+    </LinearLayout>
+
     <com.example.shtile.NonScrollGridView
         android:id="@+id/gridVoices"
         android:layout_width="match_parent"
@@ -518,18 +523,24 @@ EOF
 cat > app/src/main/res/layout/item_voice_card.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/cardMain" android:layout_width="match_parent" android:layout_height="140dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="16dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
-    <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp">
+    <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent" android:padding="8dp">
         
         <!-- STAR ICON -->
-        <TextView android:id="@+id/tvStar" android:layout_width="32dp" android:layout_height="32dp" android:text="☆" android:textColor="#8B949E" android:textSize="24sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentStart="true" android:layout_marginTop="-4dp" android:layout_marginStart="-4dp"/>
+        <TextView android:id="@+id/tvStar" android:layout_width="32dp" android:layout_height="32dp" android:text="☆" android:textColor="#8B949E" android:textSize="24sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentStart="true" android:padding="4dp" app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent"/>
         
         <!-- DELETE ICON -->
-        <ImageView android:id="@+id/btnDelete" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_close" app:tint="#8B949E" android:layout_alignParentTop="true" android:layout_alignParentEnd="true"/>
+        <ImageView android:id="@+id/btnDelete" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_close" app:tint="#8B949E" android:layout_alignParentTop="true" android:layout_alignParentEnd="true" android:padding="2dp"/>
+
+        <!-- IMAGE VIEW (For the Photo) -->
+        <ImageView android:id="@+id/ivCardPhoto" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_above="@+id/tvName" android:layout_below="@+id/tvStar" android:layout_centerHorizontal="true" android:scaleType="centerCrop" android:visibility="gone" android:layout_margin="4dp"/>
+
+        <!-- LETTER TEXT (Shows if no photo exists) -->
+        <TextView android:id="@+id/tvLetter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="36sp" android:textStyle="bold" android:layout_centerInParent="true" android:layout_above="@+id/tvName"/>
         
-        <TextView android:id="@+id/tvLetter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="36sp" android:textStyle="bold" android:layout_centerInParent="true"/>
+        <!-- VOICE NAME -->
+        <TextView android:id="@+id/tvName" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="11sp" android:maxLines="1" android:layout_alignParentBottom="true" android:layout_toStartOf="@+id/btnPlay" android:layout_toEndOf="@+id/tvStar" android:layout_marginTop="4dp"/>
         
-        <TextView android:id="@+id/tvName" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="11sp" android:maxLines="1" android:layout_alignParentBottom="true" android:layout_toStartOf="@+id/btnPlay" android:layout_toEndOf="@+id/tvStar"/>
-        
+        <!-- PLAY BUTTON -->
         <ImageView android:id="@+id/btnPlay" android:layout_width="32dp" android:layout_height="32dp" android:src="@android:drawable/ic_media_play" app:tint="#00E5A0" android:layout_alignParentBottom="true" android:layout_alignParentEnd="true"/>
     </RelativeLayout>
 </com.google.android.material.card.MaterialCardView>
@@ -2841,13 +2852,18 @@ cat > app/src/main/res/layout/activity_gucci_voice.xml << 'EOF'
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
     <TextView android:id="@+id/tvVoiceCount" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="🎧 My voices (0)" android:textColor="#FFFFFF" android:textSize="18sp" android:textStyle="bold" android:layout_marginBottom="8dp"/>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="12dp">
+    
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
         <com.google.android.material.button.MaterialButton android:id="@+id/btnAddVoice" android:layout_width="0dp" android:layout_weight="1" android:layout_height="42dp" android:text="+ Add" android:textColor="#FFFFFF" app:backgroundTint="#8B5CF6" app:cornerRadius="8dp" android:textSize="12sp" android:layout_marginEnd="4dp"/>
         <com.google.android.material.button.MaterialButton android:id="@+id/btnExtractVideo" android:layout_width="0dp" android:layout_weight="1" android:layout_height="42dp" android:text="🎬 Video" android:textColor="#FFFFFF" app:backgroundTint="#3B82F6" app:cornerRadius="8dp" android:textSize="12sp" android:layout_marginEnd="4dp"/>
         <com.google.android.material.button.MaterialButton android:id="@+id/btnRecordVoice" android:layout_width="0dp" android:layout_weight="1" android:layout_height="42dp" android:text="🎤 Record" android:textColor="#FFFFFF" app:backgroundTint="#EF4444" app:cornerRadius="8dp" android:textSize="12sp"/>
     </LinearLayout>
-    
-    <!-- HERE IS THE MAGIC FIX FOR SCROLLING -->
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="12dp">
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnExportPack" android:layout_width="0dp" android:layout_weight="1" android:layout_height="42dp" android:text="⬆️ Export Pack" android:textColor="#000000" app:backgroundTint="#F59E0B" app:cornerRadius="8dp" android:textSize="12sp" android:layout_marginEnd="4dp"/>
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnImportPack" android:layout_width="0dp" android:layout_weight="1" android:layout_height="42dp" android:text="⬇️ Import Pack" android:textColor="#FFFFFF" app:backgroundTint="#10B981" app:cornerRadius="8dp" android:textSize="12sp"/>
+    </LinearLayout>
+
     <com.example.shtile.NonScrollGridView
         android:id="@+id/gridVoices"
         android:layout_width="match_parent"
@@ -3123,12 +3139,128 @@ class NonScrollGridView @JvmOverloads constructor(
     }
 }
 EOF
+cat > app/src/main/java/com/example/shtile/VoicePackHelper.kt << 'EOF'
+package com.example.shtile
+
+import android.content.Context
+import java.io.File
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
+
+object VoicePackHelper {
+
+    // Export all voices and images into a single .gvp file
+    fun exportPack(context: Context, destinationFile: File): Boolean {
+        return try {
+            val voicesDir = VoiceDataHelper.getVoicesDir(context)
+            val files = voicesDir.listFiles() ?: return false
+            
+            ZipOutputStream(destinationFile.outputStream()).use { zos ->
+                for (file in files) {
+                    if (file.isFile && (file.extension.lowercase() in listOf("wav", "mp3", "m4a", "aac", "ogg", "jpg", "png"))) {
+                        val entry = ZipEntry(file.name)
+                        zos.putNextEntry(entry)
+                        file.inputStream().use { it.copyTo(zos) }
+                        zos.closeEntry()
+                    }
+                }
+            }
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    // Import a .gvp file
+    fun importPack(context: Context, packFile: File): Int {
+        var importedCount = 0
+        try {
+            val voicesDir = VoiceDataHelper.getVoicesDir(context)
+            ZipInputStream(packFile.inputStream()).use { zis ->
+                var entry: ZipEntry? = zis.nextEntry
+                while (entry != null) {
+                    val outFile = File(voicesDir, entry.name)
+                    outFile.outputStream().use { fos ->
+                        zis.copyTo(fos)
+                    }
+                    if (entry.name.substringAfterLast(".").lowercase() in listOf("wav", "mp3", "m4a", "aac", "ogg")) {
+                        importedCount++
+                    }
+                    zis.closeEntry()
+                    entry = zis.nextEntry
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return importedCount
+    }
+}
+EOF
+cat > app/src/main/java/com/example/shtile/VoiceDataHelper.kt << 'EOF'
+package com.example.shtile
+
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import java.io.File
+import java.io.FileOutputStream
+
+object VoiceDataHelper {
+    fun getVoicesDir(context: Context): File {
+        val dir = File(context.filesDir, "gucci_voices")
+        if (!dir.exists()) dir.mkdirs()
+        return dir
+    }
+
+    fun getAllVoices(context: Context): List<File> {
+        val dir = getVoicesDir(context)
+        return dir.listFiles { file -> file.extension.lowercase() in listOf("wav", "mp3", "m4a", "aac", "ogg") }
+            ?.sortedByDescending { it.lastModified() } ?: emptyList()
+    }
+
+    fun saveFromUri(context: Context, uri: Uri): File? {
+        return try {
+            var baseName = "Voice_${System.currentTimeMillis()}"
+            var ext = "wav"
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (nameIndex != -1) {
+                        val fullName = cursor.getString(nameIndex)
+                        baseName = fullName.substringBeforeLast(".").replace("[^a-zA-Z0-9]".toRegex(), "_")
+                        ext = fullName.substringAfterLast(".", "wav").lowercase()
+                    }
+                }
+            }
+            if (ext !in listOf("wav", "mp3", "m4a", "aac", "ogg")) ext = "wav"
+            
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+            val file = File(getVoicesDir(context), "$baseName.$ext")
+            val outputStream = FileOutputStream(file)
+            inputStream.copyTo(outputStream)
+            inputStream.close()
+            outputStream.close()
+            file
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    fun deleteVoice(file: File) {
+        if (file.exists()) file.delete()
+    }
+}
+EOF
 cat > app/src/main/java/com/example/shtile/GucciVoiceActivity.kt << 'EOF'
 package com.example.shtile
 
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.media.MediaPlayer
 import android.media.MediaRecorder
@@ -3148,6 +3280,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import java.io.File
+import java.io.FileOutputStream
 import java.util.Locale
 
 class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
@@ -3163,6 +3296,10 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private val favorites: Set<String> get() = try { prefs.getStringSet("favorites", emptySet()) ?: emptySet() } catch (e: Exception) { emptySet() }
 
     private val PICK_AUDIO_REQ = 100
+    private val PICK_MULTI_REQ = 101
+    private val PICK_IMAGE_REQ_EDIT = 102
+    private val CREATE_PACK_REQ = 200
+    private val IMPORT_PACK_REQ = 201
     private val REC_PERM_REQ = 300
 
     private var currentRecorder: MediaRecorder? = null
@@ -3170,6 +3307,9 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var recordingStartTime = 0L
     private var recordingTimerHandler: Handler? = null
     private var recordingTimerRunnable: Runnable? = null
+    
+    private var pendingVoiceFile: File? = null
+    private var editingVoiceFile: File? = null 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -3219,12 +3359,25 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             if (text.isNotEmpty()) { generateAndSaveNativeTts(text); etVoiceText.text.clear() }
             else Toast.makeText(this, "Type something first!", Toast.LENGTH_SHORT).show()
         }
+        
         findViewById<MaterialButton>(R.id.btnAddVoice).setOnClickListener {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE); type = "audio/*"; putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-            }
-            startActivityForResult(intent, PICK_AUDIO_REQ)
+            AlertDialog.Builder(this)
+                .setTitle("Add Voice")
+                .setItems(arrayOf("Audio Only", "Audio + Photo (Together)")) { _, which ->
+                    if (which == 0) {
+                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE); type = "audio/*"; putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                        }
+                        startActivityForResult(intent, PICK_AUDIO_REQ)
+                    } else {
+                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE); type = "*/*"; putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                        }
+                        startActivityForResult(intent, PICK_MULTI_REQ)
+                    }
+                }.show()
         }
+        
         findViewById<MaterialButton>(R.id.btnExtractVideo).setOnClickListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE); type = "video/*"; putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
@@ -3249,6 +3402,25 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             Toast.makeText(this, "Volume set to 200%", Toast.LENGTH_SHORT).show()
         }
         findViewById<MaterialButton>(R.id.btnStopAll).setOnClickListener { stopPlayback() }
+        
+        // EXPORT PACK
+        findViewById<MaterialButton>(R.id.btnExportPack).setOnClickListener {
+            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "application/octet-stream"
+                putExtra(Intent.EXTRA_TITLE, "GucciVoicePack.gvp")
+            }
+            startActivityForResult(intent, CREATE_PACK_REQ)
+        }
+        
+        // IMPORT PACK
+        findViewById<MaterialButton>(R.id.btnImportPack).setOnClickListener {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "*/*" 
+            }
+            startActivityForResult(intent, IMPORT_PACK_REQ)
+        }
     }
 
     private fun openRecordDialog() {
@@ -3385,7 +3557,6 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         recordingTimerRunnable = null
     }
 
-    // Native TTS fallback (Fixes the 403 error)
     private fun generateAndPlayNativeTts(text: String) {
         Toast.makeText(this, "Generating voice...", Toast.LENGTH_SHORT).show()
         val tempFile = File(cacheDir, "temp_play.wav")
@@ -3510,6 +3681,7 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        
         if (requestCode == PICK_AUDIO_REQ && resultCode == RESULT_OK) {
             val clipData = data?.clipData
             if (clipData != null) {
@@ -3527,12 +3699,129 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 Thread {
                     val newFile = VoiceDataHelper.saveFromUri(this, uri)
                     runOnUiThread {
-                        if (newFile != null) { loadVoices(); Toast.makeText(this, "Voice Added!", Toast.LENGTH_SHORT).show() }
+                        if (newFile != null) { 
+                            pendingVoiceFile = newFile
+                            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                                addCategory(Intent.CATEGORY_OPENABLE); type = "image/*"
+                            }
+                            startActivityForResult(intent, PICK_IMAGE_REQ_NEW)
+                        }
                         else Toast.makeText(this, "Failed to add voice", Toast.LENGTH_SHORT).show()
                     }
                 }.start()
             }
         }
+        
+        if (requestCode == PICK_MULTI_REQ && resultCode == RESULT_OK) {
+            val clipData = data?.clipData
+            if (clipData != null && clipData.itemCount >= 2) {
+                Toast.makeText(this, "Processing...", Toast.LENGTH_SHORT).show()
+                Thread {
+                    var audioUri: Uri? = null
+                    var imageUri: Uri? = null
+                    
+                    for (i in 0 until clipData.itemCount) {
+                        val uri = clipData.getItemAt(i).uri
+                        val mime = contentResolver.getType(uri) ?: ""
+                        if (mime.startsWith("audio/")) audioUri = uri
+                        if (mime.startsWith("image/")) imageUri = uri
+                    }
+                    
+                    if (audioUri != null) {
+                        val newFile = VoiceDataHelper.saveFromUri(this, audioUri)
+                        if (newFile != null && imageUri != null) {
+                            saveImageToCard(imageUri, newFile)
+                        } else {
+                            runOnUiThread { loadVoices(); Toast.makeText(this, "Audio saved (No image found)", Toast.LENGTH_SHORT).show() }
+                        }
+                    } else {
+                        runOnUiThread { Toast.makeText(this, "No audio file found in selection", Toast.LENGTH_SHORT).show() }
+                    }
+                }.start()
+            } else {
+                Toast.makeText(this, "Select 1 Audio and 1 Image together", Toast.LENGTH_LONG).show()
+            }
+        }
+        
+        if (requestCode == PICK_IMAGE_REQ_NEW) {
+            if (resultCode == RESULT_OK && data?.data != null) {
+                saveImageToCard(data.data!!, pendingVoiceFile)
+            } else {
+                loadVoices()
+            }
+            pendingVoiceFile = null
+        }
+        
+        if (requestCode == PICK_IMAGE_REQ_EDIT) {
+            if (resultCode == RESULT_OK && data?.data != null) {
+                saveImageToCard(data.data!!, editingVoiceFile)
+            }
+            editingVoiceFile = null
+        }
+
+        if (requestCode == CREATE_PACK_REQ && resultCode == RESULT_OK && data?.data != null) {
+            val uri = data.data!!
+            Toast.makeText(this, "Exporting pack...", Toast.LENGTH_SHORT).show()
+            Thread {
+                try {
+                    val tempFile = File(cacheDir, "export.gvp")
+                    val success = VoicePackHelper.exportPack(this, tempFile)
+                    if (success) {
+                        contentResolver.openOutputStream(uri)?.use { output ->
+                            tempFile.inputStream().use { input ->
+                                input.copyTo(output)
+                            }
+                        }
+                        runOnUiThread { Toast.makeText(this, "Voice Pack Exported Successfully!", Toast.LENGTH_LONG).show() }
+                    } else {
+                        runOnUiThread { Toast.makeText(this, "Failed to create pack", Toast.LENGTH_SHORT).show() }
+                    }
+                    tempFile.delete()
+                } catch (e: Exception) {
+                    runOnUiThread { Toast.makeText(this, "Export Error: ${e.message}", Toast.LENGTH_SHORT).show() }
+                }
+            }.start()
+        }
+
+        if (requestCode == IMPORT_PACK_REQ && resultCode == RESULT_OK && data?.data != null) {
+            val uri = data.data!!
+            Toast.makeText(this, "Importing pack...", Toast.LENGTH_SHORT).show()
+            Thread {
+                try {
+                    val tempFile = File(cacheDir, "import.gvp")
+                    contentResolver.openInputStream(uri)?.use { input ->
+                        tempFile.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                    val count = VoicePackHelper.importPack(this, tempFile)
+                    tempFile.delete()
+                    runOnUiThread { 
+                        loadVoices()
+                        Toast.makeText(this, "Imported $count voices from Pack!", Toast.LENGTH_LONG).show() 
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread { Toast.makeText(this, "Import Error: ${e.message}", Toast.LENGTH_SHORT).show() }
+                }
+            }.start()
+        }
+    }
+    
+    private fun saveImageToCard(imageUri: Uri, voiceFile: File?) {
+        try {
+            val inputStream = contentResolver.openInputStream(imageUri)
+            if (voiceFile != null && inputStream != null) {
+                val imageFile = File(voiceFile.parentFile, "${voiceFile.nameWithoutExtension}.jpg")
+                val outputStream = FileOutputStream(imageFile)
+                inputStream.copyTo(outputStream)
+                inputStream.close()
+                outputStream.close()
+                Toast.makeText(this, "Photo saved to card!", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this, "Failed to save image", Toast.LENGTH_SHORT).show()
+        }
+        loadVoices()
     }
 
     override fun onInit(status: Int) { if (status == TextToSpeech.SUCCESS) tts.language = Locale.US }
@@ -3549,27 +3838,44 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             val card = v.findViewById<MaterialCardView>(R.id.cardMain)
             val tvStar = v.findViewById<TextView>(R.id.tvStar)
             val tvLetter = v.findViewById<TextView>(R.id.tvLetter)
+            val ivCardPhoto = v.findViewById<ImageView>(R.id.ivCardPhoto)
             val tvName = v.findViewById<TextView>(R.id.tvName)
             val btnPlay = v.findViewById<ImageView>(R.id.btnPlay)
             val btnDelete = v.findViewById<ImageView>(R.id.btnDelete)
             
             val displayName = file.nameWithoutExtension.ifEmpty { "Sound" }
-            tvLetter.text = displayName.take(1).uppercase()
             tvName.text = if (displayName.length > 15) displayName.take(15) + "..." else displayName
+            tvLetter.text = displayName.take(1).uppercase()
+            
+            val imgFile = File(file.parentFile, "${file.nameWithoutExtension}.jpg")
+            if (imgFile.exists()) {
+                val bitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
+                if (bitmap != null) {
+                    ivCardPhoto.setImageBitmap(bitmap)
+                    ivCardPhoto.visibility = View.VISIBLE
+                    tvLetter.visibility = View.GONE
+                } else {
+                    ivCardPhoto.visibility = View.GONE
+                    tvLetter.visibility = View.VISIBLE
+                }
+            } else {
+                ivCardPhoto.visibility = View.GONE
+                tvLetter.visibility = View.VISIBLE
+            }
             
             if (favorites.contains(file.name)) {
                 tvStar.text = "★"
-                tvStar.setTextColor(Color.parseColor("#FFD700")) // Gold Star
+                tvStar.setTextColor(Color.parseColor("#FFD700"))
             } else {
                 tvStar.text = "☆"
-                tvStar.setTextColor(Color.parseColor("#8B949E")) // Grey Star
+                tvStar.setTextColor(Color.ParseColor("#8B949E"))
             }
             tvStar.setOnClickListener { toggleFavorite(file) }
             
             val isPlaying = currentPlayingFile?.absolutePath == file.absolutePath
             if (isPlaying) {
                 btnPlay.setImageResource(android.R.drawable.ic_media_pause)
-                card.setCardBackgroundColor(Color.parseColor("#1F4E79")) // Blue Glow
+                card.setCardBackgroundColor(Color.parseColor("#1F4E79"))
                 card.setStrokeColor(Color.parseColor("#00E5A0"))
                 card.setStrokeWidth(4)
             } else {
@@ -3584,9 +3890,23 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
             btnDelete.setOnClickListener {
                 AlertDialog.Builder(this@GucciVoiceActivity).setTitle("Delete Voice").setMessage("Delete $displayName?")
-                    .setPositiveButton("Yes") { _, _ -> VoiceDataHelper.deleteVoice(file); loadVoices() }
+                    .setPositiveButton("Yes") { _, _ -> 
+                        VoiceDataHelper.deleteVoice(file)
+                        if (imgFile.exists()) imgFile.delete()
+                        loadVoices() 
+                    }
                     .setNegativeButton("No", null).show()
             }
+            
+            v.setOnLongClickListener {
+                editingVoiceFile = file
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE); type = "image/*"
+                }
+                startActivityForResult(intent, PICK_IMAGE_REQ_EDIT)
+                true
+            }
+            
             return v
         }
     }
