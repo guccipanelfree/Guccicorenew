@@ -14,12 +14,28 @@ done
 if [ -d "drivers" ]; then cp -r drivers app/src/main/assets/; fi
 
 cat > settings.gradle << 'EOF'
-pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
-dependencyResolutionManagement { repositories { google(); mavenCentral() } }
+pluginManagement {
+    repositories {
+        google()
+        // Add mirror before mavenCentral
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositories {
+        google()
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        mavenCentral()
+    }
+}
 rootProject.name = "GucciLoader"
 include ':app'
 EOF
-
 cat > build.gradle << 'EOF'
 plugins { id 'com.android.application' version '8.2.2' apply false; id 'org.jetbrains.kotlin.android' version '1.9.22' apply false }
 EOF
@@ -28,52 +44,12 @@ cat > gradle.properties << 'EOF'
 android.useAndroidX=true
 android.nonTransitiveRClass=true
 org.gradle.jvmargs=-Xmx2048m
-EOF
 
-# Generate a permanent keystore if it doesn't exist
-if [ ! -f "my-release-key.jks" ]; then
-    keytool -genkey -v -keystore my-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias my-alias -storepass password123 -keypass password123 -dname "CN=Gucci, OU=Dev, O=Gucci, L=City, S=State, C=US"
-fi
-
-cat > app/build.gradle << 'EOF'
-plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
-android {
-    namespace 'com.example.shtile'
-    compileSdk 34
-    defaultConfig { applicationId "com.example.shtile"; minSdk 24; targetSdk 34; versionCode 76; versionName "76.0" }
-    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
-    kotlinOptions { jvmTarget = '17' }
-    
-    signingConfigs {
-        release {
-            storeFile file("../my-release-key.jks")
-            storePassword "password123"
-            keyAlias "my-alias"
-            keyPassword "password123"
-        }
-    }
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-        }
-        debug {
-            signingConfig signingConfigs.release
-        }
-    }
-}
-dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
-    implementation 'com.google.android.material:material:1.11.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
-    implementation 'dev.rikka.shizuku:api:13.1.5'
-    implementation 'dev.rikka.shizuku:provider:13.1.5'
-
-    // NEW — needed for Edge TTS WebSocket (EdgeTtsHelper.kt)
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-}
+# Proxy settings (Uncomment and fill if behind a firewall)
+# systemProp.http.proxyHost=proxy.example.com
+# systemProp.http.proxyPort=8080
+# systemProp.https.proxyHost=proxy.example.com
+# systemProp.https.proxyPort=8080
 EOF
 cat > app/src/main/AndroidManifest.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
