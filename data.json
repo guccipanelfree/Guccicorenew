@@ -1,5 +1,19 @@
 {
-  "keys": {},
+  "keys": {
+    "GUCCI": {
+      "deviceIds": [],
+      "hwidNames": {},
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 0,
+      "allowInx": true,
+      "allowFloater": true,
+      "allowKernel": true,
+      "allowVoice": true,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
+    }
+  },
   "reboot_global_time": 0,
   "global_reboot_timer": 0
 }
