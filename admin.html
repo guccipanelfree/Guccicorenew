@@ -7,238 +7,129 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #0a0e14; color: #ffffff; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 700px; }
+        .container { width: 100%; max-width: 650px; }
+        
         .card { background-color: #11161f; padding: 24px; border-radius: 12px; border: 1px solid #1f2633; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         h2 { color: #2dd4a7; margin-bottom: 20px; font-size: 22px; }
         h3 { color: #ffffff; margin-bottom: 15px; font-size: 18px; }
+        
         .input-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-size: 14px; color: #8b949e; }
-        input[type="text"], input[type="password"], select { width: 100%; padding: 12px; background-color: #1a222c; border: 1px solid #2a3645; border-radius: 8px; color: white; font-size: 15px; outline: none; }
+        .row { display: flex; gap: 10px; }
+        .row .input-group { flex: 1; }
+        label { display: block; margin-bottom: 5px; font-size: 14px; color: #8b949e; font-weight: bold; }
+        input, select { width: 100%; padding: 12px; background-color: #1a222c; border: 1px solid #2a3645; border-radius: 8px; color: white; font-size: 15px; outline: none; }
         input:focus, select:focus { border-color: #2dd4a7; }
-        button { padding: 10px 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s; }
-        .btn-main { width: 100%; background-color: #2dd4a7; color: #000000; font-size: 16px; padding: 14px; }
-        .btn-main:hover { background-color: #24b78f; }
+        
+        button { width: 100%; padding: 14px; background-color: #2dd4a7; color: #000000; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
+        button:hover { background-color: #24b78f; }
+        button.danger { background-color: #ff4d4d; color: white; margin-top: 10px; }
+        button.danger:hover { background-color: #e60000; }
+        button.refresh { background-color: #1a222c; color: #2dd4a7; border: 1px solid #2dd4a7; margin-bottom: 15px; }
+        
         .hidden { display: none !important; }
         .msg { margin-top: 10px; font-size: 14px; text-align: center; font-weight: bold; }
         .msg.success { color: #2dd4a7; }
         .msg.error { color: #ff4d4d; }
-        
-        .global-actions { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .btn-global-off { background-color: #ff4d4d; color: white; flex: 1; min-width: 45%; }
-        .btn-global-on { background-color: #2dd4a7; color: black; flex: 1; min-width: 45%; }
-        .btn-delete-all { background-color: #c0392b; color: white; flex: 1; border: 1px solid #e74c3c; min-width: 100%; }
-        .btn-reset-all { background-color: #f39c12; color: white; flex: 1; border: 1px solid #d35400; min-width: 100%; margin-top: 5px;}
-        
-        .global-reboot-box { background-color: #1a1a1a; border: 1px solid #e67e22; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        .btn-reboot-global { background-color: #e67e22; color: white; flex: 1; font-size: 14px; padding: 12px; }
-        .btn-reboot-timer-global { background-color: #d35400; color: white; flex: 1; font-size: 14px; padding: 12px; }
-        .btn-stop-reboot-global { background-color: #333; color: #ff4d4d; border: 1px solid #ff4d4d; flex: 1; font-size: 14px; padding: 12px; }
-        
-        .bulk-feature-box { background-color: #0e131a; border: 1px solid #3498db; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        .bulk-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
-        @media (max-width: 500px) { .bulk-grid { grid-template-columns: 1fr 1fr; } }
-        
-        .bulk-col { display: flex; flex-direction: column; gap: 8px; }
-        .bulk-col-title { text-align: center; color: #3498db; font-weight: bold; font-size: 14px; margin-bottom: 5px; }
-        .btn-bulk-on { background-color: #2dd4a7; color: black; }
-        .btn-bulk-off { background-color: #ff4d4d; color: white; }
-        
-        .key-item { background-color: #1a222c; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #2dd4a7; }
-        .key-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+
+        .key-item { background-color: #1a222c; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #2dd4a7; }
+        .key-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .key-title { font-weight: bold; font-size: 16px; color: #ffffff; word-break: break-all; }
         .key-status { font-size: 12px; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
         .status-bound { background-color: rgba(45, 212, 167, 0.2); color: #2dd4a7; }
         .status-unbound { background-color: rgba(255, 77, 77, 0.2); color: #ff4d4d; }
         .status-revoked { background-color: #333; color: #888; }
-        .status-timer { background-color: rgba(230, 126, 34, 0.2); color: #e67e22; animation: blink 2s infinite; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .key-details { font-size: 12px; color: #8b949e; line-height: 1.6; }
         
-        .key-details { font-size: 13px; color: #8b949e; line-height: 1.6; margin-bottom: 15px; }
-        .key-details b { color: #ffffff; }
-        .action-row { display: flex; flex-wrap: wrap; gap: 8px; }
-        .btn-action { flex: 1; padding: 8px; font-size: 12px; text-align: center; border-radius: 6px; }
-        .btn-reset { background-color: #f39c12; color: white; }
-        .btn-edit { background-color: #3498db; color: white; }
-        .btn-toggle { background-color: #9b59b6; color: white; }
-        .btn-delete { background-color: #e74c3c; color: white; }
-        .btn-copy { background-color: #3498db; color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px; margin-left: 10px; }
+        .hwid-list { margin-top: 10px; background: #0a0e14; padding: 10px; border-radius: 6px; }
+        .hwid-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border-bottom: 1px solid #1f2633; padding-bottom: 6px; }
+        .hwid-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
         
-        .btn-reboot-key { background-color: #e67e22; color: white; flex: 1; padding: 8px; font-size: 12px; text-align: center; border-radius: 6px; font-weight: bold;}
-        .btn-reboot-timer-key { background-color: #d35400; color: white; flex: 1; padding: 8px; font-size: 12px; text-align: center; border-radius: 6px; font-weight: bold;}
-        .btn-stop-reboot-key { background-color: #333; color: #ff4d4d; border: 1px solid #ff4d4d; flex: 1; padding: 8px; font-size: 12px; text-align: center; border-radius: 6px; font-weight: bold;}
-        
-        .feature-toggles { display: flex; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #2a3645; flex-wrap: wrap; }
-        .feature-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #ffffff; cursor: pointer; background: #11161f; padding: 6px 10px; border-radius: 6px; border: 1px solid #2a3645; }
-        .feature-label input { accent-color: #2dd4a7; width: 16px; height: 16px; cursor: pointer; }
-        .btn-uncheck { background: #333; color: #ff4d4d; border: 1px solid #ff4d4d; padding: 6px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; margin-left: 5px; }
-        .btn-check { background: #333; color: #2dd4a7; border: 1px solid #2dd4a7; padding: 6px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; margin-left: 5px; }
-        
-        .search-container { margin-bottom: 15px; position: relative; }
-        .search-container input { width: 100%; padding: 12px 12px 12px 40px; background-color: #1a222c; border: 1px solid #2a3645; border-radius: 8px; color: white; font-size: 14px; }
-        .search-container::before { content: '🔍'; position: absolute; left: 12px; top: 12px; font-size: 16px; }
-
-        /* MODAL STYLES */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: #11161f; padding: 24px; border-radius: 12px; border: 1px solid #2dd4a7; width: 90%; max-width: 400px; text-align: center; }
-        .modal-content h3 { color: #e67e22; margin-bottom: 15px; }
-        .modal-selects { display: flex; gap: 10px; margin-bottom: 20px; }
-        .modal-selects select { flex: 1; text-align: center; font-size: 18px; font-weight: bold; }
+        .btn-small { width: auto; padding: 6px 10px; font-size: 11px; border-radius: 4px; margin-left: 5px; }
+        .btn-revoke { background-color: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; padding: 8px 12px; width: auto; font-size: 12px; border-radius: 4px; font-weight: bold; }
+        .btn-revoke:hover { background-color: rgba(255, 77, 77, 0.1); }
+        .btn-add { background-color: #3b82f6; color: white; border: none; padding: 8px 12px; width: auto; font-size: 12px; border-radius: 4px; font-weight: bold; }
+        .btn-add:hover { background-color: #2563eb; }
+        .action-bar { display: flex; gap: 10px; margin-top: 12px; }
     </style>
 </head>
 <body>
-    <div class="container">
+
+<div class="container">
+    <!-- LOGIN CARD -->
     <div class="card" id="loginCard">
         <h2>Admin Login</h2>
-        <div class="input-group"><label>GitHub Username</label><input type="text" id="ghUser" placeholder="guccipanelfree"></div>
-        <div class="input-group"><label>Repository Name</label><input type="text" id="ghRepo" placeholder="Guccicorenew"></div>
-        <div class="input-group"><label>GitHub Token (ghp_...)</label><input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxx"></div>
-        <button class="btn-main" onclick="connectAdmin()">Connect</button>
+        <div class="input-group">
+            <label>GitHub Username</label>
+            <input type="text" id="ghUser" placeholder="guccipanelfree">
+        </div>
+        <div class="input-group">
+            <label>Repository Name</label>
+            <input type="text" id="ghRepo" placeholder="Guccicorenew">
+        </div>
+        <div class="input-group">
+            <label>GitHub Token (ghp_...)</label>
+            <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxx">
+        </div>
+        <button onclick="connectAdmin()">Connect to GitHub</button>
         <div id="loginMsg" class="msg error"></div>
     </div>
 
+    <!-- DASHBOARD CARD -->
     <div class="card hidden" id="dashboardCard">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2 style="margin: 0;">Admin Dashboard</h2>
-            <button style="background: transparent; color: #8b949e; border: 1px solid #8b949e; padding: 6px 12px;" onclick="logout()">Logout</button>
+            <button class="btn-revoke" style="color: #8b949e; border-color: #8b949e;" onclick="logout()">Logout</button>
         </div>
 
-        <!-- BULK FEATURE CONTROLS -->
-        <div class="bulk-feature-box">
-            <h3 style="color:#3498db; margin-bottom:5px;">⚡ BULK FEATURE CONTROL (ALL KEYS)</h3>
-            <p style="font-size:12px; color:#8b949e; margin-bottom:10px;">Apply permissions to every single key instantly.</p>
-            <div class="bulk-grid">
-                <div class="bulk-col">
-                    <div class="bulk-col-title">INX</div>
-                    <button class="btn-bulk-on" onclick="bulkFeatureUpdate('allowInx', true)">Enable All</button>
-                    <button class="btn-bulk-off" onclick="bulkFeatureUpdate('allowInx', false)">Disable All</button>
-                </div>
-                <div class="bulk-col">
-                    <div class="bulk-col-title">FLOATER</div>
-                    <button class="btn-bulk-on" onclick="bulkFeatureUpdate('allowFloater', true)">Enable All</button>
-                    <button class="btn-bulk-off" onclick="bulkFeatureUpdate('allowFloater', false)">Disable All</button>
-                </div>
-                <div class="bulk-col">
-                    <div class="bulk-col-title">KERNEL</div>
-                    <button class="btn-bulk-on" onclick="bulkFeatureUpdate('allowKernel', true)">Enable All</button>
-                    <button class="btn-bulk-off" onclick="bulkFeatureUpdate('allowKernel', false)">Disable All</button>
-                </div>
-                <!-- NEW VOICE BULK COLUMN -->
-                <div class="bulk-col">
-                    <div class="bulk-col-title">VOICE</div>
-                    <button class="btn-bulk-on" onclick="bulkFeatureUpdate('allowVoice', true)">Enable All</button>
-                    <button class="btn-bulk-off" onclick="bulkFeatureUpdate('allowVoice', false)">Disable All</button>
-                </div>
+        <h3>Create New Key</h3>
+        <div class="row">
+            <div class="input-group">
+                <label>Key Duration</label>
+                <select id="keyDuration">
+                    <option value="1">1 Day</option>
+                    <option value="7">7 Days</option>
+                    <option value="30">30 Days</option>
+                    <option value="0">Lifetime</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label style="color: #2dd4a7;">Max Devices Allowed</label>
+                <select id="keyMaxDevices">
+                    <option value="1">1 Device</option>
+                    <option value="2">2 Devices</option>
+                    <option value="3">3 Devices</option>
+                    <option value="5">5 Devices</option>
+                    <option value="9999">Unlimited</option>
+                </select>
             </div>
         </div>
-
-        <!-- GLOBAL REBOOT CONTROLS -->
-        <div class="global-reboot-box">
-            <h3 style="color:#e67e22; margin-bottom:15px;">🚨 GLOBAL REBOOT (ALL PHONES)</h3>
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <button class="btn-reboot-global" onclick="rebootAllDevices()">🔄 REBOOT ALL NOW</button>
-                <button class="btn-reboot-timer-global" onclick="openGlobalTimerModal()">⏱️ SET GLOBAL REBOOT TIMER</button>
-                <button class="btn-stop-reboot-global" onclick="stopGlobalReboot()">🛑 CANCEL GLOBAL REBOOT</button>
-            </div>
-        </div>
-
-        <hr style="border: 0; border-top: 1px solid #1f2633; margin: 25px 0;">
-
-        <!-- KEY GENERATION -->
-        <div class="input-group">
-            <label>Custom Key (Leave empty for Random Key)</label>
-            <input type="text" id="customKeyInput" placeholder="e.g. GUCCI-VIP-2024" style="text-transform: uppercase;">
-        </div>
-
-        <div class="input-group">
-            <label>Key Duration (For New Keys)</label>
-            <select id="keyDuration">
-                <option value="1">1 Day</option>
-                <option value="7">7 Days</option>
-                <option value="30">30 Days</option>
-                <option value="0">Lifetime</option>
-            </select>
-        </div>
-        
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="color: #2dd4a7; font-weight: bold; margin: 0;">Select Features for NEW key:</label>
-            <div>
-                <button class="btn-check" onclick="checkAllFeatures()">Check All</button>
-                <button class="btn-uncheck" onclick="uncheckAllFeatures()">Uncheck All</button>
-            </div>
-        </div>
-
-        <div class="feature-toggles" style="margin-bottom: 20px; border: none; padding: 0;">
-            <label class="feature-label"><input type="checkbox" id="allowInx" checked> Allow INX</label>
-            <label class="feature-label"><input type="checkbox" id="allowFloater" checked> Allow Floater</label>
-            <label class="feature-label"><input type="checkbox" id="allowKernel" checked> Allow Kernel</label>
-            <!-- NEW VOICE CHECKBOX -->
-            <label class="feature-label"><input type="checkbox" id="allowVoice" checked> Allow Voice</label>
-        </div>
-
-        <button class="btn-main" style="margin-bottom: 25px;" onclick="generateKey()">Generate New Key</button>
+        <button onclick="generateKey()">Generate New Key</button>
         <div id="genMsg" class="msg"></div>
 
         <hr style="border: 0; border-top: 1px solid #1f2633; margin: 25px 0;">
-
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3>Active Keys</h3>
-            <button style="background: #1a222c; color: #2dd4a7; border: 1px solid #2dd4a7; padding: 6px 12px; font-size: 12px;" onclick="loadKeys()">Refresh</button>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0;">Active Keys</h3>
+            <button class="refresh" style="margin: 0; padding: 8px 15px;" onclick="loadKeys()">Refresh List</button>
         </div>
         
-        <div class="global-actions" style="margin-top: 15px;">
-            <button class="btn-global-off" onclick="toggleAllKeys(true)">🚨 Kill ALL Keys</button>
-            <button class="btn-global-on" onclick="toggleAllKeys(false)">✅ Enable ALL Keys</button>
-            <button class="btn-delete-all" onclick="deleteAllKeys()">🗑️ Delete ALL Keys</button>
-            <button class="btn-reset-all" onclick="resetAllKeys()">🔄 Reset ALL Keys (Unbind, Unrevoke, Stop Reboots)</button>
-        </div>
-
-        <div class="search-container">
-            <input type="text" id="searchKey" oninput="renderKeys()" placeholder="Search by Key or HWID...">
-        </div>
-
         <div id="keysContainer"></div>
     </div>
-    </div>
-    <!-- CUSTOM TIMER MODAL -->
-<div id="timerModal" class="modal-overlay hidden">
-    <div class="modal-content">
-        <h3>⏱️ Select Reboot Time</h3>
-        <p style="font-size:13px; color:#8b949e; margin-bottom:15px;">Choose the exact time until the phone restarts.</p>
-        <div class="modal-selects">
-            <select id="timerHours">
-                <option value="0">0 Hours</option>
-                <option value="1">1 Hour</option>
-                <option value="2">2 Hours</option>
-                <option value="3">3 Hours</option>
-                <option value="4">4 Hours</option>
-                <option value="6">6 Hours</option>
-                <option value="12">12 Hours</option>
-                <option value="24">24 Hours</option>
-            </select>
-            <select id="timerMinutes">
-                <option value="0">0 Mins</option>
-                <option value="5">5 Mins</option>
-                <option value="10">10 Mins</option>
-                <option value="15">15 Mins</option>
-                <option value="30">30 Mins</option>
-                <option value="45">45 Mins</option>
-            </select>
-        </div>
-        <button class="btn-main" style="margin-bottom:10px;" onclick="confirmTimer()">Confirm Timer</button>
-        <button class="btn-stop-reboot-global" style="width:100%;" onclick="closeTimerModal()">Cancel</button>
-    </div>
 </div>
+
 <script>
     let token, user, repo, currentSha, currentJson;
-    let activeTimerKey = null; // Tracks if we are setting a global or key timer
 
     function connectAdmin() {
         user = document.getElementById('ghUser').value.trim();
         repo = document.getElementById('ghRepo').value.trim();
         token = document.getElementById('ghToken').value.trim();
         const msg = document.getElementById('loginMsg');
+
         if(!user || !repo || !token) { msg.innerText = "Please fill all fields."; return; }
+
         msg.innerText = "Connecting..."; msg.className = "msg";
+
         fetch(`https://api.github.com/repos/${user}/${repo}/contents/data.json`, {
             headers: { "Authorization": `Bearer ${token}`, "Accept": "application/vnd.github.v3+json" }
         })
@@ -254,7 +145,6 @@
     }
 
     function loadKeys() {
-        document.getElementById('searchKey').value = '';
         fetch(`https://api.github.com/repos/${user}/${repo}/contents/data.json`, {
             headers: { "Authorization": `Bearer ${token}`, "Accept": "application/vnd.github.v3+json" }
         })
@@ -264,6 +154,53 @@
             currentJson = JSON.parse(atob(data.content));
             renderKeys();
         });
+    }
+
+    function generateKey() {
+        const days = parseInt(document.getElementById('keyDuration').value);
+        const maxDevices = parseInt(document.getElementById('keyMaxDevices').value);
+        const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const newKey = "GUCCI-" + randomStr;
+        let expiresAt = days > 0 ? Date.now() + (days * 24 * 60 * 60 * 1000) : 0;
+
+        if(!currentJson.keys) currentJson.keys = {};
+        currentJson.keys[newKey] = { "deviceIds": [], "maxDevices": maxDevices, "revoked": false, "expiresAt": expiresAt };
+
+        saveToGitHub(`Generated key ${newKey}`, document.getElementById('genMsg'));
+    }
+
+    function revokeKey(keyName) {
+        if(!confirm(`Are you sure you want to REVOKE ${keyName}? They will be kicked out.`)) return;
+        currentJson.keys[keyName].revoked = true;
+        saveToGitHub(`Revoked key ${keyName}`);
+    }
+
+    function addManualHwid(keyName) {
+        const hwid = prompt("Enter the HWID (Device ID) to manually authorize:\n(Example: 8f1a2b3c4d5e)");
+        if(!hwid || hwid.trim() === "") return;
+        
+        const keyData = currentJson.keys[keyName];
+        if(!keyData.deviceIds) keyData.deviceIds = [];
+        
+        if(keyData.deviceIds.length >= keyData.maxDevices && keyData.maxDevices !== 9999) {
+            alert(`❌ Cannot add device! This key is already maxed out (${keyData.maxDevices} devices).`);
+            return;
+        }
+        
+        if(keyData.deviceIds.includes(hwid.trim())) {
+            alert("❌ This HWID is already in the list.");
+            return;
+        }
+
+        keyData.deviceIds.push(hwid.trim());
+        saveToGitHub(`Manually added HWID to ${keyName}`);
+    }
+
+    function removeHwid(keyName, hwid) {
+        if(!confirm(`Remove device ${hwid} from this key?`)) return;
+        const keyData = currentJson.keys[keyName];
+        keyData.deviceIds = keyData.deviceIds.filter(id => id !== hwid);
+        saveToGitHub(`Removed HWID from ${keyName}`);
     }
 
     function saveToGitHub(commitMsg, msgElement) {
@@ -276,199 +213,10 @@
         .then(res => { if(!res.ok) throw new Error("Failed to save."); return res.json(); })
         .then(data => {
             currentSha = data.content.sha;
-            renderKeys(); 
+            renderKeys();
             if(msgElement) { msgElement.innerText = "✅ " + commitMsg; msgElement.className = "msg success"; setTimeout(() => msgElement.innerText = "", 3000); }
         })
-        .catch(err => { alert(err.message); });
-    }
-
-    function copyKey(text) {
-        navigator.clipboard.writeText(text).then(() => { alert("✅ Key Copied: " + text); }).catch(err => { alert("❌ Failed to copy: " + err); });
-    }
-
-    function updateFeature(keyName, featureName, isChecked) {
-        currentJson.keys[keyName][featureName] = isChecked;
-        saveToGitHub(`Updated ${featureName} for ${keyName} to ${isChecked}`);
-    }
-
-    function checkAllFeatures() { 
-        document.getElementById('allowInx').checked = true; 
-        document.getElementById('allowFloater').checked = true; 
-        document.getElementById('allowKernel').checked = true; 
-        document.getElementById('allowVoice').checked = true; 
-    }
-    
-    function uncheckAllFeatures() { 
-        document.getElementById('allowInx').checked = false; 
-        document.getElementById('allowFloater').checked = false; 
-        document.getElementById('allowKernel').checked = false; 
-        document.getElementById('allowVoice').checked = false; 
-    }
-
-    function bulkFeatureUpdate(featureName, state) {
-        let action = state ? "Enable" : "Disable";
-        let featureLabel = featureName.replace("allow", "");
-        if(!confirm(`Are you sure you want to ${action} ${featureLabel} for ALL keys?`)) return;
-        
-        if(!currentJson.keys) return;
-        for(let k in currentJson.keys) {
-            currentJson.keys[k][featureName] = state;
-        }
-        saveToGitHub(`Bulk: ${action}d ${featureLabel} for ALL keys`);
-    }
-
-    function resetAllKeys() {
-        if(!confirm("⚠️ Are you sure you want to RESET ALL KEYS?\n\nThis will clear all HWID bindings, unrevoke all keys, and cancel active reboot timers.\n\nFeature permissions will remain unchanged.")) return;
-        
-        if(!currentJson.keys) return;
-        for(let k in currentJson.keys) {
-            currentJson.keys[k].deviceIds = [];
-            currentJson.keys[k].revoked = false;
-            currentJson.keys[k].reboot_now_time = 0;
-            currentJson.keys[k].reboot_timer = 0;
-        }
-        saveToGitHub(`🔄 Reset ALL Keys (Cleared HWID, Unrevoked, Stopped Reboots)`);
-    }
-
-    function generateKey() {
-        const days = parseInt(document.getElementById('keyDuration').value);
-        const allowInx = document.getElementById('allowInx').checked;
-        const allowFloater = document.getElementById('allowFloater').checked;
-        const allowKernel = document.getElementById('allowKernel').checked;
-        const allowVoice = document.getElementById('allowVoice').checked;
-        let newKey = document.getElementById('customKeyInput').value.trim().toUpperCase();
-        
-        if (!newKey) {
-            const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
-            newKey = "GUCCI-" + randomStr;
-        } else {
-            if (currentJson.keys && currentJson.keys[newKey]) {
-                if(!confirm(`⚠️ Key "${newKey}" already exists! Do you want to OVERWRITE it?`)) return;
-            }
-        }
-
-        let expiresAt = days > 0 ? Date.now() + (days * 24 * 60 * 60 * 1000) : 0;
-        if(!currentJson.keys) currentJson.keys = {};
-        
-        currentJson.keys[newKey] = { 
-            "deviceIds": [], "maxDevices": 1, "revoked": false, "expiresAt": expiresAt,
-            "allowInx": allowInx, "allowFloater": allowFloater, "allowKernel": allowKernel, "allowVoice": allowVoice,
-            "reboot_now_time": 0, "reboot_timer": 0
-        };
-        document.getElementById('customKeyInput').value = "";
-        saveToGitHub(`Generated key ${newKey}`, document.getElementById('genMsg'));
-    }
-
-    function resetHwid(keyName) {
-        if(!confirm(`Reset HWID for ${keyName}? This unbinds the device and cancels any pending reboots.`)) return;
-        currentJson.keys[keyName].deviceIds = [];
-        currentJson.keys[keyName].reboot_now_time = 0; // 🛑 Ye add kar (Reboot stop karne ke liye)
-        currentJson.keys[keyName].reboot_timer = 0;    // 🛑 Ye bhi add kar
-        saveToGitHub(`Reset HWID & Reboots for ${keyName}`);
-    }
-
-    function editDays(keyName) {
-        let days = prompt("Enter days (0 for Lifetime):");
-        if(days !== null) {
-            days = parseInt(days);
-            if(isNaN(days)) return alert("Invalid number");
-            let newExp = days === 0 ? 0 : Date.now() + (days * 24 * 60 * 60 * 1000);
-            currentJson.keys[keyName].expiresAt = newExp;
-            saveToGitHub(`Edited expiry for ${keyName} to ${days} days`);
-        }
-    }
-
-    function toggleKey(keyName) {
-        let currentState = currentJson.keys[keyName].revoked;
-        currentJson.keys[keyName].revoked = !currentState;
-        let action = !currentState ? "Revoked" : "Unrevoked";
-        saveToGitHub(`${action} key ${keyName}`);
-    }
-
-    function deleteKey(keyName) {
-        if(!confirm(`Are you sure you want to permanently DELETE ${keyName}?`)) return;
-        delete currentJson.keys[keyName];
-        saveToGitHub(`Deleted key ${keyName}`);
-    }
-
-    function toggleAllKeys(state) {
-        let action = state ? "Revoke" : "Unrevoke";
-        if(!confirm(`Are you sure you want to ${action} ALL keys?`)) return;
-        for(let k in currentJson.keys) { currentJson.keys[k].revoked = state; }
-        saveToGitHub(`Toggled ALL keys to ${action}`);
-    }
-
-    function deleteAllKeys() {
-        if(!confirm("⚠️ WARNING: Are you absolutely sure you want to DELETE EVERY SINGLE KEY?\n\nThis cannot be undone!")) return;
-        if(!confirm("🚨 FINAL WARNING: ALL USERS WILL BE LOGGED OUT AND KEYS WILL BE DESTROYED.\n\nProceed?")) return;
-        currentJson.keys = {};
-        saveToGitHub(`🚨 DELETED ALL KEYS`);
-    }
-
-    // --- MODAL TIMER LOGIC ---
-    function openGlobalTimerModal() {
-        activeTimerKey = "GLOBAL";
-        document.getElementById('timerHours').value = "1";
-        document.getElementById('timerMinutes').value = "0";
-        document.getElementById('timerModal').classList.remove('hidden');
-    }
-
-    function openKeyTimerModal(keyName) {
-        activeTimerKey = keyName;
-        document.getElementById('timerHours').value = "0";
-        document.getElementById('timerMinutes').value = "30";
-        document.getElementById('timerModal').classList.remove('hidden');
-    }
-
-    function closeTimerModal() {
-        document.getElementById('timerModal').classList.add('hidden');
-        activeTimerKey = null;
-    }
-
-    function confirmTimer() {
-        const h = parseInt(document.getElementById('timerHours').value);
-        const m = parseInt(document.getElementById('timerMinutes').value);
-        const totalMins = (h * 60) + m;
-        
-        if(totalMins <= 0) { alert("Please select a valid time greater than 0."); return; }
-        
-        const timeInMs = Date.now() + (totalMins * 60000);
-        
-        if(activeTimerKey === "GLOBAL") {
-            currentJson.global_reboot_timer = timeInMs;
-            saveToGitHub(`⏱️ Global Reboot timer set for ALL devices in ${totalMins} minutes`);
-        } else {
-            currentJson.keys[activeTimerKey].reboot_timer = timeInMs;
-            saveToGitHub(`⏱️ Reboot timer set for ${activeTimerKey} in ${totalMins} minutes`);
-        }
-        closeTimerModal();
-    }
-
-    // --- REBOOT COMMANDS ---
-    function rebootAllDevices() {
-        if(!confirm("⚠️ Are you sure you want to REBOOT ALL DEVICES NOW?\n\nAll active phones will restart immediately.")) return;
-        currentJson.reboot_global_time = Date.now();
-        saveToGitHub("🚨 REBOOT ALL DEVICES INITIATED");
-    }
-
-    function stopGlobalReboot() {
-        if(!confirm("Are you sure you want to CANCEL the Global Reboot?")) return;
-        currentJson.reboot_global_time = 0;
-        currentJson.global_reboot_timer = 0;
-        saveToGitHub(`🛑 Global Reboot Canceled`);
-    }
-
-    function rebootKey(keyName) {
-        if(!confirm(`Are you sure you want to REBOOT the phone using ${keyName}?`)) return;
-        currentJson.keys[keyName].reboot_now_time = Date.now();
-        saveToGitHub(`🔄 Reboot command sent for ${keyName}`);
-    }
-
-    function stopKeyReboot(keyName) {
-        if(!confirm(`Cancel Reboot for ${keyName}?`)) return;
-        currentJson.keys[keyName].reboot_now_time = 0;
-        currentJson.keys[keyName].reboot_timer = 0;
-        saveToGitHub(`🛑 Reboot Canceled for ${keyName}`);
+        .catch(err => { alert("Save Error: " + err.message); });
     }
 
     function renderKeys() {
@@ -476,96 +224,55 @@
         container.innerHTML = "";
         const keys = currentJson.keys || {};
         const keyNames = Object.keys(keys).reverse();
-        const searchVal = document.getElementById('searchKey').value.toLowerCase();
 
-        if(keyNames.length === 0) { 
-            container.innerHTML = "<p style='color:#8b949e; font-size:14px; text-align:center;'>No keys found.</p>"; 
-            return; 
-        }
-        
-        let hasVisibleKeys = false;
+        if(keyNames.length === 0) { container.innerHTML = "<p style='color:#8b949e; font-size:14px;'>No keys generated yet.</p>"; return; }
 
         keyNames.forEach(k => {
             const data = keys[k];
-            let hwidText = (data.deviceIds && data.deviceIds.length > 0) ? data.deviceIds[0] : "None";
+            if (!data.deviceIds) data.deviceIds = []; // Safety for old keys
             
-            if(searchVal && !k.toLowerCase().includes(searchVal) && !hwidText.toLowerCase().includes(searchVal)) return;
-            hasVisibleKeys = true;
-
-            // Calculate Timer Display
-            let timerHtml = "";
-            if (data.reboot_timer > 0) {
-                let remainingMs = data.reboot_timer - Date.now();
-                if (remainingMs > 0) {
-                    let remainingMins = Math.ceil(remainingMs / 60000);
-                    timerHtml = `<span class="key-status status-timer" style="margin-left:10px;">⏱️ Reboot in ${remainingMins}m</span>`;
-                } else {
-                    timerHtml = `<span class="key-status status-timer" style="margin-left:10px; background:rgba(231,76,60,0.2); color:#e74c3c;">⏱️ Rebooting...</span>`;
-                }
-            }
-
             let statusHtml = data.revoked ? `<span class="key-status status-revoked">REVOKED</span>` : 
-                             (data.deviceIds && data.deviceIds.length > 0 ? `<span class="key-status status-bound">BOUND</span>` : `<span class="key-status status-unbound">UNBOUND</span>`);
+                             (data.deviceIds.length > 0 ? `<span class="key-status status-bound">${data.deviceIds.length} / ${data.maxDevices === 9999 ? '∞' : data.maxDevices} BOUND</span>` : `<span class="key-status status-unbound">UNBOUND</span>`);
             
             let expiryText = data.expiresAt === 0 ? "Lifetime" : new Date(data.expiresAt).toLocaleString();
-            let toggleText = data.revoked ? "Unrevoke" : "Revoke";
-            let toggleColor = data.revoked ? "btn-global-on" : "btn-global-off";
             
-            let isInx = data.allowInx !== false;
-            let isFloater = data.allowFloater !== false;
-            let isKernel = data.allowKernel !== false;
-            let isVoice = data.allowVoice !== false;
+            // Generate the HWID list
+            let hwidHtml = `<div class="hwid-list">`;
+            if (data.deviceIds.length === 0) {
+                hwidHtml += `<div style="color:#8b949e; font-size:12px; text-align:center;">Waiting for first login...</div>`;
+            } else {
+                data.deviceIds.forEach(hwid => {
+                    hwidHtml += `<div class="hwid-row">
+                        <span style="font-family:monospace; font-size:12px; color:#2dd4a7;">${hwid}</span>
+                        ${data.revoked ? '' : `<button class="danger btn-small" onclick="removeHwid('${k}', '${hwid}')">Remove</button>`}
+                    </div>`;
+                });
+            }
+            hwidHtml += `</div>`;
+
+            let actionBtns = data.revoked ? "" : `
+                <div class="action-bar">
+                    <button class="btn-add" onclick="addManualHwid('${k}')">+ Add HWID Manually</button>
+                    <button class="btn-revoke" onclick="revokeKey('${k}')">Revoke Key</button>
+                </div>
+            `;
 
             container.innerHTML += `
                 <div class="key-item" style="border-left-color: ${data.revoked ? '#888' : (data.deviceIds.length > 0 ? '#2dd4a7' : '#ff4d4d')}">
-                    <div class="key-header" style="flex-wrap:wrap; gap:5px;">
-                        <div style="display: flex; align-items: center;">
-                            <span class="key-title">${k}</span>
-                            <button class="btn-copy" onclick="copyKey('${k}')">Copy</button>
-                        </div>
-                        <div>${statusHtml} ${timerHtml}</div>
+                    <div class="key-header">
+                        <span class="key-title">${k}</span>
+                        ${statusHtml}
                     </div>
-                    
                     <div class="key-details">
-                        <b>HWID:</b> ${hwidText} <br>
-                        <b>Expires:</b> ${expiryText}
+                        <b>Expires:</b> ${expiryText} <br>
+                        <b>Max Devices:</b> ${data.maxDevices === 9999 ? 'Unlimited' : data.maxDevices} <br>
                     </div>
-
-                    <div class="feature-toggles">
-                        <label class="feature-label">
-                            <input type="checkbox" ${isInx ? 'checked' : ''} onchange="updateFeature('${k}', 'allowInx', this.checked)"> INX
-                        </label>
-                        <label class="feature-label">
-                            <input type="checkbox" ${isFloater ? 'checked' : ''} onchange="updateFeature('${k}', 'allowFloater', this.checked)"> Floater
-                        </label>
-                        <label class="feature-label">
-                            <input type="checkbox" ${isKernel ? 'checked' : ''} onchange="updateFeature('${k}', 'allowKernel', this.checked)"> Kernel
-                        </label>
-                        <!-- NEW VOICE TOGGLE -->
-                        <label class="feature-label">
-                            <input type="checkbox" ${isVoice ? 'checked' : ''} onchange="updateFeature('${k}', 'allowVoice', this.checked)"> Voice
-                        </label>
-                    </div>
-
-                    <div class="action-row" style="margin-top: 15px;">
-                        <button class="btn-action btn-reset" onclick="resetHwid('${k}')">Reset HWID</button>
-                        <button class="btn-action btn-edit" onclick="editDays('${k}')">Edit Days</button>
-                        <button class="btn-action btn-toggle ${toggleColor}" onclick="toggleKey('${k}')">${toggleText}</button>
-                        <button class="btn-action btn-delete" onclick="deleteKey('${k}')">Delete</button>
-                    </div>
-                    
-                    <div class="action-row" style="margin-top: 8px;">
-                        <button class="btn-reboot-key" onclick="rebootKey('${k}')">🔄 REBOOT NOW</button>
-                        <button class="btn-reboot-timer-key" onclick="openKeyTimerModal('${k}')">⏱️ SET TIMER</button>
-                        <button class="btn-stop-reboot-key" onclick="stopKeyReboot('${k}')">🛑 STOP</button>
-                    </div>
+                    ${hwidHtml}
+                    ${actionBtns}
                 </div>`;
         });
-
-        if(!hasVisibleKeys) {
-             container.innerHTML = "<p style='color:#8b949e; font-size:14px; text-align:center;'>No keys matched your search.</p>"; 
-        }
     }
+
     function logout() { location.reload(); }
 </script>
 </body>
