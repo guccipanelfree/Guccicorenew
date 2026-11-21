@@ -3236,102 +3236,76 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
      * FAST PATH: at ≤100% volume → direct MediaPlayer from original file, zero decode, instant start.
      * SLOW PATH: at >100% → decode once, boost with soft-clip, cache boosted WAV, replay cached instantly.
      */
-      // ============================================================
-    // playVoice — no 120 ms delay, no redundant stopAudio,
-    // and a PCM cache so replay is instant.
-    // ============================================================
     private fun playVoice(file: File) {
-        // Cancel current MediaPlayer only — do NOT write a stop cmd here.
-        // The new injection command will cancel the old playback by itself.
-        cancelMediaPlayer()
-        gridAdapter?.playingFilePath = file.absolutePath
-        gridAdapter?.notifyDataSetChanged()
+        stopPlayback()
+        currentPlayingFile = file
+        voiceAdapter.notifyDataSetChanged()
 
-        // Fast path: pure MediaPlayer play, no decode
-        if (volumeLevel <= 1.0f && !isInjectOn) {
+        if (volumeLevel <= 1.0f) {
             playDirect(file, file)
             return
         }
 
-        pbPlayback?.visibility = View.VISIBLE
-        pbPlayback?.progress = 0
-        val thisFile = file
+        val boostKey = "${file.nameWithoutExtension}_${(volumeLevel * 100).toInt()}"
+        val boostFile = File(cacheDir, "boost_$boostKey.wav")
+        if (boostFile.exists() && boostFile.lastModified() >= file.lastModified()) {
+            playDirect(boostFile, file)
+            return
+        }
+
+        Toast.makeText(this, "Boosting audio…", Toast.LENGTH_SHORT).show()
         Thread {
-            // PCM cache keyed on file + volume, so replay after first is instant
-            val boostKey = "${file.nameWithoutExtension}_${(volumeLevel * 100).toInt()}"
-            val cachedPcm = File(cacheDir, "pcm_$boostKey.raw")
-
-            val boosted: ShortArray
-            val sr: Int
-            if (cachedPcm.exists() && cachedPcm.lastModified() >= file.lastModified()) {
-                val bytes = cachedPcm.readBytes()
-                val sb = java.nio.ByteBuffer.wrap(bytes).order(java.nio.ByteOrder.LITTLE_ENDIAN).asShortBuffer()
-                boosted = ShortArray(sb.remaining()).also { sb.get(it) }
-                sr = 48000
-            } else {
-                val audio = MediaDecoder.decodeToPcm(file)
-                if (audio == null) {
-                    Handler(Looper.getMainLooper()).post {
-                        Toast.makeText(this, "Decode failed", Toast.LENGTH_SHORT).show()
-                        if (gridAdapter?.playingFilePath == thisFile.absolutePath) stopPlayback()
-                    }
-                    return@Thread
+            val audio = MediaDecoder.decodeToPcm(file)
+            if (audio == null) {
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(this, "Decode failed", Toast.LENGTH_SHORT).show()
+                    stopPlayback()
                 }
-                boosted = VoiceProcessor.applyBoost(audio.samples, volumeLevel)
-                sr = audio.sampleRate
-                // Cache as raw PCM (no WAV header) for the injector
-                val buf = java.nio.ByteBuffer.allocate(boosted.size * 2)
-                    .order(java.nio.ByteOrder.LITTLE_ENDIAN)
-                for (s in boosted) buf.putShort(s)
-                cachedPcm.writeBytes(buf.array())
+                return@Thread
             }
-
-            val durationMs = ((boosted.size.toLong() * 1000) / sr).toInt()
-
-            if (isInjectOn) {
-                val bytes = ByteArray(boosted.size * 2)
-                var i = 0
-                for (s in boosted) {
-                    bytes[i++] = (s.toInt() and 0xFF).toByte()
-                    bytes[i++] = (s.toInt() shr 8 and 0xFF).toByte()
-                }
-                Handler(Looper.getMainLooper()).post {
-                    if (gridAdapter?.playingFilePath != thisFile.absolutePath) return@post
-                    // Inject directly — the new cmd cancels anything in flight
-                    AudioRouter.injectAudio(this, bytes)
-                    startProgressBar(durationMs)
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        if (gridAdapter?.playingFilePath == thisFile.absolutePath) stopPlayback()
-                    }, durationMs.toLong() + 300L)
-                }
-            } else {
-                val boostFile = File(cacheDir, "boost_$boostKey.wav")
-                if (!boostFile.exists() || boostFile.lastModified() < file.lastModified()) {
-                    VoiceProcessor.saveWav(boostFile, boosted, sr)
-                }
-                Handler(Looper.getMainLooper()).post {
-                    if (gridAdapter?.playingFilePath == thisFile.absolutePath) {
-                        playDirect(boostFile, thisFile)
-                    }
+            val boosted = VoiceProcessor.applyBoost(audio.samples, volumeLevel)
+            VoiceProcessor.saveWav(boostFile, boosted, audio.sampleRate)
+            Handler(Looper.getMainLooper()).post {
+                if (currentPlayingFile?.absolutePath == file.absolutePath) {
+                    playDirect(boostFile, file)
                 }
             }
         }.start()
     }
 
-    private fun cancelMediaPlayer() {
+    private fun playDirect(fileToPlay: File, originalRef: File) {
+        try { mediaPlayer?.release() } catch (_: Exception) {}
+        val mp = MediaPlayer()
+        mediaPlayer = mp
+        try {
+            mp.setAudioAttributes(android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_MEDIA).build())
+            mp.setDataSource(fileToPlay.absolutePath)
+            if (volumeLevel <= 1.0f) mp.setVolume(volumeLevel, volumeLevel) else mp.setVolume(1.0f, 1.0f)
+            mp.setOnCompletionListener {
+                if (mediaPlayer === mp) stopPlayback()
+            }
+            mp.setOnErrorListener { _, _, _ ->
+                if (mediaPlayer === mp) stopPlayback()
+                true
+            }
+            mp.setOnPreparedListener { p ->
+                if (mediaPlayer !== mp) { try { p.release() } catch (_: Exception) {} ; return@setOnPreparedListener }
+                p.start()
+            }
+            mp.prepareAsync()
+        } catch (e: Exception) {
+            try { mp.release() } catch (_: Exception) {}
+            Toast.makeText(this, "Cannot play: ${e.message}", Toast.LENGTH_SHORT).show()
+            stopPlayback()
+        }
+    }
+
+    private fun stopPlayback() {
         val mp = mediaPlayer
         mediaPlayer = null
         try { mp?.setOnCompletionListener(null); mp?.stop(); mp?.release() } catch (_: Exception) {}
-    }
-
-    // stopPlayback = explicit user stop / auto-stop after playback.
-    // THIS is the only place that writes "stop" to the injector.
-    private fun stopPlayback() {
-        cancelMediaPlayer()
-        try { AudioRouter.stopAudio(this) } catch (_: Exception) {}
-        stopProgressBar()
-        gridAdapter?.playingFilePath = null
-        gridAdapter?.notifyDataSetChanged()
+        currentPlayingFile = null
+        if (::voiceAdapter.isInitialized) voiceAdapter.notifyDataSetChanged()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
