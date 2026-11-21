@@ -557,25 +557,28 @@ cat > app/src/main/res/layout/item_voice_card.xml << 'EOF'
 
         <TextView android:id="@+id/tvLetter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="40sp" android:textStyle="bold" android:layout_centerInParent="true"/>
 
+        <!-- TOP ICONS -->
         <TextView android:id="@+id/tvStar" android:layout_width="32dp" android:layout_height="32dp" android:text="☆" android:textColor="#FFD700" android:textSize="26sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentStart="true" android:padding="4dp"
             android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="4"/>
         
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentTop="true" android:layout_alignParentEnd="true" android:orientation="horizontal" android:padding="6dp">
-            <ImageView android:id="@+id/btnAddPhoto" android:layout_width="28dp" android:layout_height="28dp" android:src="@android:drawable/ic_menu_camera" app:tint="#FFD700" android:padding="2dp" android:layout_marginEnd="8dp"
+            <!-- CHANGED CAMERA ICON COLOR TO CYAN -->
+            <ImageView android:id="@+id/btnAddPhoto" android:layout_width="28dp" android:layout_height="28dp" android:src="@android:drawable/ic_menu_camera" app:tint="#00E5FF" android:padding="2dp" android:layout_marginEnd="8dp"
                 android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="4"/>
             <ImageView android:id="@+id/btnDelete" android:layout_width="28dp" android:layout_height="28dp" android:src="@drawable/ic_close" app:tint="#FFFFFF" android:padding="2dp"/>
         </LinearLayout>
 
-        <!-- PROGRESS LINE & TIME TEXT TOGETHER -->
-        <FrameLayout android:layout_width="match_parent" android:layout_height="20dp" android:layout_alignParentBottom="true" android:layout_marginBottom="28dp" android:layout_marginStart="8dp" android:layout_marginEnd="48dp">
-            <ProgressBar android:id="@+id/pbCardProgress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="match_parent" android:progressTint="#00E5A0" android:progressBackgroundTint="#44FFFFFF" android:visibility="gone"/>
-            <TextView android:id="@+id/tvPlayTime" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="0:00 / 0:00" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" android:visibility="gone" android:shadowColor="#000000" android:shadowDx="1.5" android:shadowDy="1.5" android:shadowRadius="3"/>
-        </FrameLayout>
+        <!-- LIFTED TIME TEXT ABOVE THE LINE -->
+        <TextView android:id="@+id/tvPlayTime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0:00 / 0:00" android:textColor="#00E5A0" android:textSize="11sp" android:textStyle="bold" android:layout_above="@+id/pbCardProgress" android:layout_alignParentStart="true" android:layout_marginStart="8dp" android:layout_marginBottom="4dp" android:visibility="gone"
+            android:shadowColor="#000000" android:shadowDx="1.5" android:shadowDy="1.5" android:shadowRadius="3"/>
 
-        <TextView android:id="@+id/tvName" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" android:layout_alignParentBottom="true" android:layout_toStartOf="@+id/btnPlay" android:layout_toEndOf="@+id/tvStar" android:layout_marginStart="8dp" android:layout_marginBottom="8dp"
+        <!-- PROGRESS LINE AT THE VERY BOTTOM -->
+        <ProgressBar android:id="@+id/pbCardProgress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="4dp" android:progressTint="#00E5A0" android:progressBackgroundTint="#44FFFFFF" android:layout_alignParentBottom="true" android:visibility="gone" android:layout_marginBottom="2dp"/>
+
+        <TextView android:id="@+id/tvName" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" android:layout_alignParentBottom="true" android:layout_toStartOf="@+id/btnPlay" android:layout_toEndOf="@+id/tvStar" android:layout_marginStart="8dp" android:layout_marginBottom="12dp"
             android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="4"/>
         
-        <ImageView android:id="@+id/btnPlay" android:layout_width="40dp" android:layout_height="40dp" android:src="@android:drawable/ic_media_play" app:tint="#00E5A0" android:layout_alignParentBottom="true" android:layout_alignParentEnd="true" android:layout_marginEnd="8dp" android:layout_marginBottom="4dp"
+        <ImageView android:id="@+id/btnPlay" android:layout_width="40dp" android:layout_height="40dp" android:src="@android:drawable/ic_media_play" app:tint="#00E5A0" android:layout_alignParentBottom="true" android:layout_alignParentEnd="true" android:layout_marginEnd="8dp" android:layout_marginBottom="8dp"
             android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="4"/>
     </RelativeLayout>
 </com.google.android.material.card.MaterialCardView>
@@ -585,18 +588,26 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/cardMini" android:layout_width="match_parent" android:layout_height="85dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="8dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
     <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
         
+        <!-- BACKGROUND IMAGE -->
         <ImageView android:id="@+id/ivCardPhotoMini" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:visibility="gone"/>
-        <View android:layout_width="match_parent" android:layout_height="45dp" android:layout_alignParentBottom="true" android:background="#CC000000"/>
-        <TextView android:id="@+id/tvStarMini" android:layout_width="24dp" android:layout_height="24dp" android:text="☆" android:textColor="#FFD700" android:textSize="18sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentEnd="true" android:padding="2dp"/>
-        <TextView android:id="@+id/tvLetterMini" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="24sp" android:textStyle="bold" android:layout_centerInParent="true"/>
-        <TextView android:id="@+id/tvNameMini" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold" android:maxLines="1" android:layout_alignParentBottom="true" android:gravity="center" android:layout_toStartOf="@+id/btnPlayMini" android:layout_toEndOf="@+id/tvStarMini" android:layout_marginBottom="14dp"/>
-        <ImageView android:id="@+id/btnPlayMini" android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_media_play" app:tint="#00E5A0" android:layout_alignParentBottom="true" android:layout_alignParentStart="true" android:layout_margin="2dp"/>
 
-        <!-- PROGRESS LINE & TIME TEXT TOGETHER -->
-        <FrameLayout android:layout_width="match_parent" android:layout_height="12dp" android:layout_alignParentBottom="true">
-            <ProgressBar android:id="@+id/pbMiniProgress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="match_parent" android:progressTint="#00E5A0" android:progressBackgroundTint="#44FFFFFF" android:visibility="gone"/>
-            <TextView android:id="@+id/tvTimeMini" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="0:00 / 0:00" android:textColor="#FFFFFF" android:textSize="7sp" android:textStyle="bold" android:visibility="gone"/>
-        </FrameLayout>
+        <TextView android:id="@+id/tvStarMini" android:layout_width="24dp" android:layout_height="24dp" android:text="☆" android:textColor="#FFD700" android:textSize="18sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentEnd="true" android:padding="2dp"
+            android:shadowColor="#000000" android:shadowDx="1.5" android:shadowDy="1.5" android:shadowRadius="3"/>
+        
+        <TextView android:id="@+id/tvLetterMini" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="24sp" android:textStyle="bold" android:layout_centerInParent="true"/>
+        
+        <!-- NAME TEXT WITH SHADOW INSTEAD OF DARK BAR -->
+        <TextView android:id="@+id/tvNameMini" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold" android:maxLines="1" android:layout_alignParentBottom="true" android:gravity="center" android:layout_toStartOf="@+id/btnPlayMini" android:layout_toEndOf="@+id/tvStarMini" android:layout_marginBottom="14dp"
+            android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="4"/>
+        
+        <ImageView android:id="@+id/btnPlayMini" android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_media_play" app:tint="#00E5A0" android:layout_alignParentBottom="true" android:layout_alignParentStart="true" android:layout_margin="2dp"/>
+        
+        <!-- LIFTED TIME TEXT -->
+        <TextView android:id="@+id/tvTimeMini" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0:00 / 0:00" android:textColor="#00E5A0" android:textSize="9sp" android:textStyle="bold" android:gravity="center" android:visibility="gone" android:layout_above="@+id/pbMiniProgress" android:layout_marginBottom="2dp"
+            android:shadowColor="#000000" android:shadowDx="1.5" android:shadowDy="1.5" android:shadowRadius="3"/>
+
+        <!-- PROGRESS LINE -->
+        <ProgressBar android:id="@+id/pbMiniProgress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="3dp" android:progressTint="#00E5A0" android:progressBackgroundTint="#44FFFFFF" android:layout_alignParentBottom="true" android:visibility="gone"/>
     </RelativeLayout>
 </com.google.android.material.card.MaterialCardView>
 EOF
@@ -2886,11 +2897,11 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
             <TextView android:id="@+id/tvVolume" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="100%" android:textColor="#00E5A0" android:textSize="8sp"/>
         </LinearLayout>
 
-        <!-- PROGRESS LINE & TIME TEXT TOGETHER -->
-        <FrameLayout android:layout_width="match_parent" android:layout_height="16dp" android:layout_marginTop="2dp" android:layout_marginBottom="2dp">
-            <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="match_parent" android:progressTint="#00E5A0" android:visibility="invisible"/>
-            <TextView android:id="@+id/tvFloaterTime" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="0:00 / 0:00" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold" android:visibility="gone"/>
-        </FrameLayout>
+        <!-- LIFTED TIME TEXT -->
+        <TextView android:id="@+id/tvFloaterTime" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#00E5A0" android:textSize="10sp" android:textStyle="bold" android:gravity="center" android:visibility="gone" android:layout_marginTop="2dp"/>
+
+        <!-- PROGRESS LINE -->
+        <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="3dp" android:layout_marginTop="2dp" android:layout_marginBottom="4dp" android:progressTint="#00E5A0" android:visibility="invisible"/>
         
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
             <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayRefresh" android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp" android:text="REFRESH" android:textColor="#000000" app:backgroundTint="#3B82F6" app:cornerRadius="4dp" android:textSize="8sp" android:layout_marginEnd="2dp" android:insetTop="0dp" android:insetBottom="0dp"/>
