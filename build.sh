@@ -3516,10 +3516,14 @@ import android.graphics.Color
 import android.graphics.PixelFormat
 import android.media.*
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.provider.Settings
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.view.*
 import android.view.inputmethod.InputMethodManager
@@ -3570,10 +3574,14 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         }
     }
 
-    // >>> CHANGED: single selected voice ID instead of ElevenLabs persona <<<
     private var selectedVoiceId = EdgeTtsHelper.ALL_VOICES[0].id
     private var selectedPitch = EdgeTtsHelper.ALL_VOICES[0].pitchHz
     private var selectedRate  = EdgeTtsHelper.ALL_VOICES[0].ratePercent
+
+    // NEW: SpeechRecognition state for Live parrot mode
+    private var speechRecognizer: SpeechRecognizer? = null
+    private var isLiveVoiceActive = false
+    private var liveVoiceHandler: Handler? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -3679,7 +3687,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             tabType?.setOnClickListener { reset(); pageType?.visibility = View.VISIBLE; tabType?.setBackgroundResource(R.drawable.bg_box_dark) }
             tabLive?.setOnClickListener { reset(); pageLive?.visibility = View.VISIBLE; tabLive?.setBackgroundResource(R.drawable.bg_box_dark) }
 
-            // >>> CHANGED: Edge TTS voice picker (all categories) <<<
             val spinner = overlayView?.findViewById<Spinner>(R.id.spinnerVoiceSelectFloater)
             spinner?.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, EdgeTtsHelper.displayLabels())
             spinner?.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -3714,7 +3721,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     windowManager.updateViewLayout(overlayView, params)
                 }
             }
-            // >>> CHANGED: no persona arg — uses selectedVoiceId internally <<<
             overlayView?.findViewById<Button>(R.id.btnOverlaySend)?.setOnClickListener {
                 val txt = etType?.text.toString(); if (txt.isNotEmpty()) generateAndPlayOverlay(txt)
             }
@@ -3736,6 +3742,8 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) { echoMs = p * 10; tvEcho?.text = "Echo: ${echoMs}ms" }
                 override fun onStartTrackingTouch(s: SeekBar?) {}; override fun onStopTrackingTouch(s: SeekBar?) {}
             })
+
+            // Live tab now uses STT -> Edge TTS parrot mode
             swLive?.setOnCheckedChangeListener { _, on -> if (on) startLiveMic() else stopLiveMic() }
 
             overlayView?.findViewById<Button>(R.id.btnOverlayStop)?.setOnClickListener {
@@ -3766,9 +3774,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
     private fun stopAudioRouting() { AudioRouter.disable(this) }
 
-    // ============================================================
-    // playVoice — unchanged from your current version
-    // ============================================================
     private fun playVoice(file: File) {
         cancelMediaPlayer()
         gridAdapter?.playingFilePath = file.absolutePath
@@ -3906,7 +3911,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         pbPlayback?.progress = 0
     }
 
-    // >>> CHANGED: Edge TTS replaces ElevenLabs <<<
     private fun generateAndPlayOverlay(text: String) {
         Toast.makeText(this, "Generating voice...", Toast.LENGTH_SHORT).show()
         EdgeTtsHelper.callEdgeTts(text, selectedVoiceId, selectedPitch, selectedRate, { bytes ->
@@ -3942,37 +3946,107 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         })
     }
 
+    // ============================================================
+    // LIVE MODE (parrot) - STT -> Edge TTS -> inject
+    // ============================================================
     private fun startLiveMic() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "Grant Microphone permission first!", Toast.LENGTH_LONG).show(); return
+            Toast.makeText(this, "Grant Microphone permission first!", Toast.LENGTH_LONG).show()
+            return
         }
-        val rate = VoiceProcessor.SAMPLE_RATE
-        val minBuf = AudioRecord.getMinBufferSize(rate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT).coerceAtLeast(4096)
-        try {
-            audioRecord = AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, rate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, minBuf * 2)
-            if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
-                audioRecord = AudioRecord(MediaRecorder.AudioSource.MIC, rate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, minBuf * 2)
-            }
-            audioRecord?.startRecording()
-            liveOutput = DualAudioOutput(rate, AudioFormat.CHANNEL_OUT_MONO, true)
-            liveOutput?.start()
-            isLiveOn = true
-            liveThread = Thread {
-                val buf = ShortArray(2048)
-                while (isLiveOn) {
-                    val n = audioRecord?.read(buf, 0, buf.size) ?: 0
-                    if (n > 0) {
-                        val chunk = buf.copyOf(n)
-                        val out = VoiceProcessor.applyAll(chunk, pitchSemitones, echoMs, 0.3f, 1f, liveEchoState)
-                        liveOutput?.write(out)
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            Toast.makeText(this, "Speech recognition not available on this device", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        isLiveOn = true
+        isLiveVoiceActive = true
+        liveVoiceHandler = Handler(Looper.getMainLooper())
+
+        Handler(Looper.getMainLooper()).post {
+            try {
+                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+                speechRecognizer?.setRecognitionListener(object : RecognitionListener {
+                    override fun onReadyForSpeech(params: Bundle?) {}
+                    override fun onBeginningOfSpeech() {}
+                    override fun onRmsChanged(rmsdB: Float) {}
+                    override fun onBufferReceived(buffer: ByteArray?) {}
+                    override fun onEndOfSpeech() {}
+                    override fun onError(error: Int) {
+                        if (isLiveVoiceActive) {
+                            liveVoiceHandler?.postDelayed({ restartListening() }, 500)
+                        }
                     }
-                }
-            }.apply { start() }
-        } catch (e: Exception) { Toast.makeText(this, "Mic Error: ${e.message}", Toast.LENGTH_SHORT).show(); stopLiveMic() }
+                    override fun onResults(results: Bundle?) {
+                        val text = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
+                        if (!text.isNullOrBlank() && isLiveVoiceActive) {
+                            speakWithEdge(text)
+                        }
+                        if (isLiveVoiceActive) {
+                            liveVoiceHandler?.postDelayed({ restartListening() }, 200)
+                        }
+                    }
+                    override fun onPartialResults(partialResults: Bundle?) {}
+                    override fun onEvent(eventType: Int, params: Bundle?) {}
+                })
+                restartListening()
+                Toast.makeText(this, "Live mode ON — speak now", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(this, "STT error: ${e.message}", Toast.LENGTH_LONG).show()
+                stopLiveMic()
+            }
+        }
+    }
+
+    private fun restartListening() {
+        if (!isLiveVoiceActive) return
+        try {
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US")
+                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1000)
+                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1000)
+            }
+            speechRecognizer?.startListening(intent)
+        } catch (_: Exception) {}
+    }
+
+    private fun speakWithEdge(text: String) {
+        EdgeTtsHelper.callEdgeTts(text, selectedVoiceId, selectedPitch, selectedRate, { bytes ->
+            Thread {
+                try {
+                    val f = File(cacheDir, "live_edge_${System.currentTimeMillis()}.mp3")
+                    f.writeBytes(bytes)
+                    Handler(Looper.getMainLooper()).post {
+                        if (isLiveVoiceActive) playVoice(f)
+                    }
+                } catch (_: Exception) {}
+            }.start()
+        }, { err ->
+            Handler(Looper.getMainLooper()).post {
+                Toast.makeText(this, "TTS error: $err", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 
     private fun stopLiveMic() {
         isLiveOn = false
+        isLiveVoiceActive = false
+        liveVoiceHandler?.removeCallbacksAndMessages(null)
+        liveVoiceHandler = null
+
+        Handler(Looper.getMainLooper()).post {
+            try {
+                speechRecognizer?.stopListening()
+                speechRecognizer?.cancel()
+                speechRecognizer?.destroy()
+            } catch (_: Exception) {}
+            speechRecognizer = null
+        }
+
+        // Legacy cleanup (not used in new mode, kept harmless)
         liveThread?.join(500); liveThread = null
         try { audioRecord?.stop(); audioRecord?.release() } catch (_: Exception) {}
         audioRecord = null
