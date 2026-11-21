@@ -51,6 +51,16 @@ org.gradle.jvmargs=-Xmx2048m
 # systemProp.https.proxyHost=proxy.example.com
 # systemProp.https.proxyPort=8080
 EOF
+# ==========================================
+# 1. GENERATE KEYSTORE
+# ==========================================
+if [ ! -f "my-release-key.jks" ]; then
+    keytool -genkey -v -keystore my-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias my-alias -storepass password123 -keypass password123 -dname "CN=Gucci, OU=Dev, O=Gucci, L=City, S=State, C=US"
+fi
+
+# ==========================================
+# 2. APP BUILD GRADLE
+# ==========================================
 cat > app/build.gradle << 'EOF'
 plugins { 
     id 'com.android.application'
@@ -65,7 +75,8 @@ android {
     
     signingConfigs {
         release {
-            storeFile file("../my-release-key.jks")
+            // This uses rootProject.file to guarantee it finds the keystore in the root folder
+            storeFile rootProject.file('my-release-key.jks')
             storePassword "password123"
             keyAlias "my-alias"
             keyPassword "password123"
