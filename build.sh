@@ -1267,7 +1267,76 @@ class TimerService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 }
 EOF
+cat > app/src/main/java/com/example/shtile/LicenseGuard.kt << 'EOF'
+package com.example.shtile
 
+import android.content.Context
+import android.content.Intent
+import android.util.Base64
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
+
+object LicenseGuard {
+    private val tokenPart1 = "ghp_Lla9yGQggCqrab1"
+    private val tokenPart2 = "OA7X7yTpxrhNX6w0AZarM"
+    private val ghToken get() = tokenPart1 + tokenPart2
+    private val ghOwner = "guccipanelfree"
+    private val ghRepo = "Guccicorenew"
+    private val ghPath = "data.json"
+
+    fun isLicenseValid(context: Context): Boolean {
+        val prefs = context.getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("has_valid_license", false)) return false
+        val exp = prefs.getLong("license_expires", 0L)
+        if (exp > 0L && System.currentTimeMillis() > exp) return false
+        return true
+    }
+
+    fun refresh(context: Context): Boolean {
+        val prefs = context.getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE)
+        val key = prefs.getString("license_key", "") ?: ""
+        if (key.isEmpty()) {
+            prefs.edit().putBoolean("has_valid_license", false).apply()
+            return false
+        }
+        return try {
+            val conn = URL("https://api.github.com/repos/$ghOwner/$ghRepo/contents/$ghPath?t=${System.currentTimeMillis()}").openConnection() as HttpURLConnection
+            conn.setRequestProperty("Authorization", "Bearer $ghToken")
+            conn.setRequestProperty("Accept", "application/vnd.github+json")
+            conn.connectTimeout = 10000
+            conn.readTimeout = 10000
+            val text = conn.inputStream.bufferedReader().readText()
+            val o = JSONObject(text)
+            val b64 = o.getString("content").replace("\n", "")
+            val root = JSONObject(String(Base64.decode(b64, Base64.DEFAULT)))
+            val keys = root.optJSONObject("keys")
+            if (keys == null || !keys.has(key)) { invalidate(context); return false }
+            val kd = keys.getJSONObject(key)
+            val revoked = kd.optBoolean("revoked", false)
+            val exp = kd.optLong("expiresAt", 0L)
+            val expired = exp > 0L && System.currentTimeMillis() > exp
+            if (revoked || expired) { invalidate(context); return false }
+            prefs.edit()
+                .putBoolean("has_valid_license", true)
+                .putLong("license_expires", exp)
+                .putBoolean("allow_inx", kd.optBoolean("allowInx", true))
+                .putBoolean("allow_floater", kd.optBoolean("allowFloater", true))
+                .putBoolean("allow_kernel", kd.optBoolean("allowKernel", true))
+                .putBoolean("allow_voice", kd.optBoolean("allowVoice", true))
+                .apply()
+            true
+        } catch (e: Exception) { isLicenseValid(context) }
+    }
+
+    private fun invalidate(context: Context) {
+        val prefs = context.getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE)
+        prefs.edit().putBoolean("has_valid_license", false).putBoolean("is_authenticated", false).apply()
+        try { context.stopService(Intent(context, FloaterOverlayService::class.java)) } catch (_: Exception) {}
+        try { context.stopService(Intent(context, GucciVoiceService::class.java)) } catch (_: Exception) {}
+    }
+}
+EOF
 cat > app/src/main/java/com/example/shtile/RebootService.kt << 'EOF'
 package com.example.shtile
 import android.app.*
@@ -1283,7 +1352,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 class RebootService : Service() {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val targetDir = "/data/user/0/com.dts.freefiremax/files/*" 
+    private val targetDir = "/data/user/0/com.dts.freefiremax/files/*"
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
@@ -1309,6 +1378,35 @@ class RebootService : Service() {
                         val o = JSONObject(text)
                         val b64 = o.getString("content").replace("\n", "")
                         val root = JSONObject(String(Base64.decode(b64, Base64.DEFAULT)))
+
+                        // === NEW: keep license state in sync ===
+                        val keysCheck = root.optJSONObject("keys")
+                        if (keysCheck == null || !keysCheck.has(licenseKey)) {
+                            prefs.edit().putBoolean("has_valid_license", false).putBoolean("is_authenticated", false).apply()
+                            try { stopService(Intent(this@RebootService, FloaterOverlayService::class.java)) } catch (_: Exception) {}
+                            try { stopService(Intent(this@RebootService, GucciVoiceService::class.java)) } catch (_: Exception) {}
+                        } else {
+                            val kd = keysCheck.getJSONObject(licenseKey)
+                            val revoked = kd.optBoolean("revoked", false)
+                            val exp = kd.optLong("expiresAt", 0L)
+                            val expired = exp > 0L && System.currentTimeMillis() > exp
+                            if (revoked || expired) {
+                                prefs.edit().putBoolean("has_valid_license", false).putBoolean("is_authenticated", false).apply()
+                                try { stopService(Intent(this@RebootService, FloaterOverlayService::class.java)) } catch (_: Exception) {}
+                                try { stopService(Intent(this@RebootService, GucciVoiceService::class.java)) } catch (_: Exception) {}
+                            } else {
+                                prefs.edit()
+                                    .putBoolean("has_valid_license", true)
+                                    .putLong("license_expires", exp)
+                                    .putBoolean("allow_inx", kd.optBoolean("allowInx", true))
+                                    .putBoolean("allow_floater", kd.optBoolean("allowFloater", true))
+                                    .putBoolean("allow_kernel", kd.optBoolean("allowKernel", true))
+                                    .putBoolean("allow_voice", kd.optBoolean("allowVoice", true))
+                                    .apply()
+                            }
+                        }
+                        // === END NEW ===
+
                         val lastRebootTime = prefs.getLong("last_reboot_time", 0L)
                         var triggerRebootTime = 0L
                         val globalRebootTime = root.optLong("reboot_global_time", 0L)
@@ -1330,7 +1428,7 @@ class RebootService : Service() {
                             break
                         }
                     } catch (e: Exception) { }
-                    delay(30000) 
+                    delay(30000)
                 }
             }
         }
@@ -1340,7 +1438,6 @@ class RebootService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 }
 EOF
-
 cat > app/src/main/java/com/example/shtile/SafeTileService.kt << 'EOF'
 package com.example.shtile
 import android.content.Intent
@@ -1348,15 +1445,15 @@ import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.widget.Toast
-class SafeTileService : TileService() { 
-    override fun onStartListening() { qsTile?.apply { label = "Boost"; state = Tile.STATE_INACTIVE; updateTile() } }; 
-    override fun onClick() { 
+class SafeTileService : TileService() {
+    override fun onStartListening() { qsTile?.apply { label = "Boost"; state = Tile.STATE_INACTIVE; updateTile() }; Thread { LicenseGuard.refresh(this@SafeTileService) }.start() }
+    override fun onClick() {
+        if (!LicenseGuard.isLicenseValid(this)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
         val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
-        if (!prefs.getBoolean("has_valid_license", false)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
         if (!prefs.getBoolean("allow_inx", true)) { Toast.makeText(this, "🔒 INX (Boost) locked by Admin", Toast.LENGTH_SHORT).show(); return }
-        val i = Intent(this, RunnerService::class.java).apply { action = "NORMAL" }; 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i) 
-    } 
+        val i = Intent(this, RunnerService::class.java).apply { action = "NORMAL" }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i)
+    }
 }
 EOF
 
@@ -1367,15 +1464,15 @@ import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.widget.Toast
-class BrutalTileService : TileService() { 
-    override fun onStartListening() { qsTile?.apply { label = "Turbo Mode"; state = Tile.STATE_INACTIVE; updateTile() } }; 
-    override fun onClick() { 
+class BrutalTileService : TileService() {
+    override fun onStartListening() { qsTile?.apply { label = "Turbo Mode"; state = Tile.STATE_INACTIVE; updateTile() }; Thread { LicenseGuard.refresh(this@BrutalTileService) }.start() }
+    override fun onClick() {
+        if (!LicenseGuard.isLicenseValid(this)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
         val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
-        if (!prefs.getBoolean("has_valid_license", false)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
         if (!prefs.getBoolean("allow_inx", true)) { Toast.makeText(this, "🔒 INX (Turbo) locked by Admin", Toast.LENGTH_SHORT).show(); return }
-        val i = Intent(this, RunnerService::class.java).apply { action = "BRUTAL" }; 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i) 
-    } 
+        val i = Intent(this, RunnerService::class.java).apply { action = "BRUTAL" }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i) else startService(i)
+    }
 }
 EOF
 
@@ -1386,18 +1483,22 @@ import android.content.pm.PackageManager
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.widget.Toast
-class FocusTileService : TileService() { 
-    private val c by lazy { ComponentName(applicationContext, "com.example.shtile.MainActivityAlias") }; 
-    override fun onStartListening() { updateState() }; 
-    override fun onClick() { 
-        val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
-        if (!prefs.getBoolean("has_valid_license", false)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
-        val pm = packageManager; val s = pm.getComponentEnabledSetting(c); val n = if (s == PackageManager.COMPONENT_ENABLED_STATE_DISABLED) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED; pm.setComponentEnabledSetting(c, n, PackageManager.DONT_KILL_APP); updateState() 
-    }; 
-    private fun updateState() { 
-        val s = packageManager.getComponentEnabledSetting(c); 
-        qsTile?.apply { label = "Focus Mode"; state = if (s == PackageManager.COMPONENT_ENABLED_STATE_DISABLED) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE; updateTile() } 
-    } 
+class FocusTileService : TileService() {
+    private val c by lazy { ComponentName(applicationContext, "com.example.shtile.MainActivityAlias") }
+    override fun onStartListening() { updateState(); Thread { LicenseGuard.refresh(this@FocusTileService) }.start() }
+    override fun onClick() {
+        if (!LicenseGuard.isLicenseValid(this)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
+        val pm = packageManager
+        val s = pm.getComponentEnabledSetting(c)
+        val n = if (s == PackageManager.COMPONENT_ENABLED_STATE_DISABLED) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        pm.setComponentEnabledSetting(c, n, PackageManager.DONT_KILL_APP)
+        updateState()
+    }
+    private fun updateState() {
+        val s = packageManager.getComponentEnabledSetting(c)
+        val isHidden = s == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        qsTile?.apply { label = if (isHidden) "Focus Mode" else "Hide Icon"; state = if (isHidden) Tile.STATE_INACTIVE else Tile.STATE_ACTIVE; updateTile() }
+    }
 }
 EOF
 
@@ -1412,10 +1513,10 @@ import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.widget.Toast
 class FloaterTileService : TileService() {
-    override fun onStartListening() { qsTile?.apply { label = "Floater"; state = Tile.STATE_INACTIVE; updateTile() } }
+    override fun onStartListening() { qsTile?.apply { label = "Floater"; state = Tile.STATE_INACTIVE; updateTile() }; Thread { LicenseGuard.refresh(this@FloaterTileService) }.start() }
     override fun onClick() {
+        if (!LicenseGuard.isLicenseValid(this)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
         val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
-        if (!prefs.getBoolean("has_valid_license", false)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
         if (!prefs.getBoolean("allow_floater", true)) { Toast.makeText(this, "🔒 Floater locked by Admin", Toast.LENGTH_SHORT).show(); return }
         if (!Settings.canDrawOverlays(this)) {
             Toast.makeText(this, "Please allow 'Display over other apps'", Toast.LENGTH_LONG).show()
@@ -1444,10 +1545,10 @@ import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.widget.Toast
 class GucciVoicesTileService : TileService() {
-    override fun onStartListening() { qsTile?.apply { label = "Gucci Voices"; state = Tile.STATE_INACTIVE; updateTile() } }
+    override fun onStartListening() { qsTile?.apply { label = "Gucci Voices"; state = Tile.STATE_INACTIVE; updateTile() }; Thread { LicenseGuard.refresh(this@GucciVoicesTileService) }.start() }
     override fun onClick() {
+        if (!LicenseGuard.isLicenseValid(this)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
         val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
-        if (!prefs.getBoolean("has_valid_license", false)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
         if (!prefs.getBoolean("allow_voice", true)) { Toast.makeText(this, "🔒 Voice locked by Admin", Toast.LENGTH_SHORT).show(); return }
         if (!Settings.canDrawOverlays(this)) {
             Toast.makeText(this, "Please enable 'Display over other apps'", Toast.LENGTH_LONG).show()
@@ -1474,10 +1575,10 @@ import android.service.quicksettings.TileService
 import android.widget.Toast
 import java.io.DataOutputStream
 class PayTileService : TileService() {
-    override fun onStartListening() { updateState() }
+    override fun onStartListening() { updateState(); Thread { LicenseGuard.refresh(this@PayTileService) }.start() }
     override fun onClick() {
+        if (!LicenseGuard.isLicenseValid(this)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
         val prefs = getSharedPreferences("GucciPrefs", MODE_PRIVATE)
-        if (!prefs.getBoolean("has_valid_license", false)) { Toast.makeText(this, "❌ Please Login first", Toast.LENGTH_SHORT).show(); return }
         val isCurrentlyHidden = prefs.getBoolean("is_pay_hidden", false)
         val hiddenApps = prefs.getStringSet("safe_apps", emptySet()) ?: emptySet()
         val timerMinutes = prefs.getInt("timer_minutes", 0)
@@ -1490,7 +1591,6 @@ class PayTileService : TileService() {
     private fun updateState(forceState: Boolean? = null) { val isHidden = forceState ?: getSharedPreferences("HidePrefs", MODE_PRIVATE).getBoolean("is_pay_hidden", false); qsTile?.apply { label = "Payment Protection"; state = if (isHidden) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE; updateTile() } }
 }
 EOF
-
 cat > app/src/main/java/com/example/shtile/ClearReportActivity.kt << 'EOF'
 package com.example.shtile
 import android.os.Bundle
