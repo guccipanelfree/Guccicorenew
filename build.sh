@@ -483,8 +483,9 @@ cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
 EOF
 
 cat > app/src/main/res/layout/overlay_bubble.xml << 'EOF'
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="60dp" android:layout_height="60dp" android:background="@drawable/bg_circle_grey">
-<ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp" android:src="@drawable/ic_tile_floater" app:tint="@color/accent_green"/>
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="80dp" android:layout_height="80dp" android:background="@android:color/transparent">
+    <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/ic_gucci_gang" android:scaleType="fitCenter"/>
 </FrameLayout>
 EOF
 cat > app/src/main/res/layout/activity_gucci_voice.xml << 'EOF'
@@ -1258,35 +1259,30 @@ object VoiceProcessor {
         }
     }
 
-    // FIXED: Consistent Double math to prevent build errors and maximize volume
+    // FIX: CRYSTAL CLEAR & LOUDER AUDIO
     fun applyBoost(input: ShortArray, gain: Float): ShortArray {
         if (gain == 1.0f) return input.copyOf()
         val out = ShortArray(input.size)
         
-        // Find the loudest part of the audio to normalize it
+        // 1. Find the loudest peak in the audio to normalize it
         var maxVal = 1
         for (s in input) {
             val abs = abs(s.toInt())
             if (abs > maxVal) maxVal = abs
         }
         
+        // 2. Boost the volume to max capacity
         val normalizeFactor = 32767.0 / maxVal
         val gainDouble = gain.toDouble()
         
         for (i in input.indices) {
             val s = input[i] / 32768.0
-            // If gain is > 1.0, we normalize and boost heavily
-            val dynamicGain = if (gainDouble > 1.0) (gainDouble * normalizeFactor).coerceAtMost(4.0) else gainDouble
-            val boosted = s * dynamicGain
+            // Multiply by user volume and normalize factor
+            val boosted = s * gainDouble * normalizeFactor
             
-            // Soft clip at 95% to prevent harsh distortion
-            val clipped = if (boosted >= 0.0) {
-                if (boosted <= 0.95) boosted
-                else 0.95 + 0.05 * tanh((boosted - 0.95) / 0.05)
-            } else {
-                if (boosted >= -0.95) boosted
-                else -0.95 - 0.05 * tanh((-boosted - 0.95) / 0.05)
-            }
+            // 3. Smooth soft-clipping using Tanh. 
+            // This makes it super loud but prevents the voice from breaking/crackling.
+            val clipped = tanh(boosted * 1.5)
             out[i] = (clipped * 32767.0).toInt().coerceIn(-32768, 32767).toShort()
         }
         return out
@@ -4076,6 +4072,11 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         }
     }
 
+    // FIX: ADDED ONSTARTCOMMAND TO PREVENT SERVICE KILL ON MINIMIZE
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        return START_STICKY
+    }
+
     private fun startForegroundServiceNotification() {
         val ch = "gucci_voice_channel"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -4133,10 +4134,22 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             val pageCards = overlayView?.findViewById<LinearLayout>(R.id.pageCards)
             val pageType = overlayView?.findViewById<LinearLayout>(R.id.pageType)
             val pageLive = overlayView?.findViewById<LinearLayout>(R.id.pageLive)
+            
             pbPlayback = overlayView?.findViewById(R.id.pbPlayback)
-            pbPlayback?.visibility = View.INVISIBLE
             tvFloaterTime = overlayView?.findViewById(R.id.tvFloaterTime)
             tvNowPlaying = overlayView?.findViewById(R.id.tvNowPlaying)
+
+            // FIX: RESTORE UI STATE IF AUDIO IS ALREADY PLAYING
+            val isPlaying = gridAdapter?.playingFilePath != null
+            if (isPlaying) {
+                pbPlayback?.visibility = View.VISIBLE
+                tvFloaterTime?.visibility = View.VISIBLE
+                tvNowPlaying?.visibility = View.VISIBLE
+            } else {
+                pbPlayback?.visibility = View.INVISIBLE
+                tvFloaterTime?.visibility = View.GONE
+                tvNowPlaying?.visibility = View.VISIBLE
+            }
 
             tvVolume = overlayView?.findViewById(R.id.tvVolume)
             val sbVolume = overlayView?.findViewById<SeekBar>(R.id.sbVolume)
@@ -4176,21 +4189,26 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             }
 
             val gridView = overlayView?.findViewById<GridView>(R.id.lvVoicesFloater)
-            Thread {
-                loadVoices()
-                Handler(Looper.getMainLooper()).post {
-                    gridAdapter = VoiceGridAdapter(voices, ctx) { file -> playVoice(file) }
-                    gridView?.adapter = gridAdapter
-                    gridView?.setOnItemClickListener { _, _, pos, _ -> if (pos in voices.indices) playVoice(voices[pos]) }
-                }
-            }.start()
+            // FIX: ONLY LOAD VOICES IF ADAPTER IS NULL TO PREVENT STOPPING AUDIO
+            if (gridAdapter == null) {
+                Thread {
+                    loadVoices()
+                    Handler(Looper.getMainLooper()).post {
+                        gridAdapter = VoiceGridAdapter(voices, ctx) { file -> playVoice(file) }
+                        gridView?.adapter = gridAdapter
+                        gridView?.setOnItemClickListener { _, _, pos, _ -> if (pos in voices.indices) playVoice(voices[pos]) }
+                    }
+                }.start()
+            } else {
+                gridView?.adapter = gridAdapter
+                gridView?.setOnItemClickListener { _, _, pos, _ -> if (pos in voices.indices) playVoice(voices[pos]) }
+            }
 
             overlayView?.findViewById<Button>(R.id.btnOverlayRefresh)?.setOnClickListener {
                 Thread {
                     loadVoices()
                     Handler(Looper.getMainLooper()).post { 
-                        gridAdapter = VoiceGridAdapter(voices, ctx) { file -> playVoice(file) }; 
-                        gridView?.adapter = gridAdapter
+                        gridAdapter?.notifyDataSetChanged()
                         Toast.makeText(this, "Refreshed", Toast.LENGTH_SHORT).show()
                     }
                 }.start()
@@ -4255,7 +4273,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             return
         }
 
-        // FIX 2: KILL OLD TIMERS IMMEDIATELY
         stopProgressBar()
         try { AudioRouter.stopAudio(this) } catch (_: Exception) {}
         cancelMediaPlayer()
@@ -4365,7 +4382,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun startProgressBar(durationMs: Int) {
-        stopProgressBar() // FIX 2: ENSURE OLD TIMER IS DEAD
+        stopProgressBar()
         if (durationMs <= 0) return
         pbPlayback?.visibility = View.VISIBLE
         tvFloaterTime?.visibility = View.VISIBLE
