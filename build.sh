@@ -218,6 +218,47 @@ EOF
 cat > app/src/main/res/drawable/ic_tile_pay.xml << 'EOF'
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M12,1L3,5v6c0,5.55 3.84,10.74 9,12 5.16,-1.26 9,-6.45 9,-12V5l-9,-4zm-2,16l-4,-4 1.41,-1.41L10,14.17l6.59,-6.59L18,9l-8,8z"/></vector>
 EOF
+cat > app/src/main/res/drawable/ic_gucci_gang.xml << 'EOF'
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    
+    <!-- Left G -->
+    <path
+        android:pathData="M 50,10 C 25,10 10,25 10,50 C 10,75 25,90 50,90 C 70,90 85,80 90,65 L 75,55 C 70,65 60,75 50,75 C 35,75 25,65 25,50 C 25,35 35,25 50,25 C 65,25 75,35 80,45"
+        android:strokeWidth="8" 
+        android:strokeLineCap="round" 
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000">
+        <aapt:attr name="android:strokeColor">
+            <gradient android:startX="10" android:startY="10" android:endX="90" android:endY="90" android:type="linear">
+                <item android:offset="0" android:color="#FFFFF0B3"/>
+                <item android:offset="0.5" android:color="#FFD4AF37"/>
+                <item android:offset="1" android:color="#FFB8860B"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Right G (Interlocking) -->
+    <path
+        android:pathData="M 50,10 C 75,10 90,25 90,50 C 90,75 75,90 50,90 C 30,90 15,80 10,65 L 25,55 C 30,65 40,75 50,75 C 65,75 75,65 75,50 C 75,35 65,25 50,25 C 35,25 25,35 20,45"
+        android:strokeWidth="8" 
+        android:strokeLineCap="round" 
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000">
+        <aapt:attr name="android:strokeColor">
+            <gradient android:startX="90" android:startY="10" android:endX="10" android:endY="90" android:type="linear">
+                <item android:offset="0" android:color="#FFFFF0B3"/>
+                <item android:offset="0.5" android:color="#FFD4AF37"/>
+                <item android:offset="1" android:color="#FFB8860B"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>
+EOF
 
 # LAYOUTS
 cat > app/src/main/res/layout/dialog_root.xml << 'EOF'
@@ -484,8 +525,19 @@ EOF
 
 cat > app/src/main/res/layout/overlay_bubble.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="80dp" android:layout_height="80dp" android:background="@android:color/transparent">
-    <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/ic_gucci_gang" android:scaleType="fitCenter"/>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="80dp"
+    android:layout_height="80dp"
+    android:background="@android:color/transparent">
+    
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_gucci_gang"
+        android:scaleType="fitCenter"
+        android:padding="6dp"/>
+        
 </FrameLayout>
 EOF
 cat > app/src/main/res/layout/activity_gucci_voice.xml << 'EOF'
