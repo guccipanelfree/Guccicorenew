@@ -5038,7 +5038,7 @@ curl -L -o app/src/main/res/drawable/ic_app_icon.jpg "https://cdn.phototourl.com
 echo "App Icon set successfully!"
 
 # ==========================================
-# 🚀 BUILD APP
+# 🚀 BUILD ORIGINAL APK
 # ==========================================
 gradle assembleDebug
 
@@ -5047,32 +5047,29 @@ gradle assembleDebug
 # ==========================================
 echo "Applying DEX Encryption with XopProtector..."
 
-# 1. Clone XopProtector
+# 1. XopProtector clone karein
 if [ ! -d "XopProtector" ]; then
     echo "Cloning XopProtector..."
     git clone https://github.com/xopJack/XopProtector.git
 fi
 cd XopProtector
 
-# 2. NDK automatically find karo
-export ANDROID_NDK_HOME=$(ls -d $ANDROID_HOME/ndk/* | head -n 1)
-echo "Using NDK: $ANDROID_NDK_HOME"
-
-# 3. Packer aur Shell files build karo
-echo "Building Packer and Shell Files (This takes 5-10 mins first time)..."
+# 2. Packer aur Shell files build karein
+echo "Building Packer and Shell Files..."
 chmod +x gradlew
 ./gradlew :packer:jar
 ./gradlew exportShellFiles
 
-# 4. Wapas root folder mein aao
+# 3. Wapas root folder mein aao
 cd ..
 
-# 5. APK ko Protect karo
+# 4. APK ko Protect karo
 INPUT_APK="app/build/outputs/apk/debug/app-debug.apk"
 OUTPUT_APK="app-protected.apk"
 
 if [ -f "XopProtector/packer/build/libs/protector-packer.jar" ] && [ -f "$INPUT_APK" ]; then
     echo "Packing $INPUT_APK..."
+    
     java -jar XopProtector/packer/build/libs/protector-packer.jar "$INPUT_APK" -o "$OUTPUT_APK" \
         --shell-dir XopProtector/executable/shell-files \
         --rasp-action disable
@@ -5083,5 +5080,7 @@ if [ -f "XopProtector/packer/build/libs/protector-packer.jar" ] && [ -f "$INPUT_
         echo "❌ Packing failed. Check the logs above."
     fi
 else
-    echo "⚠️ Skipping protection: Input APK or Packer JAR not found."
+    echo "⚠️ Error: Input APK or Packer JAR not found."
+    echo "Checking INPUT_APK: $(ls -la $INPUT_APK)"
+    echo "Checking Packer: $(ls -la XopProtector/packer/build/libs/)"
 fi
