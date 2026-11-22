@@ -1311,30 +1311,33 @@ object VoiceProcessor {
         }
     }
 
-    // FIX: CRYSTAL CLEAR & LOUDER AUDIO
+    // 🚀 FIX: ULTRA LOUD & CRYSTAL CLEAR BOOST
     fun applyBoost(input: ShortArray, gain: Float): ShortArray {
         if (gain == 1.0f) return input.copyOf()
         val out = ShortArray(input.size)
         
-        // 1. Find the loudest peak in the audio to normalize it
+        // 1. Find the peak to normalize
         var maxVal = 1
         for (s in input) {
             val abs = abs(s.toInt())
             if (abs > maxVal) maxVal = abs
         }
         
-        // 2. Boost the volume to max capacity
+        // 2. Calculate boost (Max limit 4.0x to avoid extreme distortion)
         val normalizeFactor = 32767.0 / maxVal
         val gainDouble = gain.toDouble()
+        val dynamicGain = if (gainDouble > 1.0) (gainDouble * normalizeFactor).coerceAtMost(5.0) else gainDouble
         
         for (i in input.indices) {
             val s = input[i] / 32768.0
-            // Multiply by user volume and normalize factor
-            val boosted = s * gainDouble * normalizeFactor
+            val boosted = s * dynamicGain
             
-            // 3. Smooth soft-clipping using Tanh. 
-            // This makes it super loud but prevents the voice from breaking/crackling.
-            val clipped = tanh(boosted * 1.5)
+            // 3. Hard Soft-Clip (Limits at 0.98 to prevent digital crackling)
+            val clipped = when {
+                boosted > 0.98 -> 0.98 + 0.02 * tanh((boosted - 0.98) / 0.02)
+                boosted < -0.98 -> -0.98 + 0.02 * tanh((boosted + 0.98) / 0.02)
+                else -> boosted
+            }
             out[i] = (clipped * 32767.0).toInt().coerceIn(-32768, 32767).toShort()
         }
         return out
@@ -4099,6 +4102,10 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var tvNowPlaying: TextView? = null
     private var volumeLevel = 1.0f
 
+    // 🚀 FIX: Variables to track progress bar across minimize
+    private var currentPlayingDuration: Int = 0
+    private var currentPlaybackStartTime: Long = 0L
+
     private val progressHandler = Handler(Looper.getMainLooper())
     private var progressRunnable: Runnable? = null
 
@@ -4138,10 +4145,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         }
     }
 
-    // FIX: ADDED ONSTARTCOMMAND TO PREVENT SERVICE KILL ON MINIMIZE
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        return START_STICKY
-    }
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
 
     private fun startForegroundServiceNotification() {
         val ch = "gucci_voice_channel"
@@ -4205,16 +4209,20 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             tvFloaterTime = overlayView?.findViewById(R.id.tvFloaterTime)
             tvNowPlaying = overlayView?.findViewById(R.id.tvNowPlaying)
 
-            // FIX: RESTORE UI STATE IF AUDIO IS ALREADY PLAYING
-            val isPlaying = gridAdapter?.playingFilePath != null
-            if (isPlaying) {
-                pbPlayback?.visibility = View.VISIBLE
-                tvFloaterTime?.visibility = View.VISIBLE
-                tvNowPlaying?.visibility = View.VISIBLE
+            // 🚀 FIX: Restart progress bar from where it left off
+            if (currentPlayingDuration > 0) {
+                val offset = (System.currentTimeMillis() - currentPlaybackStartTime).toInt()
+                if (offset < currentPlayingDuration) {
+                    pbPlayback?.visibility = View.VISIBLE
+                    tvFloaterTime?.visibility = View.VISIBLE
+                    startProgressBar(currentPlayingDuration, offset)
+                } else {
+                    stopPlayback()
+                }
             } else {
                 pbPlayback?.visibility = View.INVISIBLE
                 tvFloaterTime?.visibility = View.GONE
-                tvNowPlaying?.visibility = View.VISIBLE
+                tvNowPlaying?.text = "No sound playing"
             }
 
             tvVolume = overlayView?.findViewById(R.id.tvVolume)
@@ -4247,15 +4255,12 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             spinner?.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                     val v = EdgeTtsHelper.ALL_VOICES[position]
-                    selectedVoiceId = v.id
-                    selectedPitch  = v.pitchHz
-                    selectedRate   = v.ratePercent
+                    selectedVoiceId = v.id; selectedPitch = v.pitchHz; selectedRate = v.ratePercent
                 }
                 override fun onNothingSelected(parent: AdapterView<*>?) {}
             }
 
             val gridView = overlayView?.findViewById<GridView>(R.id.lvVoicesFloater)
-            // FIX: ONLY LOAD VOICES IF ADAPTER IS NULL TO PREVENT STOPPING AUDIO
             if (gridAdapter == null) {
                 Thread {
                     loadVoices()
@@ -4270,11 +4275,15 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 gridView?.setOnItemClickListener { _, _, pos, _ -> if (pos in voices.indices) playVoice(voices[pos]) }
             }
 
+            // 🚀 FIX: Refresh button now updates adapter without killing playing state
             overlayView?.findViewById<Button>(R.id.btnOverlayRefresh)?.setOnClickListener {
                 Thread {
                     loadVoices()
                     Handler(Looper.getMainLooper()).post { 
-                        gridAdapter?.notifyDataSetChanged()
+                        val playingPath = gridAdapter?.playingFilePath
+                        gridAdapter = VoiceGridAdapter(voices, ctx) { file -> playVoice(file) }
+                        gridAdapter?.playingFilePath = playingPath
+                        gridView?.adapter = gridAdapter
                         Toast.makeText(this, "Refreshed", Toast.LENGTH_SHORT).show()
                     }
                 }.start()
@@ -4396,11 +4405,12 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 Handler(Looper.getMainLooper()).post {
                     if (gridAdapter?.playingFilePath != thisFile.absolutePath) return@post
                     
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        AudioRouter.injectAudio(this, bytes)
-                    }, 500) 
+                    Handler(Looper.getMainLooper()).postDelayed({ AudioRouter.injectAudio(this, bytes) }, 500) 
                     
+                    currentPlayingDuration = durationMs
+                    currentPlaybackStartTime = System.currentTimeMillis()
                     startProgressBar(durationMs)
+
                     Handler(Looper.getMainLooper()).postDelayed({
                         if (gridAdapter?.playingFilePath == thisFile.absolutePath) stopPlayback()
                     }, durationMs.toLong() + 800L)
@@ -4439,6 +4449,8 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             mp.setOnPreparedListener { p ->
                 if (mediaPlayer !== mp) { try { p.release() } catch (_: Exception) {} ; return@setOnPreparedListener }
                 p.start()
+                currentPlayingDuration = p.duration
+                currentPlaybackStartTime = System.currentTimeMillis()
                 startProgressBar(p.duration)
             }
             mp.prepareAsync()
@@ -4447,14 +4459,16 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         }
     }
 
-    private fun startProgressBar(durationMs: Int) {
+    // 🚀 FIX: Added startOffset parameter for seamless resuming
+    private fun startProgressBar(durationMs: Int, startOffset: Int = 0) {
         stopProgressBar()
         if (durationMs <= 0) return
         pbPlayback?.visibility = View.VISIBLE
         tvFloaterTime?.visibility = View.VISIBLE
         pbPlayback?.max = durationMs
-        pbPlayback?.progress = 0
-        var elapsed = 0
+        pbPlayback?.progress = startOffset
+        
+        var elapsed = startOffset
         
         progressRunnable = object : Runnable {
             override fun run() {
@@ -4658,9 +4672,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
         Handler(Looper.getMainLooper()).post {
             try {
-                speechRecognizer?.stopListening()
-                speechRecognizer?.cancel()
-                speechRecognizer?.destroy()
+                speechRecognizer?.stopListening(); speechRecognizer?.cancel(); speechRecognizer?.destroy()
             } catch (_: Exception) {}
             speechRecognizer = null
         }
@@ -4708,6 +4720,11 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         cancelMediaPlayer()
         try { AudioRouter.stopAudio(this) } catch (_: Exception) {}
         stopProgressBar()
+        
+        // 🚀 FIX: Reset tracking variables on stop
+        currentPlayingDuration = 0
+        currentPlaybackStartTime = 0L
+
         tvNowPlaying?.text = "No sound playing"
         gridAdapter?.playingFilePath = null
         gridAdapter?.notifyDataSetChanged()
@@ -4772,33 +4789,21 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             if (imgFile.exists()) {
                 val bitmap = decodeSampledBitmapFromFile(imgFile.absolutePath, 150, 150)
                 if (bitmap != null) {
-                    ivMini?.setImageBitmap(bitmap)
-                    ivMini?.visibility = View.VISIBLE
-                    tvLetter?.visibility = View.GONE
-                } else {
-                    ivMini?.visibility = View.GONE
-                    tvLetter?.visibility = View.VISIBLE
-                }
-            } else {
-                ivMini?.visibility = View.GONE
-                tvLetter?.visibility = View.VISIBLE
-            }
+                    ivMini?.setImageBitmap(bitmap); ivMini?.visibility = View.VISIBLE; tvLetter?.visibility = View.GONE
+                } else { ivMini?.visibility = View.GONE; tvLetter?.visibility = View.VISIBLE }
+            } else { ivMini?.visibility = View.GONE; tvLetter?.visibility = View.VISIBLE }
 
             val isPlaying = f.absolutePath == playingFilePath
             if (isPlaying) {
                 card.setCardBackgroundColor(Color.parseColor("#1F4E79"))
                 card.setStrokeColor(Color.parseColor("#00E5A0"))
-                card.setStrokeWidth(4)
-                card.cardElevation = 12f
-                pbProgress?.visibility = View.VISIBLE
-                tvTime?.visibility = View.VISIBLE
+                card.setStrokeWidth(4); card.cardElevation = 12f
+                pbProgress?.visibility = View.VISIBLE; tvTime?.visibility = View.VISIBLE
             } else {
                 card.setCardBackgroundColor(Color.parseColor("#12161F"))
                 card.setStrokeColor(Color.parseColor("#1F4E79"))
-                card.setStrokeWidth(2)
-                card.cardElevation = 2f
-                pbProgress?.visibility = View.GONE
-                tvTime?.visibility = View.GONE
+                card.setStrokeWidth(2); card.cardElevation = 2f
+                pbProgress?.visibility = View.GONE; tvTime?.visibility = View.GONE
             }
             
             val playBtn = v.findViewById<ImageView>(R.id.btnPlayMini)
@@ -4818,9 +4823,12 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 if (mp != null && mp.isPlaying) {
                     pbProgress?.max = mp.duration
                     pbProgress?.progress = mp.currentPosition
+                } else if (currentPlayingDuration > 0) {
+                    val offset = (System.currentTimeMillis() - currentPlaybackStartTime).toInt()
+                    pbProgress?.max = currentPlayingDuration
+                    pbProgress?.progress = offset
                 }
             }
-            
             return v
         }
     }
