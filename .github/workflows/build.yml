@@ -33,7 +33,6 @@ jobs:
       - name: Run Build Script
         run: bash build.sh
 
-      # Protected APK Upload
       - name: Upload Protected APK
         if: success()
         uses: actions/upload-artifact@v4
