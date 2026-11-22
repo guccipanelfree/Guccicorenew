@@ -57,7 +57,6 @@ EOF
 if [ ! -f "my-release-key.jks" ]; then
     keytool -genkey -v -keystore my-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias my-alias -storepass password123 -keypass password123 -dname "CN=Gucci, OU=Dev, O=Gucci, L=City, S=State, C=US"
 fi
-
 # ==========================================
 # 2. APP BUILD GRADLE
 # ==========================================
@@ -225,23 +224,28 @@ cat > app/src/main/res/drawable/ic_gucci_gang.xml << 'EOF'
     android:viewportWidth="100"
     android:viewportHeight="100">
     
-    <!-- Left G -->
+    <!-- Yellow Face Background -->
     <path
-        android:strokeColor="#FFD700"
-        android:strokeWidth="14"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:fillColor="#00000000"
-        android:pathData="M 50,15 C 30,15 15,30 15,50 C 15,70 30,85 50,85 C 70,85 85,70 85,50 L 85,45 L 60,45 C 60,55 55,65 45,65 C 35,65 25,55 25,50 C 25,40 35,30 45,30 C 55,30 60,35 65,40" />
+        android:fillColor="#FFD700"
+        android:pathData="M50,5 C74.85,5 95,25.15 95,50 C95,74.85 74.85,95 50,95 C25.15,95 5,74.85 5,50 C5,25.15 25.15,5 50,5 Z" />
         
-    <!-- Right G (Interlocking) -->
+    <!-- Left Eye -->
     <path
-        android:strokeColor="#FFD700"
-        android:strokeWidth="14"
+        android:fillColor="#000000"
+        android:pathData="M35,35 C38.31,35 41,37.69 41,41 C41,44.31 38.31,47 35,47 C31.69,47 29,44.31 29,41 C29,37.69 31.69,35 35,35 Z" />
+        
+    <!-- Right Eye -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M65,35 C68.31,35 71,37.69 71,41 C71,44.31 68.31,47 65,47 C61.69,47 59,44.31 59,41 C59,37.69 61.69,35 65,35 Z" />
+        
+    <!-- Smile (Happy Face Curve) -->
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="6"
         android:strokeLineCap="round"
-        android:strokeLineJoin="round"
         android:fillColor="#00000000"
-        android:pathData="M 50,15 C 70,15 85,30 85,50 C 85,70 70,85 50,85 C 30,85 15,70 15,50 L 15,45 L 40,45 C 40,55 45,65 55,65 C 65,65 75,55 75,50 C 75,40 65,30 55,30 C 45,30 40,35 35,40" />
+        android:pathData="M 30,60 Q 50,85 70,60" />
 </vector>
 EOF
 
