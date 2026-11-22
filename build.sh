@@ -595,7 +595,7 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
         
         <TextView android:id="@+id/tvLetterMini" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="24sp" android:textStyle="bold" android:layout_centerInParent="true"/>
         
-        <!-- FIX: ADDED SOLID BACKGROUND AND CENTERED IT SO IT IS ALWAYS VISIBLE -->
+        <!-- FIX 1: REMOVED BLACK BACKGROUND, ADDED PADDING SO IT DOESN'T OVERLAP BUTTONS -->
         <TextView android:id="@+id/tvNameMini" 
             android:layout_width="match_parent" 
             android:layout_height="wrap_content" 
@@ -608,13 +608,12 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
             android:gravity="center" 
             android:layout_alignParentBottom="true" 
             android:layout_marginBottom="18dp" 
-            android:background="#AA000000"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp"
+            android:paddingStart="26dp"
+            android:paddingEnd="26dp"
             android:shadowColor="#000000" 
-            android:shadowDx="1.5" 
-            android:shadowDy="1.5" 
-            android:shadowRadius="2"/>
+            android:shadowDx="2" 
+            android:shadowDy="2" 
+            android:shadowRadius="4"/>
         
         <ImageView android:id="@+id/btnPlayMini" android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_media_play" app:tint="#00E5A0" android:layout_alignParentBottom="true" android:layout_alignParentStart="true" android:layout_margin="2dp"/>
         
@@ -627,7 +626,7 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
             android:textStyle="bold" 
             android:gravity="center" 
             android:visibility="gone" 
-            android:layout_above="@+id/pbMiniProgress" 
+            android:layout_alignParentBottom="true" 
             android:layout_alignParentEnd="true" 
             android:layout_marginEnd="4dp" 
             android:layout_marginBottom="2dp"
@@ -4035,7 +4034,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var pbPlayback: ProgressBar? = null
     private var tvVolume: TextView? = null
     private var tvFloaterTime: TextView? = null 
-    private var tvNowPlaying: TextView? = null // FIX 5: ADDED MP3 NAME VARIABLE
+    private var tvNowPlaying: TextView? = null
     private var volumeLevel = 1.0f
 
     private val progressHandler = Handler(Looper.getMainLooper())
@@ -4137,7 +4136,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             pbPlayback = overlayView?.findViewById(R.id.pbPlayback)
             pbPlayback?.visibility = View.INVISIBLE
             tvFloaterTime = overlayView?.findViewById(R.id.tvFloaterTime)
-            tvNowPlaying = overlayView?.findViewById(R.id.tvNowPlaying) // FIX 5: INITIALIZED MP3 NAME
+            tvNowPlaying = overlayView?.findViewById(R.id.tvNowPlaying)
 
             tvVolume = overlayView?.findViewById(R.id.tvVolume)
             val sbVolume = overlayView?.findViewById<SeekBar>(R.id.sbVolume)
@@ -4256,10 +4255,11 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             return
         }
 
+        // FIX 2: KILL OLD TIMERS IMMEDIATELY
+        stopProgressBar()
         try { AudioRouter.stopAudio(this) } catch (_: Exception) {}
         cancelMediaPlayer()
         
-        // FIX 5: UPDATE MP3 NAME TEXT
         Handler(Looper.getMainLooper()).post { tvNowPlaying?.text = "▶ ${file.nameWithoutExtension}" }
         
         gridAdapter?.playingFilePath = file.absolutePath
@@ -4365,6 +4365,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun startProgressBar(durationMs: Int) {
+        stopProgressBar() // FIX 2: ENSURE OLD TIMER IS DEAD
         if (durationMs <= 0) return
         pbPlayback?.visibility = View.VISIBLE
         tvFloaterTime?.visibility = View.VISIBLE
@@ -4441,6 +4442,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
     private fun stopProgressBar() {
         progressRunnable?.let { progressHandler.removeCallbacks(it) }
+        progressRunnable = null
         pbPlayback?.visibility = View.INVISIBLE
         tvFloaterTime?.visibility = View.GONE
         pbPlayback?.progress = 0
@@ -4623,10 +4625,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         cancelMediaPlayer()
         try { AudioRouter.stopAudio(this) } catch (_: Exception) {}
         stopProgressBar()
-        
-        // FIX 5: RESET MP3 NAME TEXT ON STOP
         tvNowPlaying?.text = "No sound playing"
-        
         gridAdapter?.playingFilePath = null
         gridAdapter?.notifyDataSetChanged()
     }
