@@ -1201,6 +1201,7 @@ package com.example.shtile
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.tanh
@@ -1258,7 +1259,7 @@ object VoiceProcessor {
         }
     }
 
-    // FIX: MUCH STRONGER BOOST & NORMALIZATION
+    // FIXED: Consistent Double math to prevent build errors and maximize volume
     fun applyBoost(input: ShortArray, gain: Float): ShortArray {
         if (gain == 1.0f) return input.copyOf()
         val out = ShortArray(input.size)
@@ -1266,15 +1267,17 @@ object VoiceProcessor {
         // Find the loudest part of the audio to normalize it
         var maxVal = 1
         for (s in input) {
-            val abs = Math.abs(s.toInt())
+            val abs = abs(s.toInt())
             if (abs > maxVal) maxVal = abs
         }
+        
         val normalizeFactor = 32767.0 / maxVal
+        val gainDouble = gain.toDouble()
         
         for (i in input.indices) {
             val s = input[i] / 32768.0
             // If gain is > 1.0, we normalize and boost heavily
-            val dynamicGain = if (gain > 1.0f) (gain * normalizeFactor).coerceAtMost(4.0f) else gain
+            val dynamicGain = if (gainDouble > 1.0) (gainDouble * normalizeFactor).coerceAtMost(4.0) else gainDouble
             val boosted = s * dynamicGain
             
             // Soft clip at 95% to prevent harsh distortion
