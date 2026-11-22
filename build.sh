@@ -650,11 +650,15 @@ cat > app/src/main/res/layout/item_voice_card.xml << 'EOF'
 EOF
 cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/cardMini" android:layout_width="match_parent" android:layout_height="95dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="10dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/cardMini" android:layout_width="match_parent" android:layout_height="80dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="10dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
     <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
+        
         <ImageView android:id="@+id/ivCardPhotoMini" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:visibility="gone"/>
+
         <TextView android:id="@+id/tvStarMini" android:layout_width="24dp" android:layout_height="24dp" android:text="☆" android:textColor="#FFD700" android:textSize="18sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentEnd="true" android:padding="2dp"/>
+        
         <TextView android:id="@+id/tvLetterMini" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="26sp" android:textStyle="bold" android:layout_centerInParent="true"/>
+        
         <TextView android:id="@+id/tvNameMini" 
             android:layout_width="match_parent" 
             android:layout_height="wrap_content" 
@@ -671,6 +675,7 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
             android:layout_toStartOf="@+id/tvStarMini"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"/>
+        
         <ImageView android:id="@+id/btnPlayMini" 
             android:layout_width="24dp" 
             android:layout_height="24dp" 
@@ -681,6 +686,7 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
             android:layout_alignParentStart="true" 
             android:layout_margin="4dp"
             android:padding="4dp"/>
+        
         <TextView android:id="@+id/tvTimeMini" 
             android:layout_width="wrap_content" 
             android:layout_height="wrap_content" 
@@ -694,6 +700,7 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
             android:layout_alignParentEnd="true" 
             android:layout_marginEnd="6dp" 
             android:layout_marginBottom="6dp"/>
+
         <ProgressBar android:id="@+id/pbMiniProgress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="3dp" android:progressTint="#00E5A0" android:progressBackgroundTint="#44FFFFFF" android:layout_alignParentBottom="true" android:visibility="gone"/>
     </RelativeLayout>
 </com.google.android.material.card.MaterialCardView>
@@ -2928,18 +2935,18 @@ cat > app/src/main/res/layout/activity_gucci_voice.xml << 'EOF'
 EOF
 cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="280dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="16dp" app:cardElevation="15dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="260dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="16dp" app:cardElevation="15dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="10dp">
     
     <!-- PROFESSIONAL HEADER -->
-    <LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="10dp">
+    <LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
         <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="👑 GUCCI VOICES" android:textColor="#4FC3F7" android:textStyle="bold" android:textSize="14sp" android:fontFamily="sans-serif-black"/>
         <ImageButton android:id="@+id/btnMinimize" android:layout_width="28dp" android:layout_height="28dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#8B949E" android:layout_marginEnd="8dp"/>
         <ImageButton android:id="@+id/btnClose" android:layout_width="28dp" android:layout_height="28dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
     </LinearLayout>
     
     <!-- INJECT SWITCH -->
-    <LinearLayout android:layout_width="match_parent" android:layout_height="40dp" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:paddingStart="12dp" android:paddingEnd="8dp" android:layout_marginBottom="10dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="38dp" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:paddingStart="12dp" android:paddingEnd="8dp" android:layout_marginBottom="8dp">
         <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="INJECT GUCCI VOICES" android:textColor="#00E5A0" android:textSize="11sp" android:textStyle="bold"/>
         <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/swInject" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="false"/>
     </LinearLayout>
@@ -2947,7 +2954,7 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
     <TextView android:id="@+id/tvCopyMixer" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ Routing failed. Tap to copy Log." android:textColor="#FF4D4D" android:textSize="10sp" android:textStyle="bold" android:gravity="center" android:padding="4dp" android:visibility="gone"/>
     
     <!-- TABS -->
-    <LinearLayout android:layout_width="match_parent" android:layout_height="36dp" android:orientation="horizontal" android:layout_marginBottom="10dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="34dp" android:orientation="horizontal" android:layout_marginBottom="8dp">
         <LinearLayout android:id="@+id/tabCards" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="4dp">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎵" android:textColor="#FFFFFF" android:textSize="14sp"/>
         </LinearLayout>
@@ -2962,7 +2969,8 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
     <!-- PAGE: Cards -->
     <LinearLayout android:id="@+id/pageCards" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="visible">
         
-        <GridView android:id="@+id/lvVoicesFloater" android:layout_width="match_parent" android:layout_height="180dp" android:numColumns="3" android:verticalSpacing="6dp" android:horizontalSpacing="6dp"/>
+        <!-- 🚀 FIX: Height reduced to 100dp to show only 1 row -->
+        <GridView android:id="@+id/lvVoicesFloater" android:layout_width="match_parent" android:layout_height="100dp" android:numColumns="3" android:verticalSpacing="6dp" android:horizontalSpacing="6dp"/>
         
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="4dp" android:paddingEnd="4dp" android:layout_marginTop="4dp" android:layout_marginBottom="4dp">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Vol:" android:textColor="#8B949E" android:textSize="10sp" android:textStyle="bold" android:layout_marginEnd="4dp"/>
@@ -2974,9 +2982,9 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
 
         <TextView android:id="@+id/tvFloaterTime" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0:00 / 0:00" android:textColor="#00E5A0" android:textSize="11sp" android:textStyle="bold" android:gravity="center" android:visibility="gone" android:layout_marginTop="2dp"/>
 
-        <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="4dp" android:layout_marginTop="4dp" android:layout_marginBottom="8dp" android:progressTint="#00E5A0" android:visibility="invisible"/>
+        <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="4dp" android:layout_marginTop="4dp" android:layout_marginBottom="6dp" android:progressTint="#00E5A0" android:visibility="invisible"/>
         
-        <LinearLayout android:layout_width="match_parent" android:layout_height="38dp" android:orientation="horizontal">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="36dp" android:orientation="horizontal">
             <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayRefresh" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:text="REFRESH" android:textColor="#000000" app:backgroundTint="#3B82F6" app:cornerRadius="8dp" android:textSize="10sp" android:layout_marginEnd="6dp" android:insetTop="0dp" android:insetBottom="0dp"/>
             <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayStop" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:text="STOP" android:textColor="#FFFFFF" app:backgroundTint="#FF4D4D" app:cornerRadius="8dp" android:textSize="10sp" android:insetTop="0dp" android:insetBottom="0dp"/>
         </LinearLayout>
