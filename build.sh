@@ -4102,9 +4102,10 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var tvNowPlaying: TextView? = null
     private var volumeLevel = 1.0f
 
-    // 🚀 FIX: Variables to track progress bar across minimize
+    // 🚀 FIX: Track playback state and name to survive minimize/restore
     private var currentPlayingDuration: Int = 0
     private var currentPlaybackStartTime: Long = 0L
+    private var currentPlayingName: String? = null
 
     private val progressHandler = Handler(Looper.getMainLooper())
     private var progressRunnable: Runnable? = null
@@ -4209,8 +4210,9 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             tvFloaterTime = overlayView?.findViewById(R.id.tvFloaterTime)
             tvNowPlaying = overlayView?.findViewById(R.id.tvNowPlaying)
 
-            // 🚀 FIX: Restart progress bar from where it left off
-            if (currentPlayingDuration > 0) {
+            // 🚀 FIX: Restore song name and progress bar when re-opening floater
+            if (currentPlayingName != null && currentPlayingDuration > 0) {
+                tvNowPlaying?.text = "▶ $currentPlayingName"
                 val offset = (System.currentTimeMillis() - currentPlaybackStartTime).toInt()
                 if (offset < currentPlayingDuration) {
                     pbPlayback?.visibility = View.VISIBLE
@@ -4236,7 +4238,16 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                     volumeLevel = progress / 100f
                     tvVolume?.text = "$progress%"
-                    if (fromUser) prefs.edit().putInt("voice_volume", progress).apply()
+                    if (fromUser) {
+                        prefs.edit().putInt("voice_volume", progress).apply()
+                        
+                        // 🚀 FIX: Real-time volume adjustment for MediaPlayer (0% to 100%)
+                        val mp = mediaPlayer
+                        if (mp != null && mp.isPlaying) {
+                            val actualVol = Math.min(volumeLevel, 1.0f)
+                            try { mp.setVolume(actualVol, actualVol) } catch (_: Exception) {}
+                        }
+                    }
                 }
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {}
                 override fun onStopTrackingTouch(seekBar: SeekBar?) {}
@@ -4275,7 +4286,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 gridView?.setOnItemClickListener { _, _, pos, _ -> if (pos in voices.indices) playVoice(voices[pos]) }
             }
 
-            // 🚀 FIX: Refresh button now updates adapter without killing playing state
             overlayView?.findViewById<Button>(R.id.btnOverlayRefresh)?.setOnClickListener {
                 Thread {
                     loadVoices()
@@ -4352,7 +4362,9 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         try { AudioRouter.stopAudio(this) } catch (_: Exception) {}
         cancelMediaPlayer()
         
-        Handler(Looper.getMainLooper()).post { tvNowPlaying?.text = "▶ ${file.nameWithoutExtension}" }
+        // 🚀 FIX: Save current playing name
+        currentPlayingName = file.nameWithoutExtension
+        Handler(Looper.getMainLooper()).post { tvNowPlaying?.text = "▶ $currentPlayingName" }
         
         gridAdapter?.playingFilePath = file.absolutePath
         gridAdapter?.notifyDataSetChanged()
@@ -4459,7 +4471,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         }
     }
 
-    // 🚀 FIX: Added startOffset parameter for seamless resuming
     private fun startProgressBar(durationMs: Int, startOffset: Int = 0) {
         stopProgressBar()
         if (durationMs <= 0) return
@@ -4721,9 +4732,10 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         try { AudioRouter.stopAudio(this) } catch (_: Exception) {}
         stopProgressBar()
         
-        // 🚀 FIX: Reset tracking variables on stop
+        // 🚀 FIX: Clear memory when playback stops
         currentPlayingDuration = 0
         currentPlaybackStartTime = 0L
+        currentPlayingName = null
 
         tvNowPlaying?.text = "No sound playing"
         gridAdapter?.playingFilePath = null
