@@ -497,57 +497,57 @@ cat > app/src/main/res/layout/activity_clear_report.xml << 'EOF'
 EOF
 
 cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="240dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0B0F17" app:cardCornerRadius="20dp" app:cardElevation="15dp" app:strokeColor="#1F2633" app:strokeWidth="1dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
-<LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI MODS" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="14sp" android:fontFamily="sans-serif-black" android:letterSpacing="0.05"/>
-<ImageButton android:id="@+id/btnMinimize" android:layout_width="28dp" android:layout_height="28dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#8B949E" android:layout_marginEnd="8dp"/>
-<ImageButton android:id="@+id/btnClose" android:layout_width="28dp" android:layout_height="28dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="240dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0B0F17" app:cardCornerRadius="16dp" app:cardElevation="15dp" app:strokeColor="#1F2633" app:strokeWidth="1dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="8dp">
+<LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="4dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI MODS" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="13sp" android:fontFamily="sans-serif-black"/>
+<ImageButton android:id="@+id/btnMinimize" android:layout_width="24dp" android:layout_height="24dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#8B949E" android:layout_marginEnd="6dp"/>
+<ImageButton android:id="@+id/btnClose" android:layout_width="24dp" android:layout_height="24dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
 </LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="STATUS" android:textColor="#8B949E" android:textSize="10sp" android:textStyle="bold" android:letterSpacing="0.1"/>
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="READY" android:textColor="#00E5A0" android:textSize="10sp" android:textStyle="bold" android:letterSpacing="0.1"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="4dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="STATUS" android:textColor="#8B949E" android:textSize="9sp" android:textStyle="bold"/>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="READY" android:textColor="#00E5A0" android:textSize="9sp" android:textStyle="bold"/>
 </LinearLayout>
-<View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1F2633" android:layout_marginBottom="8dp"/>
-<ScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:maxHeight="240dp" android:scrollbars="none">
+<View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1F2633" android:layout_marginBottom="4dp"/>
+<ScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:maxHeight="140dp" android:scrollbars="none">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp" android:background="#12161F" android:padding="6dp" android:layout_marginEnd="4dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI DETECTOR" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="4dp" android:background="#12161F" android:padding="4dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI DETECTOR" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
 <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater1" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
 </LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp" android:background="#12161F" android:padding="6dp" android:layout_marginEnd="4dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI HS" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="4dp" android:background="#12161F" android:padding="4dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI HS" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
 <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater2" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
 </LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp" android:background="#12161F" android:padding="6dp" android:layout_marginEnd="4dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GLOO CROSS" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="4dp" android:background="#12161F" android:padding="4dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GLOO CROSS" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
 <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater3" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
 </LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp" android:background="#12161F" android:padding="6dp" android:layout_marginEnd="4dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="CHEST HS" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="4dp" android:background="#12161F" android:padding="4dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="CHEST HS" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
 <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater4" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
 </LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginBottom="6dp" android:background="#12161F" android:padding="6dp" android:layout_marginEnd="4dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginBottom="4dp" android:background="#12161F" android:padding="4dp">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="BODY HS" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="BODY HS" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
 <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater5" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
 </LinearLayout>
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⚠️ Use only In Custom" android:textColor="#FF4D4D" android:textSize="9sp" android:textStyle="bold"/>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⚠️ Use only In Custom" android:textColor="#FF4D4D" android:textSize="8sp" android:textStyle="bold"/>
 </LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp" android:background="#12161F" android:padding="6dp" android:layout_marginEnd="4dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="MAGIC" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="4dp" android:background="#12161F" android:padding="4dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="MAGIC" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
 <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater6" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
 </LinearLayout>
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="4dp" android:background="#12161F" android:padding="6dp" android:layout_marginEnd="4dp">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="LOCATION" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="2dp" android:background="#12161F" android:padding="4dp">
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="LOCATION" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold"/>
 <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchFloater7" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="#8B949E" app:trackTint="#1F2633"/>
 </LinearLayout>
 </LinearLayout>
 </ScrollView>
-<View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1F2633" android:layout_marginBottom="8dp" android:layout_marginTop="4dp"/>
+<View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1F2633" android:layout_marginBottom="4dp" android:layout_marginTop="4dp"/>
 <LinearLayout android:id="@+id/dragHandleBottom" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
-<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="ROOT" android:textColor="#8B949E" android:textSize="10sp" android:textStyle="bold" android:letterSpacing="0.1"/>
-<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GRANTED" android:textColor="#00E5A0" android:textSize="10sp" android:textStyle="bold" android:letterSpacing="0.1"/>
+<TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="ROOT" android:textColor="#8B949E" android:textSize="9sp" android:textStyle="bold"/>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GRANTED" android:textColor="#00E5A0" android:textSize="9sp" android:textStyle="bold"/>
 </LinearLayout>
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
@@ -634,48 +634,27 @@ cat > app/src/main/res/layout/item_voice_card.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/cardMain" android:layout_width="match_parent" android:layout_height="150dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="16dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
     <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
-        
         <ImageView android:id="@+id/ivCardPhoto" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:visibility="gone"/>
-
         <TextView android:id="@+id/tvLetter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="40sp" android:textStyle="bold" android:layout_centerInParent="true"/>
-
-        <TextView android:id="@+id/tvStar" android:layout_width="32dp" android:layout_height="32dp" android:text="☆" android:textColor="#FFD700" android:textSize="26sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentStart="true" android:padding="4dp"
-            android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="1"/>
-        
+        <TextView android:id="@+id/tvStar" android:layout_width="32dp" android:layout_height="32dp" android:text="☆" android:textColor="#FFD700" android:textSize="26sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentStart="true" android:padding="4dp"/>
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentTop="true" android:layout_alignParentEnd="true" android:orientation="horizontal" android:padding="6dp">
-            <ImageView android:id="@+id/btnAddPhoto" android:layout_width="28dp" android:layout_height="28dp" android:src="@android:drawable/ic_menu_camera" app:tint="#00E5FF" android:padding="2dp" android:layout_marginEnd="8dp"
-                android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="1"/>
+            <ImageView android:id="@+id/btnAddPhoto" android:layout_width="28dp" android:layout_height="28dp" android:src="@android:drawable/ic_menu_camera" app:tint="#00E5FF" android:padding="2dp" android:layout_marginEnd="8dp"/>
             <ImageView android:id="@+id/btnDelete" android:layout_width="28dp" android:layout_height="28dp" android:src="@drawable/ic_close" app:tint="#FFFFFF" android:padding="2dp"/>
         </LinearLayout>
-
-        <TextView android:id="@+id/tvPlayTime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0:00 / 0:00" android:textColor="#00E5A0" android:textSize="11sp" android:textStyle="bold" android:layout_above="@+id/pbCardProgress" android:layout_alignParentStart="true" android:layout_marginStart="8dp" android:layout_marginBottom="4dp" android:visibility="gone"
-            android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="1"/>
-
+        <TextView android:id="@+id/tvPlayTime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0:00 / 0:00" android:textColor="#00E5A0" android:textSize="11sp" android:textStyle="bold" android:layout_above="@+id/pbCardProgress" android:layout_alignParentStart="true" android:layout_marginStart="8dp" android:layout_marginBottom="4dp" android:visibility="gone"/>
         <ProgressBar android:id="@+id/pbCardProgress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="4dp" android:progressTint="#00E5A0" android:progressBackgroundTint="#44FFFFFF" android:layout_alignParentBottom="true" android:visibility="gone" android:layout_marginBottom="2dp"/>
-
-        <TextView android:id="@+id/tvName" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" android:layout_alignParentBottom="true" android:layout_toStartOf="@+id/btnPlay" android:layout_toEndOf="@+id/tvStar" android:layout_marginStart="8dp" android:layout_marginBottom="12dp"
-            android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="1"/>
-        
-        <ImageView android:id="@+id/btnPlay" android:layout_width="40dp" android:layout_height="40dp" android:src="@android:drawable/ic_media_play" app:tint="#00E5A0" android:layout_alignParentBottom="true" android:layout_alignParentEnd="true" android:layout_marginEnd="8dp" android:layout_marginBottom="8dp"
-            android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="1"/>
+        <TextView android:id="@+id/tvName" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" android:layout_alignParentBottom="true" android:layout_toStartOf="@+id/btnPlay" android:layout_toEndOf="@+id/tvStar" android:layout_marginStart="8dp" android:layout_marginBottom="12dp"/>
+        <ImageView android:id="@+id/btnPlay" android:layout_width="40dp" android:layout_height="40dp" android:src="@android:drawable/ic_media_play" app:tint="#00E5A0" android:layout_alignParentBottom="true" android:layout_alignParentEnd="true" android:layout_marginEnd="8dp" android:layout_marginBottom="8dp"/>
     </RelativeLayout>
 </com.google.android.material.card.MaterialCardView>
 EOF
 cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/cardMini" android:layout_width="match_parent" android:layout_height="105dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="10dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/cardMini" android:layout_width="match_parent" android:layout_height="95dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="10dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
     <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
-        
         <ImageView android:id="@+id/ivCardPhotoMini" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:visibility="gone"/>
-
-        <TextView android:id="@+id/tvStarMini" android:layout_width="28dp" android:layout_height="28dp" android:text="☆" android:textColor="#FFD700" android:textSize="20sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentEnd="true" android:padding="2dp"
-            android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="1"/>
-        
-        <TextView android:id="@+id/tvLetterMini" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="28sp" android:textStyle="bold" android:layout_centerInParent="true"
-            android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="2"/>
-
-        <!-- REMOVED THE DARK SCRIM VIEW HERE -->
-
+        <TextView android:id="@+id/tvStarMini" android:layout_width="24dp" android:layout_height="24dp" android:text="☆" android:textColor="#FFD700" android:textSize="18sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentEnd="true" android:padding="2dp"/>
+        <TextView android:id="@+id/tvLetterMini" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="26sp" android:textStyle="bold" android:layout_centerInParent="true"/>
         <TextView android:id="@+id/tvNameMini" 
             android:layout_width="match_parent" 
             android:layout_height="wrap_content" 
@@ -687,19 +666,14 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
             android:ellipsize="end"
             android:gravity="center|start" 
             android:layout_alignParentBottom="true" 
-            android:layout_marginBottom="20dp" 
+            android:layout_marginBottom="6dp" 
             android:layout_toEndOf="@+id/btnPlayMini" 
             android:layout_toStartOf="@+id/tvStarMini"
-            android:paddingStart="2dp"
-            android:paddingEnd="2dp"
-            android:shadowColor="#000000" 
-            android:shadowDx="1" 
-            android:shadowDy="1" 
-            android:shadowRadius="1"/>
-        
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"/>
         <ImageView android:id="@+id/btnPlayMini" 
-            android:layout_width="28dp" 
-            android:layout_height="28dp" 
+            android:layout_width="24dp" 
+            android:layout_height="24dp" 
             android:src="@android:drawable/ic_media_play" 
             app:tint="#00E5A0" 
             android:background="@drawable/bg_circle_grey"
@@ -707,7 +681,6 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
             android:layout_alignParentStart="true" 
             android:layout_margin="4dp"
             android:padding="4dp"/>
-        
         <TextView android:id="@+id/tvTimeMini" 
             android:layout_width="wrap_content" 
             android:layout_height="wrap_content" 
@@ -720,12 +693,7 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
             android:layout_alignParentBottom="true" 
             android:layout_alignParentEnd="true" 
             android:layout_marginEnd="6dp" 
-            android:layout_marginBottom="6dp"
-            android:shadowColor="#000000" 
-            android:shadowDx="1" 
-            android:shadowDy="1" 
-            android:shadowRadius="1"/>
-
+            android:layout_marginBottom="6dp"/>
         <ProgressBar android:id="@+id/pbMiniProgress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="3dp" android:progressTint="#00E5A0" android:progressBackgroundTint="#44FFFFFF" android:layout_alignParentBottom="true" android:visibility="gone"/>
     </RelativeLayout>
 </com.google.android.material.card.MaterialCardView>
@@ -1319,9 +1287,9 @@ object VoiceProcessor {
         }
     }
 
-    // 🚀 FIX: ULTRA LOUD & CRYSTAL CLEAR BOOST
+    // 🚀 FIX: ULTRA LOUD & CRYSTAL CLEAR BOOST (Forced Injection Volume)
     fun applyBoost(input: ShortArray, gain: Float): ShortArray {
-        if (gain == 1.0f) return input.copyOf()
+        if (input.isEmpty()) return input.copyOf()
         val out = ShortArray(input.size)
         
         // 1. Find the peak to normalize
@@ -1331,19 +1299,24 @@ object VoiceProcessor {
             if (abs > maxVal) maxVal = abs
         }
         
-        // 2. Calculate boost (Max limit 4.0x to avoid extreme distortion)
+        // 2. Calculate boost
         val normalizeFactor = 32767.0 / maxVal
         val gainDouble = gain.toDouble()
-        val dynamicGain = if (gainDouble > 1.0) (gainDouble * normalizeFactor).coerceAtMost(5.0) else gainDouble
+        
+        // Force at least 1.8x boost even if user left slider at 100% (for injection clarity)
+        val effectiveGain = if (gainDouble <= 1.0) 1.8 else gainDouble
+        
+        // Max limit 8.0x to prevent absolute breaking, but allows extreme loudness
+        val dynamicGain = (effectiveGain * normalizeFactor).coerceAtMost(8.0)
         
         for (i in input.indices) {
             val s = input[i] / 32768.0
             val boosted = s * dynamicGain
             
-            // 3. Hard Soft-Clip (Limits at 0.98 to prevent digital crackling)
+            // 3. Hard Soft-Clip (Limits perfectly at 0.95 to prevent digital crackling)
             val clipped = when {
-                boosted > 0.98 -> 0.98 + 0.02 * tanh((boosted - 0.98) / 0.02)
-                boosted < -0.98 -> -0.98 + 0.02 * tanh((boosted + 0.98) / 0.02)
+                boosted > 0.95 -> 0.95 + 0.05 * tanh((boosted - 0.95) / 0.05)
+                boosted < -0.95 -> -0.95 + 0.05 * tanh((boosted + 0.95) / 0.05)
                 else -> boosted
             }
             out[i] = (clipped * 32767.0).toInt().coerceIn(-32768, 32767).toShort()
