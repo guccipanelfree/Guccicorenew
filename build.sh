@@ -45,11 +45,8 @@ android.useAndroidX=true
 android.nonTransitiveRClass=true
 org.gradle.jvmargs=-Xmx2048m
 
-# Proxy settings (Uncomment and fill if behind a firewall)
-# systemProp.http.proxyHost=proxy.example.com
-# systemProp.http.proxyPort=8080
-# systemProp.https.proxyHost=proxy.example.com
-# systemProp.https.proxyPort=8080
+# 🚀 RESOURCE OBFUSCATION: Hides image names and resource IDs
+android.enableResourceOptimizations=true
 EOF
 # ==========================================
 # 1. GENERATE KEYSTORE
@@ -5004,5 +5001,38 @@ rm -f app/src/main/res/drawable/ic_app_icon.xml
 echo "Downloading new App Icon..."
 curl -L -o app/src/main/res/drawable/ic_app_icon.jpg "https://cdn.phototourl.com/anon/2026-11-22-795d5e6c-929e-4ccc-a0b4-3a465e8bc638.jpg"
 echo "App Icon set successfully!"
+# ==========================================
+# 🚀 ASSET OBFUSCATION (HIDE ASSETS & AUTO-FIX CODE)
+# ==========================================
+echo "Hiding Assets and fixing code references..."
+
+# 1. Assets ke naam badal do
+mv app/src/main/assets/Gucci_core app/src/main/assets/sys_1.bin 2>/dev/null || true
+mv app/src/main/assets/Gucci_brutal app/src/main/assets/sys_2.bin 2>/dev/null || true
+mv app/src/main/assets/Gucci_Ch app/src/main/assets/ui_1.bin 2>/dev/null || true
+mv app/src/main/assets/Gucci_h app/src/main/assets/ui_2.bin 2>/dev/null || true
+mv app/src/main/assets/Gucci_O app/src/main/assets/ui_3.bin 2>/dev/null || true
+mv app/src/main/assets/Gucci_G app/src/main/assets/ui_4.bin 2>/dev/null || true
+mv app/src/main/assets/Gucci_GO app/src/main/assets/ui_5.bin 2>/dev/null || true
+mv app/src/main/assets/Gucci_CHS app/src/main/assets/ui_6.bin 2>/dev/null || true
+mv app/src/main/assets/Gucci_B app/src/main/assets/ui_7.bin 2>/dev/null || true
+mv app/src/main/assets/Gucci_M app/src/main/assets/ui_8.bin 2>/dev/null || true
+mv app/src/main/assets/Gucci_L app/src/main/assets/ui_9.bin 2>/dev/null || true
+
+# 2. Kotlin code mein references ko update karo (taaki features kaam karein)
+sed -i 's/Gucci_core/sys_1.bin/g' app/src/main/java/com/example/shtile/*.kt
+sed -i 's/Gucci_brutal/sys_2.bin/g' app/src/main/java/com/example/shtile/*.kt
+sed -i 's/Gucci_Ch/ui_1.bin/g' app/src/main/java/com/example/shtile/*.kt
+sed -i 's/Gucci_h/ui_2.bin/g' app/src/main/java/com/example/shtile/*.kt
+sed -i 's/Gucci_O/ui_3.bin/g' app/src/main/java/com/example/shtile/*.kt
+sed -i 's/Gucci_G/ui_4.bin/g' app/src/main/java/com/example/shtile/*.kt
+sed -i 's/Gucci_GO/ui_5.bin/g' app/src/main/java/com/example/shtile/*.kt
+sed -i 's/Gucci_CHS/ui_6.bin/g' app/src/main/java/com/example/shtile/*.kt
+sed -i 's/Gucci_B/ui_7.bin/g' app/src/main/java/com/example/shtile/*.kt
+sed -i 's/Gucci_M/ui_8.bin/g' app/src/main/java/com/example/shtile/*.kt
+sed -i 's/Gucci_L/ui_9.bin/g' app/src/main/java/com/example/shtile/*.kt
+
+echo "Assets hidden and code auto-updated successfully!"
+
 
 gradle assembleDebug
