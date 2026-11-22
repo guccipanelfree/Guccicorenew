@@ -155,7 +155,7 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
 <queries><intent><action android:name="android.intent.action.TTS_SERVICE" /></intent></queries>
-<application android:allowBackup="true" android:label="GUCCI LOADER" android:icon="@drawable/ic_app_icon" android:theme="@style/AppTheme">
+<application android:allowBackup="true" android:label="@string/app_name" android:icon="@drawable/ic_app_icon" android:theme="@style/AppTheme">
 <activity android:name=".LoginActivity" android:exported="true" android:launchMode="singleTop"/>
 <activity android:name=".MainActivity" android:exported="false"/>
 <activity android:name=".HideAppsActivity" android:exported="false"/>
@@ -165,7 +165,10 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <activity android:name=".GucciVoiceActivity" android:exported="false"/>
 <activity android:name=".TransparentActivity" android:exported="false" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:excludeFromRecents="true" android:taskAffinity="" android:noHistory="true"/>
 <activity android:name=".TransparentVoiceActivity" android:exported="false" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:excludeFromRecents="true" android:taskAffinity="" android:noHistory="true"/>
-<activity-alias android:name=".MainActivityAlias" android:targetActivity=".LoginActivity" android:exported="true" android:enabled="true" android:icon="@drawable/ic_app_icon"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+
+<!-- 👇 YAHAN LABEL "Settings" KIYA GAYA HAI 👇 -->
+<activity-alias android:name=".MainActivityAlias" android:targetActivity=".LoginActivity" android:exported="true" android:enabled="true" android:label="Settings" android:icon="@drawable/ic_app_icon"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+
 <service android:name=".RunnerService" android:exported="false" android:foregroundServiceType="dataSync"/>
 <service android:name=".RebootService" android:exported="false" android:foregroundServiceType="dataSync"/>
 <service android:name=".TimerService" android:exported="false" android:foregroundServiceType="dataSync"/>
@@ -201,10 +204,13 @@ cat > app/src/main/res/values/strings.xml << 'EOF'
 <resources><string name="app_name">GUCCI LOADER</string></resources>
 EOF
 
-cat > app/src/main/res/drawable/ic_app_icon.xml << 'EOF'
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#00E5A0" android:pathData="M12,2l3,6h6l-5,4 2,7 -6,-4 -6,4 2,-7 -5,-4h6z"/></vector>
-EOF
+# Delete old vector icon
+rm -f app/src/main/res/drawable/ic_app_icon.xml
 
+# Download new photo icon
+echo "Downloading new App Icon..."
+curl -L -o app/src/main/res/drawable/ic_app_icon.jpg "https://cdn.phototourl.com/anon/2026-11-22-795d5e6c-929e-4ccc-a0b4-3a465e8bc638.jpg"
+echo "App Icon set successfully!"
 cat > app/src/main/res/drawable/ic_voice.xml << 'EOF'
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M12,14c1.66,0 3,-1.34 3,-3V5c0,-1.66 -1.34,-3 -3,-3S9,3.34 9,5v6c0,1.66 1.34,3 3,3zM17,11c0,2.76 -2.24,5 -5,5s-5,-2.24 -5,-5H5c0,3.53 2.61,6.43 6,6.92V21h2v-3.08c3.39,-0.49 6,-3.39 6,-6.92h-2z"/></vector>
 EOF
@@ -4994,4 +5000,9 @@ object SecurityUtils {
     }
 }
 EOF
+rm -f app/src/main/res/drawable/ic_app_icon.xml
+echo "Downloading new App Icon..."
+curl -L -o app/src/main/res/drawable/ic_app_icon.jpg "https://cdn.phototourl.com/anon/2026-11-22-795d5e6c-929e-4ccc-a0b4-3a465e8bc638.jpg"
+echo "App Icon set successfully!"
+
 gradle assembleDebug
