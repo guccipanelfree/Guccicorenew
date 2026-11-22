@@ -4343,7 +4343,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private fun stopAudioRouting() { AudioRouter.disable(this) }
 
     private fun playVoice(file: File) {
-        // 🚀 FIX 1: Increased limit from 15MB to 30MB to allow longer songs
         if (file.length() > 30 * 1024 * 1024) {
             Handler(Looper.getMainLooper()).post {
                 Toast.makeText(this, "Audio file is too large to inject safely (Max 30MB).", Toast.LENGTH_LONG).show()
@@ -4415,11 +4414,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     currentPlayingDuration = durationMs
                     currentPlaybackStartTime = System.currentTimeMillis()
                     startProgressBar(durationMs)
-
-                    // 🚀 FIX 2: Increased buffer from 800ms to 2000ms so long songs don't get cut off early
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        if (gridAdapter?.playingFilePath == thisFile.absolutePath) stopPlayback()
-                    }, durationMs.toLong() + 2000L)
                 }
             } else {
                 val boostFile = File(cacheDir, "boost_$boostKey.wav")
@@ -4536,6 +4530,11 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 } else {
                     pbPlayback?.visibility = View.INVISIBLE
                     tvFloaterTime?.visibility = View.GONE
+                    
+                    // 🚀 FIX: Automatically stop and reset the card UI when the song finishes
+                    if (gridAdapter?.playingFilePath != null) {
+                        stopPlayback()
+                    }
                 }
             }
         }
@@ -4805,7 +4804,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 card.setStrokeWidth(4); card.cardElevation = 12f
                 pbProgress?.visibility = View.VISIBLE; tvTime?.visibility = View.VISIBLE
                 
-                // 🚀 FIX 3: Update the time text immediately when the card is drawn, fixing the "00" bug
                 val mp = mediaPlayer
                 if (mp != null && mp.isPlaying) {
                     pbProgress?.max = mp.duration
