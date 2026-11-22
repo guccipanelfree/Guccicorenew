@@ -15,22 +15,6 @@
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
-    "GUCCI-922E86": {
-      "deviceIds": [
-        "f1d8394ada641a3dholiOnePlusOP5958L1CPH2467",
-        "4d88d46cf38e3815holiOnePlusOP5958L1CPH2467"
-      ],
-      "hwidNames": {},
-      "maxDevices": 4,
-      "revoked": false,
-      "expiresAt": 1795353802886,
-      "allowInx": true,
-      "allowFloater": true,
-      "allowKernel": true,
-      "allowVoice": true,
-      "reboot_now_time": 0,
-      "reboot_timer": 0
-    },
     "RYZEN": {
       "deviceIds": [
         "3ceff1283b117b79eqemotorolaeqemotorolaedge50pro"
