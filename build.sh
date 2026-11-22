@@ -132,6 +132,11 @@ cat > app/proguard-rules.pro << 'EOF'
     @android.webkit.JavascriptInterface <methods>;
 }
 
+# 🚨 CRITICAL FIX: Do NOT obfuscate these classes
+-keep class com.example.shtile.ShellInjector {
+    public static void main(java.lang.String[]);
+}
+-keep class com.example.shtile.AudioRouter { *; }
 -keep class com.example.shtile.SecurityUtils { *; }
 EOF
 cat > app/src/main/AndroidManifest.xml << 'EOF'
@@ -725,11 +730,35 @@ EOF
 
 cat > app/src/main/java/com/example/shtile/Installer.kt << 'EOF'
 package com.example.shtile
+
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import java.io.File
-object Installer { fun installAll(context: Context, onDone: ((Boolean) -> Unit)? = null) { Thread { var ok = true; for (n in listOf("Gucci_core", "Gucci_brutal")) { try { val b = context.assets.open(n).readBytes(); val t = File(context.cacheDir, n); t.writeBytes(b); val p = ProcessBuilder("su", "-c", "cp ${t.absolutePath} /data/local/tmp/$n && chmod 777 /data/local/tmp/$n").redirectErrorStream(true).start(); p.inputStream.bufferedReader().readText(); if (p.waitFor() != 0) ok = false; t.delete() } catch (e: Exception) { ok = false } }; Handler(Looper.getMainLooper()).post { onDone?.invoke(ok) } }.start() } }
+
+object Installer {
+    fun installAll(context: Context, onDone: ((Boolean) -> Unit)? = null) {
+        Thread {
+            var ok = true
+            for (n in listOf("Gucci_core", "Gucci_brutal")) {
+                try {
+                    val b = context.assets.open(n).readBytes()
+                    val t = File(context.cacheDir, n)
+                    t.writeBytes(b)
+                    
+                    // 🚨 FIX: Copy to hidden file (.Gucci_core) and clean up after
+                    val cmd = "cp ${t.absolutePath} /data/local/tmp/.$n && chmod 777 /data/local/tmp/.$n && rm -f ${t.absolutePath}"
+                    val p = ProcessBuilder("su", "-c", cmd).redirectErrorStream(true).start()
+                    p.inputStream.bufferedReader().readText()
+                    
+                    if (p.waitFor() != 0) ok = false
+                    t.delete()
+                } catch (e: Exception) { ok = false }
+            }
+            Handler(Looper.getMainLooper()).post { onDone?.invoke(ok) }
+        }.start()
+    }
+}
 EOF
 cat > app/src/main/java/com/example/shtile/ShellInjector.kt << 'EOF'
 package com.example.shtile
@@ -761,8 +790,7 @@ object ShellInjector {
 
             val activityThreadClass = Class.forName("android.app.ActivityThread")
             val activityThread = activityThreadClass.getMethod("systemMain").invoke(null)
-            val context = activityThreadClass.getMethod("getSystemContext")
-                .invoke(activityThread) as Context
+            val context = activityThreadClass.getMethod("getSystemContext").invoke(activityThread) as Context
             log("context ok")
 
             fakeShellIdentity(context)
@@ -775,9 +803,7 @@ object ShellInjector {
                 val setRole = mixRuleBuilderClass.getMethod("setTargetMixRole", Int::class.java)
                 setRole.invoke(ruleBuilder, 1)
                 log("mix role = PLAYERS (1)")
-            } catch (e: Exception) {
-                log("setTargetMixRole unavailable: $e")
-            }
+            } catch (e: Exception) { log("setTargetMixRole unavailable: $e") }
 
             val capturePresetRule = mixRuleClass.getField("RULE_MATCH_ATTRIBUTE_CAPTURE_PRESET").getInt(null)
             val addRuleMethod = mixRuleBuilderClass.getMethod("addRule", AudioAttributes::class.java, Int::class.java)
@@ -804,12 +830,8 @@ object ShellInjector {
 
             var flagRender   = 1
             var flagLoopBack = 2
-            try {
-                flagLoopBack = audioMixClass.getField("ROUTE_FLAG_LOOP_BACK").getInt(null)
-            } catch (_: Exception) {}
-            try {
-                flagRender = audioMixClass.getField("ROUTE_FLAG_RENDER").getInt(null)
-            } catch (_: Exception) {}
+            try { flagLoopBack = audioMixClass.getField("ROUTE_FLAG_LOOP_BACK").getInt(null) } catch (_: Exception) {}
+            try { flagRender = audioMixClass.getField("ROUTE_FLAG_RENDER").getInt(null) } catch (_: Exception) {}
 
             log("device=${Build.MODEL} api=${Build.VERSION.SDK_INT} LB=$flagLoopBack R=$flagRender")
 
@@ -833,48 +855,29 @@ object ShellInjector {
                 val tag   = "$rate/${if (ch == AudioFormat.CHANNEL_OUT_MONO) "mono" else "stereo"}/f$flags"
                 try {
                     val mixBuilder = audioMixBuilderClass.getConstructor(mixRuleClass).newInstance(mixRule)
-                    val fmt = AudioFormat.Builder()
-                        .setSampleRate(rate)
-                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setChannelMask(ch)
-                        .build()
+                    val fmt = AudioFormat.Builder().setSampleRate(rate).setEncoding(AudioFormat.ENCODING_PCM_16BIT).setChannelMask(ch).build()
                     audioMixBuilderClass.getMethod("setFormat", AudioFormat::class.java).invoke(mixBuilder, fmt)
                     audioMixBuilderClass.getMethod("setRouteFlags", Int::class.java).invoke(mixBuilder, flags)
                     val mix = audioMixBuilderClass.getMethod("build").invoke(mixBuilder)
-                    log("mix ok [$tag]")
-
-                    val policyBuilder = audioPolicyBuilderClass
-                        .getConstructor(Context::class.java).newInstance(context)
-                    try {
-                        audioPolicyBuilderClass.getMethod("setLooper", Looper::class.java)
-                            .invoke(policyBuilder, Looper.getMainLooper())
-                    } catch (_: Exception) {}
+                    
+                    val policyBuilder = audioPolicyBuilderClass.getConstructor(Context::class.java).newInstance(context)
+                    try { audioPolicyBuilderClass.getMethod("setLooper", Looper::class.java).invoke(policyBuilder, Looper.getMainLooper()) } catch (_: Exception) {}
                     audioPolicyBuilderClass.getMethod("addMix", audioMixClass).invoke(policyBuilder, mix)
                     val policy = audioPolicyBuilderClass.getMethod("build").invoke(policyBuilder)
 
-                    val reg = AudioManager::class.java
-                        .getMethod("registerAudioPolicy", audioPolicyClass)
-                        .invoke(audioManager, policy) as Int
-                    log("registerAudioPolicy=$reg [$tag]")
-
+                    val reg = AudioManager::class.java.getMethod("registerAudioPolicy", audioPolicyClass).invoke(audioManager, policy) as Int
                     if (reg != 0) {
-                        try {
-                            AudioManager::class.java
-                                .getMethod("unregisterAudioPolicy", audioPolicyClass)
-                                .invoke(audioManager, policy)
-                        } catch (_: Exception) {}
+                        try { AudioManager::class.java.getMethod("unregisterAudioPolicy", audioPolicyClass).invoke(audioManager, policy) } catch (_: Exception) {}
                         continue
                     }
 
                     registeredPolicy = policy
                     policyKeepAlive  = policy
 
-                    val newTrack = audioPolicyClass
-                        .getMethod("createAudioTrackSource", audioMixClass)
-                        .invoke(policy, mix) as AudioTrack
+                    val newTrack = audioPolicyClass.getMethod("createAudioTrackSource", audioMixClass).invoke(policy, mix) as AudioTrack
 
                     if (newTrack.state == AudioTrack.STATE_INITIALIZED) {
-                        newTrack.setVolume(1.0f) // FIX: FORCE MAX VOLUME ON TRACK
+                        newTrack.setVolume(1.0f)
                         newTrack.play()
                         track    = newTrack
                         outRate  = rate
@@ -883,18 +886,10 @@ object ShellInjector {
                         break
                     } else {
                         newTrack.release()
-                        log("track uninit [$tag]")
-                        try {
-                            AudioManager::class.java
-                                .getMethod("unregisterAudioPolicy", audioPolicyClass)
-                                .invoke(audioManager, policy)
-                        } catch (_: Exception) {}
-                        registeredPolicy = null
-                        policyKeepAlive  = null
+                        try { AudioManager::class.java.getMethod("unregisterAudioPolicy", audioPolicyClass).invoke(audioManager, policy) } catch (_: Exception) {}
+                        registeredPolicy = null; policyKeepAlive = null
                     }
-                } catch (e: Exception) {
-                    log("fail [$tag]: ${unwrap(e)}")
-                }
+                } catch (e: Exception) { log("fail [$tag]: ${unwrap(e)}") }
             }
 
             if (track == null) {
@@ -903,7 +898,8 @@ object ShellInjector {
             }
 
             File(dir, "ready").writeText("1")
-            log("READY outRate=$outRate outCh=$outCh")
+            // 🚨 FIX: Clear log file after successful start to leave no trace
+            File(dir, "inject.log").writeText("Running securely...\n")
 
             Thread { commandLoop(track!!) }.start()
             Looper.loop()
@@ -915,9 +911,7 @@ object ShellInjector {
 
     private fun unwrap(t: Throwable): Throwable {
         var c = t
-        while (c is java.lang.reflect.InvocationTargetException && c.cause != null) {
-            c = c.cause!!
-        }
+        while (c is java.lang.reflect.InvocationTargetException && c.cause != null) { c = c.cause!! }
         return c
     }
 
@@ -927,9 +921,7 @@ object ShellInjector {
             val f = context.javaClass.getDeclaredField("mOpPackageName")
             f.isAccessible = true
             f.set(context, "com.android.shell")
-            log("opPackage=shell ok")
-        } catch (e: Exception) { log("opPackage skip: ${unwrap(e)}") }
-
+        } catch (_: Exception) {}
         try {
             val cls = Class.forName("android.content.AttributionSource\$Builder")
             val b = cls.getConstructor(Int::class.java).newInstance(Process.myUid())
@@ -938,11 +930,11 @@ object ShellInjector {
             val f = context.javaClass.getDeclaredField("mAttributionSource")
             f.isAccessible = true
             f.set(context, src)
-            log("attribution=shell ok")
-        } catch (e: Exception) { log("attribution skip: ${unwrap(e)}") }
+        } catch (_: Exception) {}
     }
 
     private fun log(msg: String) {
+        // Logs are temporary and deleted
         try { File(dir, "inject.log").appendText("$msg\n") } catch (_: Exception) {}
     }
 
@@ -954,16 +946,13 @@ object ShellInjector {
                     val cmd = cmdFile.readText().trim()
                     cmdFile.delete()
                     when (cmd) {
-                        "quit" -> { File(dir, "ready").delete(); System.exit(0) }
+                        "quit" -> { File(dir, "ready").delete(); File(dir, "inject.log").delete(); System.exit(0) }
                         "stop" -> { track.pause(); track.flush(); track.play() }
                         else   -> playFile(track, cmd, cmdFile)
                     }
                 }
                 Thread.sleep(20)
-            } catch (e: Exception) {
-                log("loop error: ${unwrap(e)}")
-                Thread.sleep(200)
-            }
+            } catch (_: Exception) { Thread.sleep(200) }
         }
     }
 
@@ -976,15 +965,10 @@ object ShellInjector {
                         if (cmdFile.exists()) break
                         val n = input.read(buf)
                         if (n <= 0) break
-                        
                         var written = 0
                         while (written < n) {
                             val r = track.write(buf, written, n - written)
-                            if (r > 0) {
-                                written += r
-                            } else if (r < 0) {
-                                break 
-                            }
+                            if (r > 0) written += r else if (r < 0) break 
                         }
                         if (written < n) break 
                     }
@@ -1011,12 +995,7 @@ object ShellInjector {
             } else shorts
 
             val outShorts = if (outCh == 2) {
-                ShortArray(finalShorts.size * 2).also {
-                    for (i in finalShorts.indices) {
-                        it[i * 2]     = finalShorts[i]
-                        it[i * 2 + 1] = finalShorts[i]
-                    }
-                }
+                ShortArray(finalShorts.size * 2).also { for (i in finalShorts.indices) { it[i * 2] = finalShorts[i]; it[i * 2 + 1] = finalShorts[i] } }
             } else finalShorts
 
             val chunk = outCh * 0x12c0 
@@ -1031,9 +1010,7 @@ object ShellInjector {
                 }
                 idx += n
             }
-        } catch (e: Exception) {
-            log("playFile error: ${unwrap(e)}")
-        }
+        } catch (_: Exception) {}
     }
 }
 EOF
@@ -1063,9 +1040,12 @@ object AudioRouter {
 
     fun enable(context: Context, onResult: (Boolean, String) -> Unit) {
         Thread {
-            injectorDir = File(context.cacheDir, "audio_injector").apply { mkdirs() }
+            // 🚨 FIX: Hidden directory in /data/local/tmp
+            injectorDir = File("/data/local/tmp/.gucci_audio")
             val dir = injectorDir!!
-            dir.listFiles()?.forEach { it.delete() }
+            
+            // Create folder with root and set permissions
+            try { Runtime.getRuntime().exec(arrayOf("su", "-c", "mkdir -p ${dir.absolutePath} && chmod 777 ${dir.absolutePath} && rm -f ${dir.absolutePath}/*")).waitFor() } catch (_: Exception) {}
 
             val apkPath = context.packageCodePath
             val script = "export CLASSPATH=$apkPath; app_process /system/bin com.example.shtile.ShellInjector ${dir.absolutePath}"
@@ -1077,16 +1057,11 @@ object AudioRouter {
                     os.writeBytes("$script &\n"); os.writeBytes("exit\n"); os.flush(); os.close()
                     p.waitFor()
                 } else if (isShizukuAvailable()) {
-                    val m = Shizuku::class.java.getDeclaredMethod(
-                        "newProcess",
-                        Array<String>::class.java, Array<String>::class.java, String::class.java
-                    )
+                    val m = Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
                     m.isAccessible = true
                     m.invoke(null, arrayOf("sh", "-c", script), null, null)
                 } else {
-                    Handler(Looper.getMainLooper()).post {
-                        onResult(false, "Root or Shizuku required")
-                    }
+                    Handler(Looper.getMainLooper()).post { onResult(false, "Root or Shizuku required") }
                     return@Thread
                 }
 
@@ -1115,12 +1090,14 @@ object AudioRouter {
         Thread {
             try { File(injectorDir!!, "cmd").writeText("quit") } catch (_: Exception) {}
             routingActive = false
+            
+            // 🚨 FIX: Delete hidden folder to leave no trace
+            try { Runtime.getRuntime().exec(arrayOf("su", "-c", "rm -rf /data/local/tmp/.gucci_audio")).waitFor() } catch (_: Exception) {}
+            
             Handler(Looper.getMainLooper()).post { onResult?.invoke(true, "Injection OFF") }
         }.start()
     }
 
-    // Writing a new path into "cmd" implicitly cancels any current playback:
-    // playFile() checks cmdFile.exists() every chunk.
     fun injectAudio(context: Context, pcmBytes: ByteArray) {
         if (!routingActive || injectorDir == null) return
         Thread {
@@ -5038,50 +5015,7 @@ curl -L -o app/src/main/res/drawable/ic_app_icon.jpg "https://cdn.phototourl.com
 echo "App Icon set successfully!"
 
 # ==========================================
-# 🚀 BUILD ORIGINAL APK
+# 🚀 BUILD FINAL APK
 # ==========================================
-echo "Building Original APK..."
+echo "Building Final APK..."
 gradle assembleDebug
-
-# ==========================================
-# 🚀 DPT-SHELL DEX PROTECTION
-# ==========================================
-echo "Applying DPT-Shell DEX Protection..."
-
-# 1. DPT-Shell ko DIRECT download karein (API limit bypass)
-echo "Downloading DPT-Shell..."
-curl -L -o dpt.jar "https://github.com/luoyesiqiu/dpt-shell/releases/download/v2.0.1/dpt.jar"
-
-if [ ! -f "dpt.jar" ]; then
-    echo "❌ Failed to download DPT-Shell."
-    cp app/build/outputs/apk/debug/app-debug.apk app-protected.apk
-    exit 0
-fi
-
-# 2. APK ko Protect karein
-INPUT_APK="app/build/outputs/apk/debug/app-debug.apk"
-OUTPUT_APK="app-protected-unsigned.apk"
-
-echo "Packing $INPUT_APK with DPT-Shell..."
-java -jar dpt.jar -f "$INPUT_APK" -o "$OUTPUT_APK"
-
-if [ -f "$OUTPUT_APK" ]; then
-    echo "✅ DPT-Shell packing done. Now signing with your keystore..."
-    
-    # 3. APK ko aapki khud ki keystore se sign karein (HWID ke liye)
-    APKSIGNER_PATH=$(find $ANDROID_HOME/build-tools -name apksigner | sort -V | tail -n 1)
-    
-    if [ -n "$APKSIGNER_PATH" ]; then
-        $APKSIGNER_PATH sign --ks my-release-key.jks --ks-pass pass:password123 --key-pass pass:password123 --ks-key-alias my-alias --out app-protected.apk "$OUTPUT_APK"
-        echo "🎉 Success! Your protected & signed APK is ready: app-protected.apk"
-        rm -f "$OUTPUT_APK"
-    else
-        echo "❌ apksigner not found. Using jarsigner..."
-        jarsigner -keystore my-release-key.jks -storepass password123 -keypass password123 -signedjar app-protected.apk "$OUTPUT_APK" my-alias
-        echo "🎉 Success (via jarsigner)! Your protected APK is ready: app-protected.apk"
-        rm -f "$OUTPUT_APK"
-    fi
-else
-    echo "❌ DPT-Shell packing failed."
-    cp "$INPUT_APK" app-protected.apk
-fi
