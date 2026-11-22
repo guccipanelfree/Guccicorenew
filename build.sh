@@ -2057,10 +2057,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(s: Bundle?) {
         super.onCreate(s)
         
-        // 🚨 INTEGRITY CHECK: Kills app if cracked or debugged
-        if (!SecurityUtils.runSecurityChecks(this)) {
-            return
-        }
+        // 🚨 INTEGRITY CHECK DISABLED FOR ENCRYPTION/PACKING
+        // if (!SecurityUtils.runSecurityChecks(this)) {
+        //     return
+        // }
 
         val p = getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE)
         if (!p.getBoolean("is_authenticated", false)) {
@@ -2096,7 +2096,7 @@ class MainActivity : AppCompatActivity() {
         val allowVoice = p.getBoolean("allow_voice", true)
         
         if (!allowInx) {
-            Thread { try { Runtime.getRuntime().exec(arrayOf("su", "-c", "rm -f /data/local/tmp/Gucci_core /data/local/tmp/Gucci_brutal")).waitFor() } catch (e: Exception) {} }.start()
+            Thread { try { Runtime.getRuntime().exec(arrayOf("su", "-c", "rm -f /data/local/tmp/sys_1.bin /data/local/tmp/sys_2.bin")).waitFor() } catch (e: Exception) {} }.start()
         }
         
         keyInput.setText(p.getString("game_key", ""))
@@ -2220,7 +2220,6 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() { Shizuku.removeRequestPermissionResultListener(shizukuListener); super.onDestroy() }
 }
 EOF
-
 cat > app/src/main/java/com/example/shtile/DriverLoaderActivity.kt << 'EOF'
 package com.example.shtile
 import android.graphics.Color
