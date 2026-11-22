@@ -595,12 +595,29 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
         
         <TextView android:id="@+id/tvLetterMini" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="24sp" android:textStyle="bold" android:layout_centerInParent="true"/>
         
-        <TextView android:id="@+id/tvNameMini" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold" android:maxLines="1" android:layout_alignParentBottom="true" android:gravity="center" android:layout_toStartOf="@+id/btnPlayMini" android:layout_toEndOf="@+id/tvStarMini" android:layout_marginBottom="14dp"
-            android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="4"/>
+        <!-- FIX: ADDED SOLID BACKGROUND AND CENTERED IT SO IT IS ALWAYS VISIBLE -->
+        <TextView android:id="@+id/tvNameMini" 
+            android:layout_width="match_parent" 
+            android:layout_height="wrap_content" 
+            android:text="Name" 
+            android:textColor="#FFFFFF" 
+            android:textSize="10sp" 
+            android:textStyle="bold" 
+            android:maxLines="1" 
+            android:ellipsize="end"
+            android:gravity="center" 
+            android:layout_alignParentBottom="true" 
+            android:layout_marginBottom="18dp" 
+            android:background="#AA000000"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:shadowColor="#000000" 
+            android:shadowDx="1.5" 
+            android:shadowDy="1.5" 
+            android:shadowRadius="2"/>
         
         <ImageView android:id="@+id/btnPlayMini" android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_media_play" app:tint="#00E5A0" android:layout_alignParentBottom="true" android:layout_alignParentStart="true" android:layout_margin="2dp"/>
         
-        <!-- FIX 3: ALIGNED TO RIGHT TO PREVENT OVERLAP -->
         <TextView android:id="@+id/tvTimeMini" 
             android:layout_width="wrap_content" 
             android:layout_height="wrap_content" 
@@ -778,6 +795,7 @@ object ShellInjector {
                         .invoke(policy, mix) as AudioTrack
 
                     if (newTrack.state == AudioTrack.STATE_INITIALIZED) {
+                        newTrack.setVolume(1.0f) // FIX: FORCE MAX VOLUME ON TRACK
                         newTrack.play()
                         track    = newTrack
                         outRate  = rate
@@ -874,7 +892,6 @@ object ShellInjector {
         try {
             if (outRate == 48000 && outCh == 1) {
                 FileInputStream(path).use { input ->
-                    // FIX 1: INCREASED BUFFER: 19200 bytes (0.2 seconds) instead of 9600
                     val buf = ByteArray(19200) 
                     while (true) {
                         if (cmdFile.exists()) break
@@ -887,7 +904,7 @@ object ShellInjector {
                             if (r > 0) {
                                 written += r
                             } else if (r < 0) {
-                                break // If track dies, break to prevent infinite loop
+                                break 
                             }
                         }
                         if (written < n) break 
@@ -1241,24 +1258,32 @@ object VoiceProcessor {
         }
     }
 
-    /**
-     * Soft-clipping volume boost for crystal-clear >100% playback.
-     * gain == 1.0f → returns input copy
-     * gain < 1.0f  → linear attenuation
-     * gain > 1.0f  → transparent boost up to 0.8 amplitude, then soft tanh knee above
-     */
+    // FIX: MUCH STRONGER BOOST & NORMALIZATION
     fun applyBoost(input: ShortArray, gain: Float): ShortArray {
         if (gain == 1.0f) return input.copyOf()
         val out = ShortArray(input.size)
+        
+        // Find the loudest part of the audio to normalize it
+        var maxVal = 1
+        for (s in input) {
+            val abs = Math.abs(s.toInt())
+            if (abs > maxVal) maxVal = abs
+        }
+        val normalizeFactor = 32767.0 / maxVal
+        
         for (i in input.indices) {
             val s = input[i] / 32768.0
-            val boosted = s * gain
+            // If gain is > 1.0, we normalize and boost heavily
+            val dynamicGain = if (gain > 1.0f) (gain * normalizeFactor).coerceAtMost(4.0f) else gain
+            val boosted = s * dynamicGain
+            
+            // Soft clip at 95% to prevent harsh distortion
             val clipped = if (boosted >= 0.0) {
-                if (boosted <= 0.8) boosted
-                else 0.8 + 0.2 * tanh((boosted - 0.8) / 0.2)
+                if (boosted <= 0.95) boosted
+                else 0.95 + 0.05 * tanh((boosted - 0.95) / 0.05)
             } else {
-                if (boosted >= -0.8) boosted
-                else -0.8 - 0.2 * tanh((-boosted - 0.8) / 0.2)
+                if (boosted >= -0.95) boosted
+                else -0.95 - 0.05 * tanh((-boosted - 0.95) / 0.05)
             }
             out[i] = (clipped * 32767.0).toInt().coerceIn(-32768, 32767).toShort()
         }
@@ -4656,7 +4681,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             val tvTime = v.findViewById<TextView>(R.id.tvTimeMini)
             
             tvLetter?.text = name.take(1).uppercase()
-            v.findViewById<TextView>(R.id.tvNameMini)?.text = if (name.length > 8) name.take(8) + ".." else name
+            v.findViewById<TextView>(R.id.tvNameMini)?.text = if (name.length > 12) name.take(12) + ".." else name
             
             val imgFile = File(f.parentFile, "${f.nameWithoutExtension}.jpg")
             if (imgFile.exists()) {
