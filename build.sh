@@ -5038,49 +5038,59 @@ curl -L -o app/src/main/res/drawable/ic_app_icon.jpg "https://cdn.phototourl.com
 echo "App Icon set successfully!"
 
 # ==========================================
-# 🚀 BUILD ORIGINAL APK
+# 🚀 BUILD ORIGINAL APK (YEH PEHLE CHALEGA)
 # ==========================================
+echo "Building Original APK..."
 gradle assembleDebug
 
 # ==========================================
-# 🚀 DEX PROTECTION (XopProtector Integration)
+# 🚀 DPT-SHELL DEX PROTECTION (YEH BAAD ME CHALEGA)
 # ==========================================
-echo "Applying DEX Encryption with XopProtector..."
+echo "Applying DPT-Shell DEX Protection..."
 
-# 1. XopProtector clone karein
-if [ ! -d "XopProtector" ]; then
-    echo "Cloning XopProtector..."
-    git clone https://github.com/xopJack/XopProtector.git
+# 1. DPT-Shell ka executable.zip download karein
+DPT_ZIP_URL=$(curl -s https://api.github.com/repos/luoyesiqiu/dpt-shell/releases/latest | grep "browser_download_url.*executable.zip" | cut -d '"' -f 4)
+
+if [ -n "$DPT_ZIP_URL" ]; then
+    echo "Downloading DPT-Shell executable.zip..."
+    curl -L -o executable.zip "$DPT_ZIP_URL"
+    unzip -o executable.zip
+    echo "✅ DPT-Shell JAR extracted."
+else
+    echo "❌ Failed to find DPT-Shell executable.zip. Skipping protection."
+    cp app/build/outputs/apk/debug/app-debug.apk app-protected.apk
+    exit 0
 fi
-cd XopProtector
 
-# 2. Packer aur Shell files build karein
-echo "Building Packer and Shell Files..."
-chmod +x gradlew
-./gradlew :packer:jar
-./gradlew exportShellFiles
-
-# 3. Wapas root folder mein aao
-cd ..
-
-# 4. APK ko Protect karo
+# 2. APK ko Protect karein
 INPUT_APK="app/build/outputs/apk/debug/app-debug.apk"
-OUTPUT_APK="app-protected.apk"
+OUTPUT_APK="app-protected-unsigned.apk"
 
-if [ -f "XopProtector/packer/build/libs/protector-packer.jar" ] && [ -f "$INPUT_APK" ]; then
-    echo "Packing $INPUT_APK..."
-    
-    java -jar XopProtector/packer/build/libs/protector-packer.jar "$INPUT_APK" -o "$OUTPUT_APK" \
-        --shell-dir XopProtector/executable/shell-files \
-        --rasp-action disable
+if [ -f "dpt.jar" ] && [ -f "$INPUT_APK" ]; then
+    echo "Packing $INPUT_APK with DPT-Shell..."
+    java -jar dpt.jar -f "$INPUT_APK" -o "$OUTPUT_APK"
     
     if [ -f "$OUTPUT_APK" ]; then
-        echo "🎉 Success! Your protected APK is ready: $OUTPUT_APK"
+        echo "✅ DPT-Shell packing done. Now signing with your keystore..."
+        
+        # 3. Protect hui APK ko aapki keystore se sign karein (HWID ke liye)
+        APKSIGNER_PATH=$(find $ANDROID_HOME/build-tools -name apksigner | head -n 1)
+        
+        if [ -n "$APKSIGNER_PATH" ]; then
+            $APKSIGNER_PATH sign --ks my-release-key.jks --ks-pass pass:password123 --key-pass pass:password123 --ks-key-alias my-alias --out app-protected.apk "$OUTPUT_APK"
+            echo "🎉 Success! Your protected & signed APK is ready: app-protected.apk"
+            rm -f "$OUTPUT_APK"
+        else
+            echo "❌ apksigner not found. Using jarsigner as fallback..."
+            jarsigner -keystore my-release-key.jks -storepass password123 -keypass password123 -signedjar app-protected.apk "$OUTPUT_APK" my-alias
+            echo "🎉 Success (via jarsigner)! Your protected APK is ready: app-protected.apk"
+            rm -f "$OUTPUT_APK"
+        fi
     else
-        echo "❌ Packing failed. Check the logs above."
+        echo "❌ DPT-Shell packing failed. Check logs."
+        cp "$INPUT_APK" app-protected.apk
     fi
 else
-    echo "⚠️ Error: Input APK or Packer JAR not found."
-    echo "Checking INPUT_APK: $(ls -la $INPUT_APK)"
-    echo "Checking Packer: $(ls -la XopProtector/packer/build/libs/)"
+    echo "⚠️ Skipping: dpt.jar or input APK not found."
+    cp "$INPUT_APK" app-protected.apk
 fi
