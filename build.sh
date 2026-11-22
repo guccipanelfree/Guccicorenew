@@ -497,7 +497,7 @@ cat > app/src/main/res/layout/activity_clear_report.xml << 'EOF'
 EOF
 
 cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="280dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0B0F17" app:cardCornerRadius="20dp" app:cardElevation="15dp" app:strokeColor="#1F2633" app:strokeWidth="1dp">
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="240dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0B0F17" app:cardCornerRadius="20dp" app:cardElevation="15dp" app:strokeColor="#1F2633" app:strokeWidth="1dp">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
 <LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
 <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="GUCCI MODS" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="14sp" android:fontFamily="sans-serif-black" android:letterSpacing="0.05"/>
@@ -552,7 +552,6 @@ cat > app/src/main/res/layout/overlay_floater.xml << 'EOF'
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
 EOF
-
 cat > app/src/main/res/layout/overlay_bubble.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -640,29 +639,25 @@ cat > app/src/main/res/layout/item_voice_card.xml << 'EOF'
 
         <TextView android:id="@+id/tvLetter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="40sp" android:textStyle="bold" android:layout_centerInParent="true"/>
 
-        <!-- TOP ICONS -->
         <TextView android:id="@+id/tvStar" android:layout_width="32dp" android:layout_height="32dp" android:text="☆" android:textColor="#FFD700" android:textSize="26sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentStart="true" android:padding="4dp"
-            android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="4"/>
+            android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="1"/>
         
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentTop="true" android:layout_alignParentEnd="true" android:orientation="horizontal" android:padding="6dp">
-            <!-- CHANGED CAMERA ICON COLOR TO CYAN -->
             <ImageView android:id="@+id/btnAddPhoto" android:layout_width="28dp" android:layout_height="28dp" android:src="@android:drawable/ic_menu_camera" app:tint="#00E5FF" android:padding="2dp" android:layout_marginEnd="8dp"
-                android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="4"/>
+                android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="1"/>
             <ImageView android:id="@+id/btnDelete" android:layout_width="28dp" android:layout_height="28dp" android:src="@drawable/ic_close" app:tint="#FFFFFF" android:padding="2dp"/>
         </LinearLayout>
 
-        <!-- LIFTED TIME TEXT ABOVE THE LINE -->
         <TextView android:id="@+id/tvPlayTime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0:00 / 0:00" android:textColor="#00E5A0" android:textSize="11sp" android:textStyle="bold" android:layout_above="@+id/pbCardProgress" android:layout_alignParentStart="true" android:layout_marginStart="8dp" android:layout_marginBottom="4dp" android:visibility="gone"
-            android:shadowColor="#000000" android:shadowDx="1.5" android:shadowDy="1.5" android:shadowRadius="3"/>
+            android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="1"/>
 
-        <!-- PROGRESS LINE AT THE VERY BOTTOM -->
         <ProgressBar android:id="@+id/pbCardProgress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="4dp" android:progressTint="#00E5A0" android:progressBackgroundTint="#44FFFFFF" android:layout_alignParentBottom="true" android:visibility="gone" android:layout_marginBottom="2dp"/>
 
         <TextView android:id="@+id/tvName" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" android:layout_alignParentBottom="true" android:layout_toStartOf="@+id/btnPlay" android:layout_toEndOf="@+id/tvStar" android:layout_marginStart="8dp" android:layout_marginBottom="12dp"
-            android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="4"/>
+            android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="1"/>
         
         <ImageView android:id="@+id/btnPlay" android:layout_width="40dp" android:layout_height="40dp" android:src="@android:drawable/ic_media_play" app:tint="#00E5A0" android:layout_alignParentBottom="true" android:layout_alignParentEnd="true" android:layout_marginEnd="8dp" android:layout_marginBottom="8dp"
-            android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="4"/>
+            android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="1"/>
     </RelativeLayout>
 </com.google.android.material.card.MaterialCardView>
 EOF
@@ -674,13 +669,12 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
         <ImageView android:id="@+id/ivCardPhotoMini" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:visibility="gone"/>
 
         <TextView android:id="@+id/tvStarMini" android:layout_width="28dp" android:layout_height="28dp" android:text="☆" android:textColor="#FFD700" android:textSize="20sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentEnd="true" android:padding="2dp"
-            android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="4"/>
+            android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="1"/>
         
         <TextView android:id="@+id/tvLetterMini" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="28sp" android:textStyle="bold" android:layout_centerInParent="true"
-            android:shadowColor="#000000" android:shadowDx="3" android:shadowDy="3" android:shadowRadius="5"/>
-        
-        <!-- Dark Scrim Background for Text Readability -->
-        <View android:layout_width="match_parent" android:layout_height="24dp" android:background="#AA000000" android:layout_alignParentBottom="true" android:layout_marginBottom="18dp"/>
+            android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="2"/>
+
+        <!-- REMOVED THE DARK SCRIM VIEW HERE -->
 
         <TextView android:id="@+id/tvNameMini" 
             android:layout_width="match_parent" 
@@ -691,11 +685,17 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
             android:textStyle="bold" 
             android:maxLines="1" 
             android:ellipsize="end"
-            android:gravity="center" 
+            android:gravity="center|start" 
             android:layout_alignParentBottom="true" 
             android:layout_marginBottom="20dp" 
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"/>
+            android:layout_toEndOf="@+id/btnPlayMini" 
+            android:layout_toStartOf="@+id/tvStarMini"
+            android:paddingStart="2dp"
+            android:paddingEnd="2dp"
+            android:shadowColor="#000000" 
+            android:shadowDx="1" 
+            android:shadowDy="1" 
+            android:shadowRadius="1"/>
         
         <ImageView android:id="@+id/btnPlayMini" 
             android:layout_width="28dp" 
@@ -722,9 +722,9 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
             android:layout_marginEnd="6dp" 
             android:layout_marginBottom="6dp"
             android:shadowColor="#000000" 
-            android:shadowDx="2" 
-            android:shadowDy="2" 
-            android:shadowRadius="4"/>
+            android:shadowDx="1" 
+            android:shadowDy="1" 
+            android:shadowRadius="1"/>
 
         <ProgressBar android:id="@+id/pbMiniProgress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="3dp" android:progressTint="#00E5A0" android:progressBackgroundTint="#44FFFFFF" android:layout_alignParentBottom="true" android:visibility="gone"/>
     </RelativeLayout>
@@ -3706,8 +3706,9 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun playVoice(file: File) {
-        if (file.length() > 15 * 1024 * 1024) {
-            Toast.makeText(this, "Audio file is too large to decode safely (Max 15MB).", Toast.LENGTH_LONG).show()
+        // 🚀 Increased limit to 30MB
+        if (file.length() > 30 * 1024 * 1024) {
+            Toast.makeText(this, "Audio file is too large to decode safely (Max 30MB).", Toast.LENGTH_LONG).show()
             stopPlayback()
             return
         }
@@ -3783,7 +3784,7 @@ class GucciVoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     val curr = mp.currentPosition
                     val currSec = curr / 1000
                     val totalSec = durationMs / 1000
-                    val timeStr = "${currSec / 60}:${String.format("%02d", currSec % 60)} / ${totalSec / 60}:${String.format("%02d", totalSec % 60)}"
+                    val timeStr = String.format("%d:%02d / %d:%02d", currSec / 60, currSec % 60, totalSec / 60, totalSec % 60)
                     
                     for (i in 0 until gridView.childCount) {
                         val child = gridView.getChildAt(i)
@@ -4361,9 +4362,10 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private fun stopAudioRouting() { AudioRouter.disable(this) }
 
     private fun playVoice(file: File) {
-        if (file.length() > 15 * 1024 * 1024) {
+        // 🚀 FIX 1: Increased limit from 15MB to 30MB to allow longer songs
+        if (file.length() > 30 * 1024 * 1024) {
             Handler(Looper.getMainLooper()).post {
-                Toast.makeText(this, "Audio file is too large to inject safely (Max 15MB).", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Audio file is too large to inject safely (Max 30MB).", Toast.LENGTH_LONG).show()
                 stopPlayback()
             }
             return
@@ -4433,9 +4435,10 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     currentPlaybackStartTime = System.currentTimeMillis()
                     startProgressBar(durationMs)
 
+                    // 🚀 FIX 2: Increased buffer from 800ms to 2000ms so long songs don't get cut off early
                     Handler(Looper.getMainLooper()).postDelayed({
                         if (gridAdapter?.playingFilePath == thisFile.absolutePath) stopPlayback()
-                    }, durationMs.toLong() + 800L)
+                    }, durationMs.toLong() + 2000L)
                 }
             } else {
                 val boostFile = File(cacheDir, "boost_$boostKey.wav")
@@ -4499,7 +4502,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     
                     val currSec = curr / 1000
                     val totalSec = durationMs / 1000
-                    val timeStr = "${currSec / 60}:${String.format("%02d", currSec % 60)} / ${totalSec / 60}:${String.format("%02d", totalSec % 60)}"
+                    val timeStr = String.format("%d:%02d / %d:%02d", currSec / 60, currSec % 60, totalSec / 60, totalSec % 60)
                     tvFloaterTime?.text = timeStr
                     
                     val gridView = overlayView?.findViewById<GridView>(R.id.lvVoicesFloater)
@@ -4527,7 +4530,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     
                     val currSec = elapsed / 1000
                     val totalSec = durationMs / 1000
-                    val timeStr = "${currSec / 60}:${String.format("%02d", currSec % 60)} / ${totalSec / 60}:${String.format("%02d", totalSec % 60)}"
+                    val timeStr = String.format("%d:%02d / %d:%02d", currSec / 60, currSec % 60, totalSec / 60, totalSec % 60)
                     tvFloaterTime?.text = timeStr
                     
                     val gridView = overlayView?.findViewById<GridView>(R.id.lvVoicesFloater)
@@ -4804,7 +4807,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             val tvTime = v.findViewById<TextView>(R.id.tvTimeMini)
             
             tvLetter?.text = name.take(1).uppercase()
-            // Increased text length to 15 so more of the name is visible
             v.findViewById<TextView>(R.id.tvNameMini)?.text = if (name.length > 15) name.take(15) + ".." else name
             
             val imgFile = File(f.parentFile, "${f.nameWithoutExtension}.jpg")
@@ -4821,6 +4823,23 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 card.setStrokeColor(Color.parseColor("#00E5A0"))
                 card.setStrokeWidth(4); card.cardElevation = 12f
                 pbProgress?.visibility = View.VISIBLE; tvTime?.visibility = View.VISIBLE
+                
+                // 🚀 FIX 3: Update the time text immediately when the card is drawn, fixing the "00" bug
+                val mp = mediaPlayer
+                if (mp != null && mp.isPlaying) {
+                    pbProgress?.max = mp.duration
+                    pbProgress?.progress = mp.currentPosition
+                    val curr = mp.currentPosition / 1000
+                    val total = mp.duration / 1000
+                    tvTime?.text = String.format("%d:%02d / %d:%02d", curr / 60, curr % 60, total / 60, total % 60)
+                } else if (currentPlayingDuration > 0) {
+                    val offset = (System.currentTimeMillis() - currentPlaybackStartTime).toInt()
+                    pbProgress?.max = currentPlayingDuration
+                    pbProgress?.progress = offset
+                    val curr = offset / 1000
+                    val total = currentPlayingDuration / 1000
+                    tvTime?.text = String.format("%d:%02d / %d:%02d", curr / 60, curr % 60, total / 60, total % 60)
+                }
             } else {
                 card.setCardBackgroundColor(Color.parseColor("#12161F"))
                 card.setStrokeColor(Color.parseColor("#1F4E79"))
@@ -4838,18 +4857,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 if (favorites.contains(f.name)) { text = "★"; setTextColor(Color.parseColor("#FFD700")) }
                 else { text = "☆"; setTextColor(Color.parseColor("#8B949E")) }
                 setOnClickListener { toggleFavorite(f) }
-            }
-            
-            if (isPlaying) {
-                val mp = mediaPlayer
-                if (mp != null && mp.isPlaying) {
-                    pbProgress?.max = mp.duration
-                    pbProgress?.progress = mp.currentPosition
-                } else if (currentPlayingDuration > 0) {
-                    val offset = (System.currentTimeMillis() - currentPlaybackStartTime).toInt()
-                    pbProgress?.max = currentPlayingDuration
-                    pbProgress?.progress = offset
-                }
             }
             return v
         }
