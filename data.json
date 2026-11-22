@@ -17,7 +17,8 @@
     },
     "GUCCI": {
       "deviceIds": [
-        "767531bb66591c89holiOnePlusOP5958L1qcomCPH2467CPH2467unknown"
+        "767531bb66591c89holiOnePlusOP5958L1qcomCPH2467CPH2467unknown",
+        "114d3a4a7cd63b90holiOnePlusOP5958L1qcomCPH2467CPH2467unknown"
       ],
       "hwidNames": {},
       "maxDevices": 9999,
