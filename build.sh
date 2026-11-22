@@ -5014,8 +5014,4 @@ echo "Downloading new App Icon..."
 curl -L -o app/src/main/res/drawable/ic_app_icon.jpg "https://cdn.phototourl.com/anon/2026-11-22-795d5e6c-929e-4ccc-a0b4-3a465e8bc638.jpg"
 echo "App Icon set successfully!"
 
-# ==========================================
-# 🚀 BUILD FINAL APK
-# ==========================================
-echo "Building Final APK..."
 gradle assembleDebug
