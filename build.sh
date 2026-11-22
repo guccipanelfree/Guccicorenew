@@ -120,7 +120,7 @@ dependencies {
 EOF
 cat > app/proguard-rules.pro << 'EOF'
 -allowaccessmodification
--repackageclasses ''
+# 🚨 FIX: -repackageclasses '' HATA DIYA HAI taaki app_process ShellInjector ko dhundh sake
 
 -keep class rikka.shizuku.** { *; }
 -dontwarn rikka.shizuku.**
@@ -132,10 +132,8 @@ cat > app/proguard-rules.pro << 'EOF'
     @android.webkit.JavascriptInterface <methods>;
 }
 
-# 🚨 CRITICAL FIX: Do NOT obfuscate these classes
--keep class com.example.shtile.ShellInjector {
-    public static void main(java.lang.String[]);
-}
+# 🚨 CRITICAL: In classes ko R8 se 100% bachana hai
+-keep class com.example.shtile.ShellInjector { *; }
 -keep class com.example.shtile.AudioRouter { *; }
 -keep class com.example.shtile.SecurityUtils { *; }
 EOF
@@ -898,7 +896,7 @@ object ShellInjector {
             }
 
             File(dir, "ready").writeText("1")
-            // 🚨 FIX: Clear log file after successful start to leave no trace
+            // 🚨 CLEAR LOGS: Koi trace na chhodne ke liye log file clear kar do
             File(dir, "inject.log").writeText("Running securely...\n")
 
             Thread { commandLoop(track!!) }.start()
@@ -934,7 +932,6 @@ object ShellInjector {
     }
 
     private fun log(msg: String) {
-        // Logs are temporary and deleted
         try { File(dir, "inject.log").appendText("$msg\n") } catch (_: Exception) {}
     }
 
@@ -1040,15 +1037,17 @@ object AudioRouter {
 
     fun enable(context: Context, onResult: (Boolean, String) -> Unit) {
         Thread {
-            // 🚨 FIX: Hidden directory in /data/local/tmp
-            injectorDir = File("/data/local/tmp/.gucci_audio")
+            // Use hidden directory in cache (Safer than /data/local/tmp)
+            injectorDir = File(context.cacheDir, ".gucci_audio").apply { mkdirs() }
             val dir = injectorDir!!
-            
-            // Create folder with root and set permissions
-            try { Runtime.getRuntime().exec(arrayOf("su", "-c", "mkdir -p ${dir.absolutePath} && chmod 777 ${dir.absolutePath} && rm -f ${dir.absolutePath}/*")).waitFor() } catch (_: Exception) {}
+            dir.listFiles()?.forEach { it.delete() }
 
-            val apkPath = context.packageCodePath
-            val script = "export CLASSPATH=$apkPath; app_process /system/bin com.example.shtile.ShellInjector ${dir.absolutePath}"
+            // 🚨 FIX: Copy APK to a readable location for app_process
+            val originalApk = context.packageCodePath
+            val tempApk = File(context.cacheDir, "temp_base.apk")
+            try { File(originalApk).copyTo(tempApk, overwrite = true) } catch (_: Exception) {}
+
+            val script = "export CLASSPATH=${tempApk.absolutePath}; app_process /system/bin com.example.shtile.ShellInjector ${dir.absolutePath}"
 
             try {
                 if (isRootAvailable()) {
@@ -1078,7 +1077,7 @@ object AudioRouter {
 
                 routingActive = success
                 Handler(Looper.getMainLooper()).post {
-                    onResult(success, if (success) "✅ Mic Injection Active" else "❌ Injector failed — see inject.log")
+                    onResult(success, if (success) "✅ Mic Injection Active" else "❌ Injector failed — check inject.log")
                 }
             } catch (e: Exception) {
                 Handler(Looper.getMainLooper()).post { onResult(false, e.message ?: "Error") }
@@ -1090,10 +1089,7 @@ object AudioRouter {
         Thread {
             try { File(injectorDir!!, "cmd").writeText("quit") } catch (_: Exception) {}
             routingActive = false
-            
-            // 🚨 FIX: Delete hidden folder to leave no trace
-            try { Runtime.getRuntime().exec(arrayOf("su", "-c", "rm -rf /data/local/tmp/.gucci_audio")).waitFor() } catch (_: Exception) {}
-            
+            try { File(context.cacheDir, "temp_base.apk").delete() } catch (_: Exception) {}
             Handler(Looper.getMainLooper()).post { onResult?.invoke(true, "Injection OFF") }
         }.start()
     }
