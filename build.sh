@@ -4997,10 +4997,6 @@ object SecurityUtils {
     }
 }
 EOF
-rm -f app/src/main/res/drawable/ic_app_icon.xml
-echo "Downloading new App Icon..."
-curl -L -o app/src/main/res/drawable/ic_app_icon.jpg "https://cdn.phototourl.com/anon/2026-11-22-795d5e6c-929e-4ccc-a0b4-3a465e8bc638.jpg"
-echo "App Icon set successfully!"
 # ==========================================
 # 🚀 ASSET OBFUSCATION (HIDE ASSETS & AUTO-FIX CODE)
 # ==========================================
@@ -5033,6 +5029,13 @@ sed -i 's/Gucci_M/ui_8.bin/g' app/src/main/java/com/example/shtile/*.kt
 sed -i 's/Gucci_L/ui_9.bin/g' app/src/main/java/com/example/shtile/*.kt
 
 echo "Assets hidden and code auto-updated successfully!"
+# ==========================================
+# 🚀 NEW APP ICON SETUP
+# ==========================================
+rm -f app/src/main/res/drawable/ic_app_icon.xml
+echo "Downloading new App Icon..."
+curl -L -o app/src/main/res/drawable/ic_app_icon.jpg "https://cdn.phototourl.com/anon/2026-11-22-795d5e6c-929e-4ccc-a0b4-3a465e8bc638.jpg"
+echo "App Icon set successfully!"
 
 # ==========================================
 # 🚀 BUILD APP
