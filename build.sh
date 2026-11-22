@@ -5053,7 +5053,7 @@ echo "Downloading DPT-Shell..."
 curl -L -o dpt.jar "https://github.com/luoyesiqiu/dpt-shell/releases/download/v2.0.1/dpt.jar"
 
 if [ ! -f "dpt.jar" ]; then
-    echo "❌ Failed to download DPT-Shell. Aborting protection."
+    echo "❌ Failed to download DPT-Shell."
     cp app/build/outputs/apk/debug/app-debug.apk app-protected.apk
     exit 0
 fi
