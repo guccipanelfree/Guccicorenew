@@ -668,17 +668,20 @@ cat > app/src/main/res/layout/item_voice_card.xml << 'EOF'
 EOF
 cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/cardMini" android:layout_width="match_parent" android:layout_height="85dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="8dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/cardMini" android:layout_width="match_parent" android:layout_height="105dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="10dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
     <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
         
         <ImageView android:id="@+id/ivCardPhotoMini" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:visibility="gone"/>
 
-        <TextView android:id="@+id/tvStarMini" android:layout_width="24dp" android:layout_height="24dp" android:text="☆" android:textColor="#FFD700" android:textSize="18sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentEnd="true" android:padding="2dp"
-            android:shadowColor="#000000" android:shadowDx="1.5" android:shadowDy="1.5" android:shadowRadius="3"/>
+        <TextView android:id="@+id/tvStarMini" android:layout_width="28dp" android:layout_height="28dp" android:text="☆" android:textColor="#FFD700" android:textSize="20sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentEnd="true" android:padding="2dp"
+            android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="4"/>
         
-        <TextView android:id="@+id/tvLetterMini" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="24sp" android:textStyle="bold" android:layout_centerInParent="true"/>
+        <TextView android:id="@+id/tvLetterMini" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="28sp" android:textStyle="bold" android:layout_centerInParent="true"
+            android:shadowColor="#000000" android:shadowDx="3" android:shadowDy="3" android:shadowRadius="5"/>
         
-        <!-- FIX 1: REMOVED BLACK BACKGROUND, ADDED PADDING SO IT DOESN'T OVERLAP BUTTONS -->
+        <!-- Dark Scrim Background for Text Readability -->
+        <View android:layout_width="match_parent" android:layout_height="24dp" android:background="#AA000000" android:layout_alignParentBottom="true" android:layout_marginBottom="18dp"/>
+
         <TextView android:id="@+id/tvNameMini" 
             android:layout_width="match_parent" 
             android:layout_height="wrap_content" 
@@ -690,15 +693,20 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
             android:ellipsize="end"
             android:gravity="center" 
             android:layout_alignParentBottom="true" 
-            android:layout_marginBottom="18dp" 
-            android:paddingStart="26dp"
-            android:paddingEnd="26dp"
-            android:shadowColor="#000000" 
-            android:shadowDx="2" 
-            android:shadowDy="2" 
-            android:shadowRadius="4"/>
+            android:layout_marginBottom="20dp" 
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"/>
         
-        <ImageView android:id="@+id/btnPlayMini" android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_media_play" app:tint="#00E5A0" android:layout_alignParentBottom="true" android:layout_alignParentStart="true" android:layout_margin="2dp"/>
+        <ImageView android:id="@+id/btnPlayMini" 
+            android:layout_width="28dp" 
+            android:layout_height="28dp" 
+            android:src="@android:drawable/ic_media_play" 
+            app:tint="#00E5A0" 
+            android:background="@drawable/bg_circle_grey"
+            android:layout_alignParentBottom="true" 
+            android:layout_alignParentStart="true" 
+            android:layout_margin="4dp"
+            android:padding="4dp"/>
         
         <TextView android:id="@+id/tvTimeMini" 
             android:layout_width="wrap_content" 
@@ -711,12 +719,12 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
             android:visibility="gone" 
             android:layout_alignParentBottom="true" 
             android:layout_alignParentEnd="true" 
-            android:layout_marginEnd="4dp" 
-            android:layout_marginBottom="2dp"
+            android:layout_marginEnd="6dp" 
+            android:layout_marginBottom="6dp"
             android:shadowColor="#000000" 
-            android:shadowDx="1.5" 
-            android:shadowDy="1.5" 
-            android:shadowRadius="3"/>
+            android:shadowDx="2" 
+            android:shadowDy="2" 
+            android:shadowRadius="4"/>
 
         <ProgressBar android:id="@+id/pbMiniProgress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="3dp" android:progressTint="#00E5A0" android:progressBackgroundTint="#44FFFFFF" android:layout_alignParentBottom="true" android:visibility="gone"/>
     </RelativeLayout>
@@ -2947,74 +2955,81 @@ cat > app/src/main/res/layout/activity_gucci_voice.xml << 'EOF'
 EOF
 cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="240dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="12dp" app:cardElevation="10dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
-<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="8dp">
-    <LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp">
-        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="👑 GUCCI VOICES" android:textColor="#4FC3F7" android:textStyle="bold" android:textSize="11sp" android:fontFamily="sans-serif-black"/>
-        <ImageButton android:id="@+id/btnMinimize" android:layout_width="20dp" android:layout_height="20dp" android:padding="2dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#8B949E" android:layout_marginEnd="4dp"/>
-        <ImageButton android:id="@+id/btnClose" android:layout_width="20dp" android:layout_height="20dp" android:padding="2dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="280dp" android:layout_height="wrap_content" app:cardBackgroundColor="#0A1120" app:cardCornerRadius="16dp" app:cardElevation="15dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
+    
+    <!-- PROFESSIONAL HEADER -->
+    <LinearLayout android:id="@+id/dragHandleTop" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="10dp">
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="👑 GUCCI VOICES" android:textColor="#4FC3F7" android:textStyle="bold" android:textSize="14sp" android:fontFamily="sans-serif-black"/>
+        <ImageButton android:id="@+id/btnMinimize" android:layout_width="28dp" android:layout_height="28dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_minimize" app:tint="#8B949E" android:layout_marginEnd="8dp"/>
+        <ImageButton android:id="@+id/btnClose" android:layout_width="28dp" android:layout_height="28dp" android:padding="4dp" android:background="@drawable/bg_circle_grey" android:src="@drawable/ic_close" app:tint="#FF4D4D"/>
     </LinearLayout>
     
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="4dp" android:layout_marginBottom="6dp">
-        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="INJECT GUCCI VOICES" android:textColor="#00E5A0" android:textSize="9sp" android:textStyle="bold"/>
+    <!-- INJECT SWITCH -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="40dp" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:paddingStart="12dp" android:paddingEnd="8dp" android:layout_marginBottom="10dp">
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="INJECT GUCCI VOICES" android:textColor="#00E5A0" android:textSize="11sp" android:textStyle="bold"/>
         <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/swInject" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="false"/>
     </LinearLayout>
     
-    <TextView android:id="@+id/tvCopyMixer" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ Routing failed. Tap here to copy Mixer Log." android:textColor="#FF4D4D" android:textSize="9sp" android:textStyle="bold" android:gravity="center" android:padding="4dp" android:visibility="gone"/>
+    <TextView android:id="@+id/tvCopyMixer" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ Routing failed. Tap to copy Log." android:textColor="#FF4D4D" android:textSize="10sp" android:textStyle="bold" android:gravity="center" android:padding="4dp" android:visibility="gone"/>
     
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="6dp">
-        <LinearLayout android:id="@+id/tabCards" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="2dp">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎵" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold"/>
+    <!-- TABS -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="36dp" android:orientation="horizontal" android:layout_marginBottom="10dp">
+        <LinearLayout android:id="@+id/tabCards" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="4dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎵" android:textColor="#FFFFFF" android:textSize="14sp"/>
         </LinearLayout>
-        <LinearLayout android:id="@+id/tabType" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="2dp">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💬" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold"/>
+        <LinearLayout android:id="@+id/tabType" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:background="@drawable/bg_box_dark" android:layout_marginEnd="4dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💬" android:textColor="#FFFFFF" android:textSize="14sp"/>
         </LinearLayout>
-        <LinearLayout android:id="@+id/tabLive" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:gravity="center" android:background="#12161F">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔴" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold"/>
+        <LinearLayout android:id="@+id/tabLive" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:background="@drawable/bg_box_dark">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔴" android:textColor="#FFFFFF" android:textSize="14sp"/>
         </LinearLayout>
     </LinearLayout>
     
+    <!-- PAGE: Cards -->
     <LinearLayout android:id="@+id/pageCards" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="visible">
-        <GridView android:id="@+id/lvVoicesFloater" android:layout_width="match_parent" android:layout_height="130dp" android:numColumns="3" android:verticalSpacing="2dp" android:horizontalSpacing="2dp"/>
         
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="4dp" android:paddingEnd="4dp" android:layout_marginBottom="2dp">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Vol: " android:textColor="#8B949E" android:textSize="8sp"/>
-            <SeekBar android:id="@+id/sbVolume" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:max="200" android:progress="100" android:minHeight="12dp" android:maxHeight="12dp"/>
-            <TextView android:id="@+id/tvVolume" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="100%" android:textColor="#00E5A0" android:textSize="8sp"/>
+        <GridView android:id="@+id/lvVoicesFloater" android:layout_width="match_parent" android:layout_height="180dp" android:numColumns="3" android:verticalSpacing="6dp" android:horizontalSpacing="6dp"/>
+        
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="4dp" android:paddingEnd="4dp" android:layout_marginTop="4dp" android:layout_marginBottom="4dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Vol:" android:textColor="#8B949E" android:textSize="10sp" android:textStyle="bold" android:layout_marginEnd="4dp"/>
+            <SeekBar android:id="@+id/sbVolume" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:max="200" android:progress="100" android:minHeight="16dp" android:maxHeight="16dp"/>
+            <TextView android:id="@+id/tvVolume" android:layout_width="35dp" android:layout_height="wrap_content" android:text="100%" android:textColor="#00E5A0" android:textSize="10sp" android:textStyle="bold" android:gravity="end"/>
         </LinearLayout>
 
-        <!-- FIX 4: NEW NOW PLAYING TEXT -->
-        <TextView android:id="@+id/tvNowPlaying" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sound playing" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end" android:gravity="center" android:layout_marginTop="2dp"/>
+        <TextView android:id="@+id/tvNowPlaying" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sound playing" android:textColor="#4FC3F7" android:textSize="12sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end" android:gravity="center" android:layout_marginTop="2dp"/>
 
-        <TextView android:id="@+id/tvFloaterTime" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#00E5A0" android:textSize="10sp" android:textStyle="bold" android:gravity="center" android:visibility="gone" android:layout_marginTop="2dp"/>
+        <TextView android:id="@+id/tvFloaterTime" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0:00 / 0:00" android:textColor="#00E5A0" android:textSize="11sp" android:textStyle="bold" android:gravity="center" android:visibility="gone" android:layout_marginTop="2dp"/>
 
-        <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="3dp" android:layout_marginTop="2dp" android:layout_marginBottom="4dp" android:progressTint="#00E5A0" android:visibility="invisible"/>
+        <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="4dp" android:layout_marginTop="4dp" android:layout_marginBottom="8dp" android:progressTint="#00E5A0" android:visibility="invisible"/>
         
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayRefresh" android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp" android:text="REFRESH" android:textColor="#000000" app:backgroundTint="#3B82F6" app:cornerRadius="4dp" android:textSize="8sp" android:layout_marginEnd="2dp" android:insetTop="0dp" android:insetBottom="0dp"/>
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayStop" android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp" android:text="STOP" android:textColor="#FFFFFF" app:backgroundTint="#FF4D4D" app:cornerRadius="4dp" android:textSize="8sp" android:insetTop="0dp" android:insetBottom="0dp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="38dp" android:orientation="horizontal">
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayRefresh" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:text="REFRESH" android:textColor="#000000" app:backgroundTint="#3B82F6" app:cornerRadius="8dp" android:textSize="10sp" android:layout_marginEnd="6dp" android:insetTop="0dp" android:insetBottom="0dp"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayStop" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:text="STOP" android:textColor="#FFFFFF" app:backgroundTint="#FF4D4D" app:cornerRadius="8dp" android:textSize="10sp" android:insetTop="0dp" android:insetBottom="0dp"/>
         </LinearLayout>
     </LinearLayout>
     
+    <!-- PAGE: Type -->
     <LinearLayout android:id="@+id/pageType" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
-        <Spinner android:id="@+id/spinnerVoiceSelectFloater" android:layout_width="match_parent" android:layout_height="28dp" android:layout_marginBottom="4dp" android:backgroundTint="#00E5A0"/>
-        <EditText android:id="@+id/etTypeHere" android:layout_width="match_parent" android:layout_height="32dp" android:hint="Type here..." android:textColor="#FFFFFF" android:textColorHint="#8B949E" android:background="#12161F" android:padding="4dp" android:textSize="10sp" android:layout_marginBottom="4dp"/>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySend" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:text="Play" android:textColor="#000000" app:backgroundTint="#00E5A0" app:cornerRadius="4dp" android:textSize="9sp" android:layout_marginEnd="2dp" android:insetTop="0dp" android:insetBottom="0dp"/>
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySave" android:layout_width="0dp" android:layout_weight="1" android:layout_height="28dp" android:text="Save" android:textColor="#FFFFFF" app:backgroundTint="#8B5CF6" app:cornerRadius="4dp" android:textSize="9sp" android:insetTop="0dp" android:insetBottom="0dp"/>
+        <Spinner android:id="@+id/spinnerVoiceSelectFloater" android:layout_width="match_parent" android:layout_height="38dp" android:layout_marginBottom="8dp" android:backgroundTint="#00E5A0"/>
+        <EditText android:id="@+id/etTypeHere" android:layout_width="match_parent" android:layout_height="42dp" android:hint="Type here..." android:textColor="#FFFFFF" android:textColorHint="#8B949E" android:background="#12161F" android:padding="8dp" android:textSize="12sp" android:layout_marginBottom="8dp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="38dp" android:orientation="horizontal">
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySend" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:text="Play" android:textColor="#000000" app:backgroundTint="#00E5A0" app:cornerRadius="8dp" android:textSize="12sp" android:layout_marginEnd="6dp" android:insetTop="0dp" android:insetBottom="0dp"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlaySave" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:text="Save" android:textColor="#FFFFFF" app:backgroundTint="#8B5CF6" app:cornerRadius="8dp" android:textSize="12sp" android:insetTop="0dp" android:insetBottom="0dp"/>
         </LinearLayout>
     </LinearLayout>
     
+    <!-- PAGE: Live -->
     <LinearLayout android:id="@+id/pageLive" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ Headphones recommended." android:textColor="#FF4D4D" android:textSize="8sp" android:textStyle="bold" android:layout_marginBottom="2dp" android:gravity="center"/>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:padding="4dp" android:layout_marginBottom="4dp">
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="🎤 Live Mode" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold"/>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ Headphones recommended." android:textColor="#FF4D4D" android:textSize="10sp" android:textStyle="bold" android:layout_marginBottom="6dp" android:gravity="center"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="40dp" android:orientation="horizontal" android:gravity="center_vertical" android:background="#12161F" android:paddingStart="12dp" android:paddingEnd="8dp" android:layout_marginBottom="8dp">
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="🎤 Live Mode" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold"/>
             <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/swLiveMic" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
         </LinearLayout>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="#12161F" android:padding="4dp" android:layout_marginBottom="4dp">
-            <TextView android:id="@+id/tvPitch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Pitch: 0" android:textColor="#8B949E" android:textSize="8sp"/>
-            <SeekBar android:id="@+id/sbPitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="24" android:progress="12"/>
-            <TextView android:id="@+id/tvEcho" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Echo: 0ms" android:textColor="#8B949E" android:textSize="8sp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="#12161F" android:padding="8dp" android:layout_marginBottom="8dp">
+            <TextView android:id="@+id/tvPitch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Pitch: 0" android:textColor="#8B949E" android:textSize="10sp" android:textStyle="bold"/>
+            <SeekBar android:id="@+id/sbPitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="24" android:progress="12" android:layout_marginBottom="4dp"/>
+            <TextView android:id="@+id/tvEcho" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Echo: 0ms" android:textColor="#8B949E" android:textSize="10sp" android:textStyle="bold"/>
             <SeekBar android:id="@+id/sbEcho" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="50" android:progress="0"/>
         </LinearLayout>
     </LinearLayout>
@@ -4102,7 +4117,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var tvNowPlaying: TextView? = null
     private var volumeLevel = 1.0f
 
-    // 🚀 FIX: Track playback state and name to survive minimize/restore
     private var currentPlayingDuration: Int = 0
     private var currentPlaybackStartTime: Long = 0L
     private var currentPlayingName: String? = null
@@ -4210,7 +4224,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             tvFloaterTime = overlayView?.findViewById(R.id.tvFloaterTime)
             tvNowPlaying = overlayView?.findViewById(R.id.tvNowPlaying)
 
-            // 🚀 FIX: Restore song name and progress bar when re-opening floater
             if (currentPlayingName != null && currentPlayingDuration > 0) {
                 tvNowPlaying?.text = "▶ $currentPlayingName"
                 val offset = (System.currentTimeMillis() - currentPlaybackStartTime).toInt()
@@ -4240,8 +4253,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     tvVolume?.text = "$progress%"
                     if (fromUser) {
                         prefs.edit().putInt("voice_volume", progress).apply()
-                        
-                        // 🚀 FIX: Real-time volume adjustment for MediaPlayer (0% to 100%)
                         val mp = mediaPlayer
                         if (mp != null && mp.isPlaying) {
                             val actualVol = Math.min(volumeLevel, 1.0f)
@@ -4362,7 +4373,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         try { AudioRouter.stopAudio(this) } catch (_: Exception) {}
         cancelMediaPlayer()
         
-        // 🚀 FIX: Save current playing name
         currentPlayingName = file.nameWithoutExtension
         Handler(Looper.getMainLooper()).post { tvNowPlaying?.text = "▶ $currentPlayingName" }
         
@@ -4732,7 +4742,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         try { AudioRouter.stopAudio(this) } catch (_: Exception) {}
         stopProgressBar()
         
-        // 🚀 FIX: Clear memory when playback stops
         currentPlayingDuration = 0
         currentPlaybackStartTime = 0L
         currentPlayingName = null
@@ -4795,7 +4804,8 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             val tvTime = v.findViewById<TextView>(R.id.tvTimeMini)
             
             tvLetter?.text = name.take(1).uppercase()
-            v.findViewById<TextView>(R.id.tvNameMini)?.text = if (name.length > 12) name.take(12) + ".." else name
+            // Increased text length to 15 so more of the name is visible
+            v.findViewById<TextView>(R.id.tvNameMini)?.text = if (name.length > 15) name.take(15) + ".." else name
             
             val imgFile = File(f.parentFile, "${f.nameWithoutExtension}.jpg")
             if (imgFile.exists()) {
