@@ -5033,6 +5033,38 @@ sed -i 's/Gucci_M/ui_8.bin/g' app/src/main/java/com/example/shtile/*.kt
 sed -i 's/Gucci_L/ui_9.bin/g' app/src/main/java/com/example/shtile/*.kt
 
 echo "Assets hidden and code auto-updated successfully!"
+# ==========================================
+# 🚀 DEX PROTECTION (XopProtector Integration)
+# ==========================================
+echo "Applying DEX Encryption with XopProtector..."
 
+# 1. Shell files generate karein
+echo "Generating Shell Files..."
+gradle exportShellFiles
+
+# 2. Latest XopProtector packer JAR download karein
+LATEST_PACKER_URL=$(curl -s https://api.github.com/repos/xopJack/XopProtector/releases/latest | grep "browser_download_url.*protector-packer-.*\.jar" | cut -d '"' -f 4)
+curl -L -o protector-packer.jar "$LATEST_PACKER_URL"
+
+# 3. Apni build hui APK ka sahi path (Debug build)
+INPUT_APK="app/build/outputs/apk/debug/app-debug.apk"
+OUTPUT_APK="app-protected.apk"
+
+# 4. XopProtector CLI chala kar APK ko protect karein
+if [ -f "protector-packer.jar" ] && [ -f "$INPUT_APK" ]; then
+    echo "Packing $INPUT_APK..."
+    
+    java -jar protector-packer.jar "$INPUT_APK" -o "$OUTPUT_APK" \
+        --shell-dir executable/shell-files \
+        --rasp-action disable
+    
+    if [ -f "$OUTPUT_APK" ]; then
+        echo "🎉 Success! Your protected APK is: $OUTPUT_APK"
+    else
+        echo "❌ Packing failed. Check the logs above."
+    fi
+else
+    echo "⚠️ Skipping protection: Input APK or Packer JAR not found."
+fi
 
 gradle assembleDebug
