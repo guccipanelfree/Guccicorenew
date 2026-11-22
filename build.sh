@@ -588,7 +588,6 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/cardMini" android:layout_width="match_parent" android:layout_height="85dp" app:cardBackgroundColor="#12161F" app:cardCornerRadius="8dp" app:strokeColor="#1F4E79" app:strokeWidth="1dp">
     <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
         
-        <!-- BACKGROUND IMAGE -->
         <ImageView android:id="@+id/ivCardPhotoMini" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:visibility="gone"/>
 
         <TextView android:id="@+id/tvStarMini" android:layout_width="24dp" android:layout_height="24dp" android:text="☆" android:textColor="#FFD700" android:textSize="18sp" android:gravity="center" android:layout_alignParentTop="true" android:layout_alignParentEnd="true" android:padding="2dp"
@@ -596,17 +595,30 @@ cat > app/src/main/res/layout/item_voice_card_mini.xml << 'EOF'
         
         <TextView android:id="@+id/tvLetterMini" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="A" android:textColor="#4FC3F7" android:textSize="24sp" android:textStyle="bold" android:layout_centerInParent="true"/>
         
-        <!-- NAME TEXT WITH SHADOW INSTEAD OF DARK BAR -->
         <TextView android:id="@+id/tvNameMini" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold" android:maxLines="1" android:layout_alignParentBottom="true" android:gravity="center" android:layout_toStartOf="@+id/btnPlayMini" android:layout_toEndOf="@+id/tvStarMini" android:layout_marginBottom="14dp"
             android:shadowColor="#000000" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="4"/>
         
         <ImageView android:id="@+id/btnPlayMini" android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_media_play" app:tint="#00E5A0" android:layout_alignParentBottom="true" android:layout_alignParentStart="true" android:layout_margin="2dp"/>
         
-        <!-- LIFTED TIME TEXT -->
-        <TextView android:id="@+id/tvTimeMini" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0:00 / 0:00" android:textColor="#00E5A0" android:textSize="9sp" android:textStyle="bold" android:gravity="center" android:visibility="gone" android:layout_above="@+id/pbMiniProgress" android:layout_marginBottom="2dp"
-            android:shadowColor="#000000" android:shadowDx="1.5" android:shadowDy="1.5" android:shadowRadius="3"/>
+        <!-- FIX 3: ALIGNED TO RIGHT TO PREVENT OVERLAP -->
+        <TextView android:id="@+id/tvTimeMini" 
+            android:layout_width="wrap_content" 
+            android:layout_height="wrap_content" 
+            android:text="0:00 / 0:00" 
+            android:textColor="#00E5A0" 
+            android:textSize="9sp" 
+            android:textStyle="bold" 
+            android:gravity="center" 
+            android:visibility="gone" 
+            android:layout_above="@+id/pbMiniProgress" 
+            android:layout_alignParentEnd="true" 
+            android:layout_marginEnd="4dp" 
+            android:layout_marginBottom="2dp"
+            android:shadowColor="#000000" 
+            android:shadowDx="1.5" 
+            android:shadowDy="1.5" 
+            android:shadowRadius="3"/>
 
-        <!-- PROGRESS LINE -->
         <ProgressBar android:id="@+id/pbMiniProgress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="3dp" android:progressTint="#00E5A0" android:progressBackgroundTint="#44FFFFFF" android:layout_alignParentBottom="true" android:visibility="gone"/>
     </RelativeLayout>
 </com.google.android.material.card.MaterialCardView>
@@ -641,8 +653,6 @@ object ShellInjector {
     private var outCh   = 1
     private lateinit var dir: File
 
-    // Keep the policy alive — otherwise the client-side proxy can be GC'd
-    // and audioserver silently unregisters the mix mid-call.
     @JvmStatic private var policyKeepAlive: Any? = null
 
     @JvmStatic
@@ -665,12 +675,6 @@ object ShellInjector {
             val mixRuleBuilderClass = Class.forName("android.media.audiopolicy.AudioMixingRule\$Builder")
             val ruleBuilder         = mixRuleBuilderClass.getConstructor().newInstance()
 
-            // ============================================================
-            // FIX 1 — MIX_ROLE_PLAYERS (1), NOT MIX_ROLE_INJECTOR (2).
-            // The friend's working APK uses role=1 with CAPTURE_PRESET
-            // rules; that is what makes the loopback audio reach the
-            // recorder instead of the speaker.
-            // ============================================================
             try {
                 val setRole = mixRuleBuilderClass.getMethod("setTargetMixRole", Int::class.java)
                 setRole.invoke(ruleBuilder, 1)
@@ -682,7 +686,7 @@ object ShellInjector {
             val capturePresetRule = mixRuleClass.getField("RULE_MATCH_ATTRIBUTE_CAPTURE_PRESET").getInt(null)
             val addRuleMethod = mixRuleBuilderClass.getMethod("addRule", AudioAttributes::class.java, Int::class.java)
 
-            val presets = intArrayOf(1, 5, 6, 7, 9) // MIC, CAMCORDER, VOICE_RECOGNITION, VOICE_COMMUNICATION, UNPROCESSED
+            val presets = intArrayOf(1, 5, 6, 7, 9)
             val attrBuilderClass = Class.forName("android.media.AudioAttributes\$Builder")
             val setCapturePreset = attrBuilderClass.getMethod("setCapturePreset", Int::class.java)
             for (p in presets) {
@@ -702,7 +706,6 @@ object ShellInjector {
 
             val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-            // Resolve constants at runtime, same as friend's build.
             var flagRender   = 1
             var flagLoopBack = 2
             try {
@@ -714,11 +717,6 @@ object ShellInjector {
 
             log("device=${Build.MODEL} api=${Build.VERSION.SDK_INT} LB=$flagLoopBack R=$flagRender")
 
-            // ============================================================
-            // FIX 2 — LOOP_BACK first (matches friend's working build).
-            // RENDER-only goes to the speaker, not to the mic — that is
-            // why your friends can't hear you and only you can.
-            // ============================================================
             val combos = listOf(
                 intArrayOf(48000, AudioFormat.CHANNEL_OUT_MONO,   flagLoopBack),
                 intArrayOf(48000, AudioFormat.CHANNEL_OUT_STEREO, flagLoopBack),
@@ -807,7 +805,6 @@ object ShellInjector {
                 System.exit(1)
             }
 
-            // Signal success
             File(dir, "ready").writeText("1")
             log("READY outRate=$outRate outCh=$outCh")
 
@@ -852,10 +849,6 @@ object ShellInjector {
         try { File(dir, "inject.log").appendText("$msg\n") } catch (_: Exception) {}
     }
 
-    // ============================================================
-    // FIX 3 — no separate "stop" file. cmd-file existence is the
-    // stop signal (same as friend's build). No stale-file race.
-    // ============================================================
     private fun commandLoop(track: AudioTrack) {
         val cmdFile = File(dir, "cmd")
         while (true) {
@@ -869,7 +862,7 @@ object ShellInjector {
                         else   -> playFile(track, cmd, cmdFile)
                     }
                 }
-                Thread.sleep(20)   // was 50 — snappier command pickup
+                Thread.sleep(20)
             } catch (e: Exception) {
                 log("loop error: ${unwrap(e)}")
                 Thread.sleep(200)
@@ -879,21 +872,30 @@ object ShellInjector {
 
     private fun playFile(track: AudioTrack, path: String, cmdFile: File) {
         try {
-            // FAST PATH: 48k mono, write raw bytes directly (friend's logic).
             if (outRate == 48000 && outCh == 1) {
                 FileInputStream(path).use { input ->
-                    val buf = ByteArray(0x2580)   // 9600 bytes = 4800 mono samples
+                    // FIX 1: INCREASED BUFFER: 19200 bytes (0.2 seconds) instead of 9600
+                    val buf = ByteArray(19200) 
                     while (true) {
                         if (cmdFile.exists()) break
                         val n = input.read(buf)
                         if (n <= 0) break
-                        track.write(buf, 0, n)
+                        
+                        var written = 0
+                        while (written < n) {
+                            val r = track.write(buf, written, n - written)
+                            if (r > 0) {
+                                written += r
+                            } else if (r < 0) {
+                                break // If track dies, break to prevent infinite loop
+                            }
+                        }
+                        if (written < n) break 
                     }
                 }
                 return
             }
 
-            // SLOW PATH: decode + resample to short array.
             val rawBytes = File(path).readBytes()
             val sb = ByteBuffer.wrap(rawBytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
             val shorts = ShortArray(sb.remaining()).also { sb.get(it) }
@@ -921,8 +923,7 @@ object ShellInjector {
                 }
             } else finalShorts
 
-            // Large chunks → fewer wakeups → lower latency, fewer glitches.
-            val chunk = outCh * 0x12c0   // 4800 samples per channel
+            val chunk = outCh * 0x12c0 
             var idx = 0
             while (idx < outShorts.size) {
                 if (cmdFile.exists()) break
@@ -2537,13 +2538,14 @@ class FloaterOverlayService : Service() {
         sw5.isChecked = prefs.getBoolean("f5_on", false); sw6.isChecked = prefs.getBoolean("f6_on", false)
         sw7.isChecked = prefs.getBoolean("f7_on", false)
         
-        sw1.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f1_on", isChecked).apply(); applyFloater(1, isChecked) }
-        sw2.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f2_on", isChecked).apply(); applyFloater(2, isChecked) }
-        sw3.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f3_on", isChecked).apply(); applyFloater(3, isChecked) }
-        sw4.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f4_on", isChecked).apply(); applyFloater(4, isChecked) }
-        sw5.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f5_on", isChecked).apply(); applyFloater(5, isChecked) }
-        sw6.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f6_on", isChecked).apply(); applyFloater(6, isChecked) }
-        sw7.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f7_on", isChecked).apply(); applyFloater(7, isChecked) }
+        // FIX 2: Wrapped in Thread to prevent UI freezing
+        sw1.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f1_on", isChecked).apply(); Thread { applyFloater(1, isChecked) }.start() }
+        sw2.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f2_on", isChecked).apply(); Thread { applyFloater(2, isChecked) }.start() }
+        sw3.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f3_on", isChecked).apply(); Thread { applyFloater(3, isChecked) }.start() }
+        sw4.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f4_on", isChecked).apply(); Thread { applyFloater(4, isChecked) }.start() }
+        sw5.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f5_on", isChecked).apply(); Thread { applyFloater(5, isChecked) }.start() }
+        sw6.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f6_on", isChecked).apply(); Thread { applyFloater(6, isChecked) }.start() }
+        sw7.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f7_on", isChecked).apply(); Thread { applyFloater(7, isChecked) }.start() }
         
         panel = v; wm.addView(v, params)
     }
@@ -2661,14 +2663,6 @@ class FloaterOverlayService : Service() {
     }
     override fun onDestroy() { panel?.let { runCatching { wm.removeView(it) } }; bubble?.let { runCatching { wm.removeView(it) } }; super.onDestroy() }
 }
-EOF
-cat > app/src/main/java/com/example/shtile/VoicePersona.kt << 'EOF'
-package com.example.shtile
-
-data class VoicePersona(
-    val id: String,   
-    val name: String  
-)
 EOF
 cat > app/src/main/res/layout/dialog_record_voice.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
@@ -2897,10 +2891,11 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
             <TextView android:id="@+id/tvVolume" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="100%" android:textColor="#00E5A0" android:textSize="8sp"/>
         </LinearLayout>
 
-        <!-- LIFTED TIME TEXT -->
+        <!-- FIX 4: NEW NOW PLAYING TEXT -->
+        <TextView android:id="@+id/tvNowPlaying" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sound playing" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end" android:gravity="center" android:layout_marginTop="2dp"/>
+
         <TextView android:id="@+id/tvFloaterTime" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#00E5A0" android:textSize="10sp" android:textStyle="bold" android:gravity="center" android:visibility="gone" android:layout_marginTop="2dp"/>
 
-        <!-- PROGRESS LINE -->
         <ProgressBar android:id="@+id/pbPlayback" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="3dp" android:layout_marginTop="2dp" android:layout_marginBottom="4dp" android:progressTint="#00E5A0" android:visibility="invisible"/>
         
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
@@ -4012,6 +4007,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var pbPlayback: ProgressBar? = null
     private var tvVolume: TextView? = null
     private var tvFloaterTime: TextView? = null 
+    private var tvNowPlaying: TextView? = null // FIX 5: ADDED MP3 NAME VARIABLE
     private var volumeLevel = 1.0f
 
     private val progressHandler = Handler(Looper.getMainLooper())
@@ -4113,6 +4109,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             pbPlayback = overlayView?.findViewById(R.id.pbPlayback)
             pbPlayback?.visibility = View.INVISIBLE
             tvFloaterTime = overlayView?.findViewById(R.id.tvFloaterTime)
+            tvNowPlaying = overlayView?.findViewById(R.id.tvNowPlaying) // FIX 5: INITIALIZED MP3 NAME
 
             tvVolume = overlayView?.findViewById(R.id.tvVolume)
             val sbVolume = overlayView?.findViewById<SeekBar>(R.id.sbVolume)
@@ -4233,6 +4230,10 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
         try { AudioRouter.stopAudio(this) } catch (_: Exception) {}
         cancelMediaPlayer()
+        
+        // FIX 5: UPDATE MP3 NAME TEXT
+        Handler(Looper.getMainLooper()).post { tvNowPlaying?.text = "▶ ${file.nameWithoutExtension}" }
+        
         gridAdapter?.playingFilePath = file.absolutePath
         gridAdapter?.notifyDataSetChanged()
 
@@ -4594,6 +4595,10 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         cancelMediaPlayer()
         try { AudioRouter.stopAudio(this) } catch (_: Exception) {}
         stopProgressBar()
+        
+        // FIX 5: RESET MP3 NAME TEXT ON STOP
+        tvNowPlaying?.text = "No sound playing"
+        
         gridAdapter?.playingFilePath = null
         gridAdapter?.notifyDataSetChanged()
     }
