@@ -33,7 +33,7 @@ jobs:
       - name: Build APK
         run: bash build.sh
 
-      # 👇 Yahan wapas normal APK upload hoga 👇
+      # 👇 YAHAN PATH NORMAL APK KA HAI (app-protected.apk NAHI) 👇
       - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
