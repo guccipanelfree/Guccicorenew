@@ -1,20 +1,5 @@
 {
   "keys": {
-    "GUCCI": {
-      "deviceIds": [
-        "401f462be855169choliOnePlusOP5958L1qcomCPH2467CPH2467unknown"
-      ],
-      "hwidNames": {},
-      "maxDevices": 1,
-      "revoked": false,
-      "expiresAt": 0,
-      "allowInx": true,
-      "allowFloater": true,
-      "allowKernel": true,
-      "allowVoice": true,
-      "reboot_now_time": 0,
-      "reboot_timer": 0
-    },
     "RYZEN": {
       "deviceIds": [
         "3ceff1283b117b79eqemotorolaeqemotorolaedge50pro"
