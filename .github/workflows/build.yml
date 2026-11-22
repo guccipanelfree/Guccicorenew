@@ -1,4 +1,4 @@
-name: Build & Protect APK (DPT-Shell)
+name: Build & Protect APK
 
 on:
   push:
@@ -30,23 +30,10 @@ jobs:
       - name: Make build.sh executable
         run: chmod +x build.sh
 
-      # 1. Original APK Build karein
-      - name: Build Original APK
+      - name: Run Build Script
         run: bash build.sh
 
-      # 2. DPT-Shell download karein aur APK ko protect karein
-      - name: Apply DPT-Shell Protection
-        run: |
-          echo "Downloading DPT-Shell..."
-          DPT_JAR_URL=$(curl -s https://api.github.com/repos/luoyesiqiu/dpt-shell/releases/latest | grep "browser_download_url.*dpt.jar" | cut -d '"' -f 4)
-          curl -L -o dpt.jar "$DPT_JAR_URL"
-          
-          echo "Applying DPT-Shell to app-debug.apk..."
-          # Aapki keystore file ka path aur password yahan pass kiya gaya hai
-          # taaki HWID change na ho
-          java -jar dpt.jar -f app/build/outputs/apk/debug/app-debug.apk -o app-protected.apk -k my-release-key.jks -p password123 -a my-alias -kp password123
-
-      # 3. Protected APK ko upload karein
+      # Protected APK Upload
       - name: Upload Protected APK
         if: success()
         uses: actions/upload-artifact@v4
