@@ -5038,26 +5038,22 @@ curl -L -o app/src/main/res/drawable/ic_app_icon.jpg "https://cdn.phototourl.com
 echo "App Icon set successfully!"
 
 # ==========================================
-# 🚀 BUILD ORIGINAL APK (YEH PEHLE CHALEGA)
+# 🚀 BUILD ORIGINAL APK
 # ==========================================
 echo "Building Original APK..."
 gradle assembleDebug
 
 # ==========================================
-# 🚀 DPT-SHELL DEX PROTECTION (YEH BAAD ME CHALEGA)
+# 🚀 DPT-SHELL DEX PROTECTION
 # ==========================================
 echo "Applying DPT-Shell DEX Protection..."
 
-# 1. DPT-Shell ka executable.zip download karein
-DPT_ZIP_URL=$(curl -s https://api.github.com/repos/luoyesiqiu/dpt-shell/releases/latest | grep "browser_download_url.*executable.zip" | cut -d '"' -f 4)
+# 1. DPT-Shell ko DIRECT download karein (API limit bypass)
+echo "Downloading DPT-Shell..."
+curl -L -o dpt.jar "https://github.com/luoyesiqiu/dpt-shell/releases/download/v2.0.1/dpt.jar"
 
-if [ -n "$DPT_ZIP_URL" ]; then
-    echo "Downloading DPT-Shell executable.zip..."
-    curl -L -o executable.zip "$DPT_ZIP_URL"
-    unzip -o executable.zip
-    echo "✅ DPT-Shell JAR extracted."
-else
-    echo "❌ Failed to find DPT-Shell executable.zip. Skipping protection."
+if [ ! -f "dpt.jar" ]; then
+    echo "❌ Failed to download DPT-Shell. Aborting protection."
     cp app/build/outputs/apk/debug/app-debug.apk app-protected.apk
     exit 0
 fi
@@ -5066,31 +5062,26 @@ fi
 INPUT_APK="app/build/outputs/apk/debug/app-debug.apk"
 OUTPUT_APK="app-protected-unsigned.apk"
 
-if [ -f "dpt.jar" ] && [ -f "$INPUT_APK" ]; then
-    echo "Packing $INPUT_APK with DPT-Shell..."
-    java -jar dpt.jar -f "$INPUT_APK" -o "$OUTPUT_APK"
+echo "Packing $INPUT_APK with DPT-Shell..."
+java -jar dpt.jar -f "$INPUT_APK" -o "$OUTPUT_APK"
+
+if [ -f "$OUTPUT_APK" ]; then
+    echo "✅ DPT-Shell packing done. Now signing with your keystore..."
     
-    if [ -f "$OUTPUT_APK" ]; then
-        echo "✅ DPT-Shell packing done. Now signing with your keystore..."
-        
-        # 3. Protect hui APK ko aapki keystore se sign karein (HWID ke liye)
-        APKSIGNER_PATH=$(find $ANDROID_HOME/build-tools -name apksigner | head -n 1)
-        
-        if [ -n "$APKSIGNER_PATH" ]; then
-            $APKSIGNER_PATH sign --ks my-release-key.jks --ks-pass pass:password123 --key-pass pass:password123 --ks-key-alias my-alias --out app-protected.apk "$OUTPUT_APK"
-            echo "🎉 Success! Your protected & signed APK is ready: app-protected.apk"
-            rm -f "$OUTPUT_APK"
-        else
-            echo "❌ apksigner not found. Using jarsigner as fallback..."
-            jarsigner -keystore my-release-key.jks -storepass password123 -keypass password123 -signedjar app-protected.apk "$OUTPUT_APK" my-alias
-            echo "🎉 Success (via jarsigner)! Your protected APK is ready: app-protected.apk"
-            rm -f "$OUTPUT_APK"
-        fi
+    # 3. APK ko aapki khud ki keystore se sign karein (HWID ke liye)
+    APKSIGNER_PATH=$(find $ANDROID_HOME/build-tools -name apksigner | sort -V | tail -n 1)
+    
+    if [ -n "$APKSIGNER_PATH" ]; then
+        $APKSIGNER_PATH sign --ks my-release-key.jks --ks-pass pass:password123 --key-pass pass:password123 --ks-key-alias my-alias --out app-protected.apk "$OUTPUT_APK"
+        echo "🎉 Success! Your protected & signed APK is ready: app-protected.apk"
+        rm -f "$OUTPUT_APK"
     else
-        echo "❌ DPT-Shell packing failed. Check logs."
-        cp "$INPUT_APK" app-protected.apk
+        echo "❌ apksigner not found. Using jarsigner..."
+        jarsigner -keystore my-release-key.jks -storepass password123 -keypass password123 -signedjar app-protected.apk "$OUTPUT_APK" my-alias
+        echo "🎉 Success (via jarsigner)! Your protected APK is ready: app-protected.apk"
+        rm -f "$OUTPUT_APK"
     fi
 else
-    echo "⚠️ Skipping: dpt.jar or input APK not found."
+    echo "❌ DPT-Shell packing failed."
     cp "$INPUT_APK" app-protected.apk
 fi
