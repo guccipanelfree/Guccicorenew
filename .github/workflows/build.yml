@@ -1,4 +1,5 @@
 name: Build INX-Loader APK
+
 on:
   push:
     branches: [ main, master ]
@@ -8,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up JDK 17
@@ -29,12 +30,13 @@ jobs:
       - name: Make build.sh executable
         run: chmod +x build.sh
 
-      - name: Build APK
+      - name: Build & Protect APK
         run: bash build.sh
 
-      - name: Upload APK
+      # 👇 YAHAN PATH CHANGE KIYA HAI (app-protected.apk) 👇
+      - name: Upload Protected APK
         if: success()
         uses: actions/upload-artifact@74fad66b98a6d799dc004d3353ccd0e6f6b2530e # v4
         with:
           name: inx-loader-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: app-protected.apk
