@@ -2560,7 +2560,9 @@ import android.app.*
 import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.provider.Settings
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -2573,11 +2575,11 @@ import androidx.appcompat.view.ContextThemeWrapper
 import com.google.android.material.materialswitch.MaterialSwitch
 import java.io.File
 class FloaterOverlayService : Service() {
-    private val floater1OnAsset = "Gucci_Ch"; private val floater1OffAsset = "Gucci_O"
-    private val floater2OnAsset = "Gucci_h"; private val floater2OffAsset = "Gucci_O"
-    private val floater3OnAsset = "Gucci_G"; private val floater3OffAsset = "Gucci_GO"
-    private val floater4OnAsset = "Gucci_CHS"; private val floater5OnAsset = "Gucci_B"
-    private val floater6OnAsset = "Gucci_M"; private val floater7OnAsset = "Gucci_L"
+    private val floater1OnAsset = "ui_1.bin"; private val floater1OffAsset = "ui_3.bin"
+    private val floater2OnAsset = "ui_2.bin"; private val floater2OffAsset = "ui_3.bin"
+    private val floater3OnAsset = "ui_4.bin"; private val floater3OffAsset = "ui_5.bin"
+    private val floater4OnAsset = "ui_6.bin"; private val floater5OnAsset = "ui_7.bin"
+    private val floater6OnAsset = "ui_8.bin"; private val floater7OnAsset = "ui_9.bin"
     private val glooTargetDir = "/storage/emulated/0/Android/data/com.dts.freefiremax/files/contentcache/Optional/android/"
     private val compulsoryDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/"
     private val avatarDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/avatar/"
@@ -2618,7 +2620,6 @@ class FloaterOverlayService : Service() {
         sw5.isChecked = prefs.getBoolean("f5_on", false); sw6.isChecked = prefs.getBoolean("f6_on", false)
         sw7.isChecked = prefs.getBoolean("f7_on", false)
         
-        // FIX 2: Wrapped in Thread to prevent UI freezing
         sw1.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f1_on", isChecked).apply(); Thread { applyFloater(1, isChecked) }.start() }
         sw2.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f2_on", isChecked).apply(); Thread { applyFloater(2, isChecked) }.start() }
         sw3.setOnCheckedChangeListener { _, isChecked -> prefs.edit().putBoolean("f3_on", isChecked).apply(); Thread { applyFloater(3, isChecked) }.start() }
@@ -2660,28 +2661,37 @@ class FloaterOverlayService : Service() {
     private fun applyFloater(number: Int, on: Boolean) {
         if (number == 3) { 
             val error = copyAssetToTarget(if (on) floater3OnAsset else floater3OffAsset, "fileinfo", glooTargetDir)
-            if (error == null) Toast.makeText(this, if (on) "✅ GLOO CROSS Activated" else "✅ GLOO CROSS Deactivated", Toast.LENGTH_SHORT).show() 
-            else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
+            // 🚀 CRASH FIX: Wrapped Toast in Handler so it runs on the UI thread
+            Handler(Looper.getMainLooper()).post {
+                if (error == null) Toast.makeText(this, if (on) "✅ GLOO CROSS Activated" else "✅ GLOO CROSS Deactivated", Toast.LENGTH_SHORT).show() 
+                else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
+            }
             return
         }
         if (number == 4 || number == 5 || number == 6) { 
             val asset = when(number) { 4 -> floater4OnAsset; 5 -> floater5OnAsset; else -> floater6OnAsset }
             val tag = when(number) { 4 -> "CHEST HS"; 5 -> "BODY HS"; else -> "MAGIC" }
             val error = copyWithBackup(asset, cacheResName, compulsoryDir, on, "cache_res.bak")
-            if (error == null) Toast.makeText(this, if (on) "✅ $tag Activated" else "✅ $tag Deactivated", Toast.LENGTH_SHORT).show() 
-            else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
+            Handler(Looper.getMainLooper()).post {
+                if (error == null) Toast.makeText(this, if (on) "✅ $tag Activated" else "✅ $tag Deactivated", Toast.LENGTH_SHORT).show() 
+                else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
+            }
             return
         }
         if (number == 7) { 
             val error = copyWithBackup(floater7OnAsset, pdcacheName, filesDir, on, "pdcache.bak")
-            if (error == null) Toast.makeText(this, if (on) "✅ LOCATION Activated" else "✅ LOCATION Deactivated", Toast.LENGTH_SHORT).show() 
-            else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
+            Handler(Looper.getMainLooper()).post {
+                if (error == null) Toast.makeText(this, if (on) "✅ LOCATION Activated" else "✅ LOCATION Deactivated", Toast.LENGTH_SHORT).show() 
+                else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
+            }
             return
         }
         val asset = when { number == 1 && on -> floater1OnAsset; number == 1 && !on -> floater1OffAsset; number == 2 && on -> floater2OnAsset; else -> floater2OffAsset }
         val error = copyAssetToTarget(asset, assetIndexerName, avatarDir); val tag = if (number == 1) "GUCCI DETECTOR" else "GUCCI HS"
-        if (error == null) Toast.makeText(this, if (on) "✅ $tag Activated" else "✅ $tag Deactivated", Toast.LENGTH_SHORT).show() 
-        else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
+        Handler(Looper.getMainLooper()).post {
+            if (error == null) Toast.makeText(this, if (on) "✅ $tag Activated" else "✅ $tag Deactivated", Toast.LENGTH_SHORT).show() 
+            else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
+        }
     }
     private fun copyWithBackup(assetName: String, targetName: String, targetDir: String, enable: Boolean, bakName: String): String? {
         try {
