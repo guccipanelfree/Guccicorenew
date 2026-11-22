@@ -45,32 +45,6 @@
       "allowVoice": true,
       "reboot_now_time": 0,
       "reboot_timer": 0
-    },
-    "ROHIT": {
-      "deviceIds": [
-        "d2c14738b789fdf8holiOnePlusOP5958L1CPH2467",
-        "2eadd70d8b72e43dholiOnePlusOP5958L1CPH2467",
-        "14149d0907d5e9cdholiOnePlusOP5958L1CPH2467",
-        "0b518127582e35a2holiOnePlusOP5958L1CPH2467",
-        "1d6c565271520612holiOnePlusOP5958L1CPH2467",
-        "71e4eb8693cf6a38holiOnePlusOP5958L1CPH2467",
-        "40736f2c003d41e1holiOnePlusOP5958L1CPH2467",
-        "6eb483f24ac790a6holiOnePlusOP5958L1CPH2467",
-        "13360edb3d72b478holiOnePlusOP5958L1CPH2467",
-        "c54c26a0fcbbee4aholiOnePlusOP5958L1CPH2467",
-        "e4b96581fc2ca6efholiOnePlusOP5958L1qcomCPH2467CPH2467unknown",
-        "066be1d273ce4820holiOnePlusOP5958L1qcomCPH2467CPH2467unknown"
-      ],
-      "hwidNames": {},
-      "maxDevices": 99,
-      "revoked": false,
-      "expiresAt": 1797874538791,
-      "allowInx": false,
-      "allowFloater": false,
-      "allowKernel": false,
-      "allowVoice": true,
-      "reboot_now_time": 0,
-      "reboot_timer": 0
     }
   },
   "reboot_global_time": 0,
