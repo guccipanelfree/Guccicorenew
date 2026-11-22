@@ -5033,38 +5033,52 @@ sed -i 's/Gucci_M/ui_8.bin/g' app/src/main/java/com/example/shtile/*.kt
 sed -i 's/Gucci_L/ui_9.bin/g' app/src/main/java/com/example/shtile/*.kt
 
 echo "Assets hidden and code auto-updated successfully!"
+
+# ==========================================
+# 🚀 BUILD APP
+# ==========================================
+gradle assembleDebug
+
 # ==========================================
 # 🚀 DEX PROTECTION (XopProtector Integration)
 # ==========================================
 echo "Applying DEX Encryption with XopProtector..."
 
-# 1. Shell files generate karein
-echo "Generating Shell Files..."
-gradle exportShellFiles
+# 1. Clone XopProtector
+if [ ! -d "XopProtector" ]; then
+    echo "Cloning XopProtector..."
+    git clone https://github.com/xopJack/XopProtector.git
+fi
+cd XopProtector
 
-# 2. Latest XopProtector packer JAR download karein
-LATEST_PACKER_URL=$(curl -s https://api.github.com/repos/xopJack/XopProtector/releases/latest | grep "browser_download_url.*protector-packer-.*\.jar" | cut -d '"' -f 4)
-curl -L -o protector-packer.jar "$LATEST_PACKER_URL"
+# 2. NDK automatically find karo
+export ANDROID_NDK_HOME=$(ls -d $ANDROID_HOME/ndk/* | head -n 1)
+echo "Using NDK: $ANDROID_NDK_HOME"
 
-# 3. Apni build hui APK ka sahi path (Debug build)
+# 3. Packer aur Shell files build karo
+echo "Building Packer and Shell Files (This takes 5-10 mins first time)..."
+chmod +x gradlew
+./gradlew :packer:jar
+./gradlew exportShellFiles
+
+# 4. Wapas root folder mein aao
+cd ..
+
+# 5. APK ko Protect karo
 INPUT_APK="app/build/outputs/apk/debug/app-debug.apk"
 OUTPUT_APK="app-protected.apk"
 
-# 4. XopProtector CLI chala kar APK ko protect karein
-if [ -f "protector-packer.jar" ] && [ -f "$INPUT_APK" ]; then
+if [ -f "XopProtector/packer/build/libs/protector-packer.jar" ] && [ -f "$INPUT_APK" ]; then
     echo "Packing $INPUT_APK..."
-    
-    java -jar protector-packer.jar "$INPUT_APK" -o "$OUTPUT_APK" \
-        --shell-dir executable/shell-files \
+    java -jar XopProtector/packer/build/libs/protector-packer.jar "$INPUT_APK" -o "$OUTPUT_APK" \
+        --shell-dir XopProtector/executable/shell-files \
         --rasp-action disable
     
     if [ -f "$OUTPUT_APK" ]; then
-        echo "🎉 Success! Your protected APK is: $OUTPUT_APK"
+        echo "🎉 Success! Your protected APK is ready: $OUTPUT_APK"
     else
         echo "❌ Packing failed. Check the logs above."
     fi
 else
     echo "⚠️ Skipping protection: Input APK or Packer JAR not found."
 fi
-
-gradle assembleDebug
