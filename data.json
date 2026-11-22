@@ -1,9 +1,7 @@
 {
   "keys": {
     "GUCCI": {
-      "deviceIds": [
-        "401f462be855169choliOnePlusOP5958L1qcomCPH2467CPH2467unknown"
-      ],
+      "deviceIds": [],
       "hwidNames": {},
       "maxDevices": 1,
       "revoked": false,
