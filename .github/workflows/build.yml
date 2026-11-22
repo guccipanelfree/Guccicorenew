@@ -1,4 +1,4 @@
-name: Build APK
+name: Build & Protect APK
 
 on:
   push:
@@ -18,6 +18,14 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      # 🚀 NDK Setup (XopProtector ko NDK chahiye hota hai)
+      - name: Setup Android NDK
+        run: |
+          # GitHub runner par pehle se installed NDK ka latest version uthayega
+          NDK_VERSION=$(ls -d $ANDROID_HOME/ndk/* | sort -V | tail -n 1 | xargs basename)
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$NDK_VERSION" >> $GITHUB_ENV
+          echo "Using NDK: $ANDROID_NDK_HOME"
+
       - name: Add Swap Space (Prevent Memory Crash)
         run: |
           sudo swapoff /swapfile 2>/dev/null || true
@@ -30,14 +38,14 @@ jobs:
       - name: Make build.sh executable
         run: chmod +x build.sh
 
-      - name: Build APK
+      - name: Build & Protect APK
         run: bash build.sh
 
-      # 👇 PATH WAPAS ORIGINAL APK KA KAR DIYA 👇
-      - name: Upload APK
+      # 👇 PROTECTED APK UPLOAD HOGA 👇
+      - name: Upload Protected APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: gucci-loader-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: gucci-loader-protected
+          path: app-protected.apk
           if-no-files-found: error
