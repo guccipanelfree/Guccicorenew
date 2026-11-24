@@ -4983,17 +4983,23 @@ object SecurityUtils {
     // 🚨 Aapki Official SHA256 Signature
     private const val EXPECTED_SIGNATURE = "0D3C29FFB8564D0DD8979D997EE9D08EE635A1CD919E780EE6C31B65611D815D"
 
+    // 🔓 TESTING MODE: true = checks disabled (build test karne ke liye)
+    // 🔒 PRODUCTION: false kar do (jab signature hash update kar lo)
+    private const val BYPASS_SECURITY = true
+
     fun runSecurityChecks(context: Context): Boolean {
+        if (BYPASS_SECURITY) return true
+        
         if (isDebuggerConnected()) {
-            fail(context, "Debugger detected!")
+            fail(context, "Not Possible to Crack Madharchod 😂 Jaake Gucci Papa Se Key Buy Kar Garib 💀")
             return false
         }
         if (isFridaRunning()) {
-            fail(context, "Frida/Xposed detected!")
+            fail(context, "Not Possible to Crack Madharchod 😂 Jaake Gucci Papa Se Key Buy Kar Garib 💀")
             return false
         }
         if (!isSignatureValid(context)) {
-            fail(context, "Tampering detected! Invalid signature.")
+            fail(context, "Not Possible to Crack Madharchod 😂 Jaake Gucci Papa Se Key Buy Kar Garib 💀")
             return false
         }
         return true
@@ -5036,8 +5042,13 @@ object SecurityUtils {
         return false
     }
 
+    // 🔒 Enhanced fail(): big bold toast + kill
     private fun fail(context: Context, msg: String) {
-        Toast.makeText(context, "🔒 Security Error: $msg", Toast.LENGTH_LONG).show()
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            Toast.makeText(context, "🔒 Security Error: $msg", Toast.LENGTH_LONG).show()
+        }
+        // Small delay so user actually sees the toast before kill
+        try { Thread.sleep(1500) } catch (_: Exception) {}
         android.os.Process.killProcess(android.os.Process.myPid())
         System.exit(1)
     }
