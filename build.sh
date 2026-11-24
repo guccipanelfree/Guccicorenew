@@ -792,30 +792,25 @@ object ShellInjector {
     fun main(args: Array<String>) {
         try {
             dir = File(args[0])
+            Thread.setDefaultUncaughtExceptionHandler { t, e ->
+                try { File(dir, "inject.log").appendText("UNCAUGHT[${t.name}]: ${e.message}\n") } catch (_: Exception) {}
+            }
             log("start uid=${Process.myUid()}")
-
             Looper.prepareMainLooper()
-
             val activityThreadClass = Class.forName("android.app.ActivityThread")
             val activityThread = activityThreadClass.getMethod("systemMain").invoke(null)
             val context = activityThreadClass.getMethod("getSystemContext").invoke(activityThread) as Context
             log("context ok")
-
             fakeShellIdentity(context)
-
             val mixRuleClass        = Class.forName("android.media.audiopolicy.AudioMixingRule")
             val mixRuleBuilderClass = Class.forName("android.media.audiopolicy.AudioMixingRule\$Builder")
             val ruleBuilder         = mixRuleBuilderClass.getConstructor().newInstance()
-
             try {
                 val setRole = mixRuleBuilderClass.getMethod("setTargetMixRole", Int::class.java)
-                setRole.invoke(ruleBuilder, 1)
-                log("mix role = PLAYERS (1)")
+                setRole.invoke(ruleBuilder, 1); log("mix role = PLAYERS (1)")
             } catch (e: Exception) { log("setTargetMixRole unavailable: $e") }
-
             val capturePresetRule = mixRuleClass.getField("RULE_MATCH_ATTRIBUTE_CAPTURE_PRESET").getInt(null)
             val addRuleMethod = mixRuleBuilderClass.getMethod("addRule", AudioAttributes::class.java, Int::class.java)
-
             val presets = intArrayOf(1, 5, 6, 7, 9)
             val attrBuilderClass = Class.forName("android.media.AudioAttributes\$Builder")
             val setCapturePreset = attrBuilderClass.getMethod("setCapturePreset", Int::class.java)
@@ -825,24 +820,18 @@ object ShellInjector {
                 val aa = attrBuilderClass.getMethod("build").invoke(b) as AudioAttributes
                 addRuleMethod.invoke(ruleBuilder, aa, capturePresetRule)
             }
-
             val mixRule = mixRuleBuilderClass.getMethod("build").invoke(ruleBuilder)
             log("rule ok")
-
             val audioMixClass         = Class.forName("android.media.audiopolicy.AudioMix")
             val audioMixBuilderClass  = Class.forName("android.media.audiopolicy.AudioMix\$Builder")
             val audioPolicyClass      = Class.forName("android.media.audiopolicy.AudioPolicy")
             val audioPolicyBuilderClass = Class.forName("android.media.audiopolicy.AudioPolicy\$Builder")
-
             val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-
             var flagRender   = 1
             var flagLoopBack = 2
             try { flagLoopBack = audioMixClass.getField("ROUTE_FLAG_LOOP_BACK").getInt(null) } catch (_: Exception) {}
             try { flagRender = audioMixClass.getField("ROUTE_FLAG_RENDER").getInt(null) } catch (_: Exception) {}
-
             log("device=${Build.MODEL} api=${Build.VERSION.SDK_INT} LB=$flagLoopBack R=$flagRender")
-
             val combos = listOf(
                 intArrayOf(48000, AudioFormat.CHANNEL_OUT_MONO,   flagLoopBack),
                 intArrayOf(48000, AudioFormat.CHANNEL_OUT_STEREO, flagLoopBack),
@@ -852,14 +841,9 @@ object ShellInjector {
                 intArrayOf(48000, AudioFormat.CHANNEL_OUT_MONO,   flagLoopBack or flagRender),
                 intArrayOf(48000, AudioFormat.CHANNEL_OUT_STEREO, flagLoopBack or flagRender)
             )
-
             var track: AudioTrack? = null
-            var registeredPolicy: Any? = null
-
             for (combo in combos) {
-                val rate  = combo[0]
-                val ch    = combo[1]
-                val flags = combo[2]
+                val rate  = combo[0]; val ch = combo[1]; val flags = combo[2]
                 val tag   = "$rate/${if (ch == AudioFormat.CHANNEL_OUT_MONO) "mono" else "stereo"}/f$flags"
                 try {
                     val mixBuilder = audioMixBuilderClass.getConstructor(mixRuleClass).newInstance(mixRule)
@@ -867,94 +851,71 @@ object ShellInjector {
                     audioMixBuilderClass.getMethod("setFormat", AudioFormat::class.java).invoke(mixBuilder, fmt)
                     audioMixBuilderClass.getMethod("setRouteFlags", Int::class.java).invoke(mixBuilder, flags)
                     val mix = audioMixBuilderClass.getMethod("build").invoke(mixBuilder)
-                    
                     val policyBuilder = audioPolicyBuilderClass.getConstructor(Context::class.java).newInstance(context)
                     try { audioPolicyBuilderClass.getMethod("setLooper", Looper::class.java).invoke(policyBuilder, Looper.getMainLooper()) } catch (_: Exception) {}
                     audioPolicyBuilderClass.getMethod("addMix", audioMixClass).invoke(policyBuilder, mix)
                     val policy = audioPolicyBuilderClass.getMethod("build").invoke(policyBuilder)
-
                     val reg = AudioManager::class.java.getMethod("registerAudioPolicy", audioPolicyClass).invoke(audioManager, policy) as Int
                     if (reg != 0) {
                         try { AudioManager::class.java.getMethod("unregisterAudioPolicy", audioPolicyClass).invoke(audioManager, policy) } catch (_: Exception) {}
                         continue
                     }
-
-                    registeredPolicy = policy
-                    policyKeepAlive  = policy
-
+                    policyKeepAlive = policy
                     val newTrack = audioPolicyClass.getMethod("createAudioTrackSource", audioMixClass).invoke(policy, mix) as AudioTrack
-
                     if (newTrack.state == AudioTrack.STATE_INITIALIZED) {
-                        newTrack.setVolume(1.0f)
-                        newTrack.play()
-                        track    = newTrack
-                        outRate  = rate
-                        outCh    = if (ch == AudioFormat.CHANNEL_OUT_MONO) 1 else 2
-                        log("track ok [$tag]")
-                        break
+                        newTrack.setVolume(1.0f); newTrack.play()
+                        track = newTrack; outRate = rate; outCh = if (ch == AudioFormat.CHANNEL_OUT_MONO) 1 else 2
+                        log("track ok [$tag]"); break
                     } else {
                         newTrack.release()
                         try { AudioManager::class.java.getMethod("unregisterAudioPolicy", audioPolicyClass).invoke(audioManager, policy) } catch (_: Exception) {}
-                        registeredPolicy = null; policyKeepAlive = null
+                        policyKeepAlive = null
                     }
                 } catch (e: Exception) { log("fail [$tag]: ${unwrap(e)}") }
             }
-
-            if (track == null) {
-                log("FAILED: no working audio format")
-                System.exit(1)
-            }
-
+            if (track == null) { log("FAILED: no working audio format"); System.exit(1) }
             File(dir, "ready").writeText("1")
-            // 🚨 CLEAR LOGS: Koi trace na chhodne ke liye log file clear kar do
             File(dir, "inject.log").writeText("Running securely...\n")
-
             Thread { commandLoop(track!!) }.start()
             Looper.loop()
         } catch (e: Exception) {
-            log("ERROR: ${unwrap(e).stackTraceToString().take(1800)}")
-            System.exit(1)
+            log("ERROR: ${unwrap(e).stackTraceToString().take(1800)}"); System.exit(1)
         }
     }
 
-    private fun unwrap(t: Throwable): Throwable {
-        var c = t
-        while (c is java.lang.reflect.InvocationTargetException && c.cause != null) { c = c.cause!! }
-        return c
-    }
+    private fun unwrap(t: Throwable): Throwable { var c = t; while (c is java.lang.reflect.InvocationTargetException && c.cause != null) { c = c.cause!! }; return c }
 
     private fun fakeShellIdentity(context: Context) {
         if (Process.myUid() == 0) return
-        try {
-            val f = context.javaClass.getDeclaredField("mOpPackageName")
-            f.isAccessible = true
-            f.set(context, "com.android.shell")
-        } catch (_: Exception) {}
+        try { val f = context.javaClass.getDeclaredField("mOpPackageName"); f.isAccessible = true; f.set(context, "com.android.shell") } catch (_: Exception) {}
         try {
             val cls = Class.forName("android.content.AttributionSource\$Builder")
             val b = cls.getConstructor(Int::class.java).newInstance(Process.myUid())
             cls.getMethod("setPackageName", String::class.java).invoke(b, "com.android.shell")
             val src = cls.getMethod("build").invoke(b)
-            val f = context.javaClass.getDeclaredField("mAttributionSource")
-            f.isAccessible = true
-            f.set(context, src)
+            val f = context.javaClass.getDeclaredField("mAttributionSource"); f.isAccessible = true; f.set(context, src)
         } catch (_: Exception) {}
     }
 
-    private fun log(msg: String) {
-        try { File(dir, "inject.log").appendText("$msg\n") } catch (_: Exception) {}
-    }
+    private fun log(msg: String) { try { File(dir, "inject.log").appendText("$msg\n") } catch (_: Exception) {} }
 
     private fun commandLoop(track: AudioTrack) {
         val cmdFile = File(dir, "cmd")
+        val readyFile = File(dir, "ready")
+        var lastBeat = 0L
         while (true) {
             try {
+                val now = System.currentTimeMillis()
+                if (now - lastBeat > 2000) {
+                    try { readyFile.writeText("1") } catch (_: Exception) {}
+                    lastBeat = now
+                }
                 if (cmdFile.exists()) {
                     val cmd = cmdFile.readText().trim()
                     cmdFile.delete()
                     when (cmd) {
-                        "quit" -> { File(dir, "ready").delete(); File(dir, "inject.log").delete(); System.exit(0) }
-                        "stop" -> { track.pause(); track.flush(); track.play() }
+                        "quit" -> { readyFile.delete(); File(dir, "inject.log").delete(); System.exit(0) }
+                        "stop" -> { try { track.pause(); track.flush(); track.play() } catch (_: Exception) {} }
                         else   -> playFile(track, cmd, cmdFile)
                     }
                 }
@@ -963,78 +924,52 @@ object ShellInjector {
         }
     }
 
-    // 🚀 FLICKER FIX: bigger buffers, retry on temporary error (no mid-song cuts, no gaps)
     private fun playFile(track: AudioTrack, path: String, cmdFile: File) {
         try {
             if (outRate == 48000 && outCh == 1) {
                 FileInputStream(path).use { input ->
-                    val buf = ByteArray(38400)   // 🚀 Bigger buffer (400ms) — less I/O calls, fewer underruns
+                    val buf = ByteArray(38400)
                     while (true) {
                         if (cmdFile.exists()) break
-                        val n = input.read(buf)
-                        if (n <= 0) break
-                        var written = 0
-                        var errCount = 0
+                        val n = input.read(buf); if (n <= 0) break
+                        var written = 0; var errCount = 0
                         while (written < n) {
                             val r = track.write(buf, written, n - written)
-                            if (r > 0) {
-                                written += r
-                                errCount = 0
-                            } else if (r == AudioTrack.ERROR_DEAD_OBJECT) {
-                                return
-                            } else {
-                                // 🚀 Retry on temporary error (don't stop playback)
-                                errCount++
-                                if (errCount > 50) return
-                                Thread.sleep(5)
-                            }
+                            if (r > 0) { written += r; errCount = 0 }
+                            else if (r == AudioTrack.ERROR_DEAD_OBJECT) return
+                            else { errCount++; if (errCount > 50) return; Thread.sleep(5) }
                         }
                     }
                 }
                 return
             }
-
             val rawBytes = File(path).readBytes()
             val sb = ByteBuffer.wrap(rawBytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
             val shorts = ShortArray(sb.remaining()).also { sb.get(it) }
-
             val finalShorts = if (outRate != 48000) {
                 val n = (shorts.size.toLong() * outRate / 48000).toInt()
                 val out = ShortArray(n)
                 for (i in 0 until n) {
                     val srcF = i.toDouble() * 48000.0 / outRate
-                    val si = srcF.toInt()
-                    val frac = srcF - si
+                    val si = srcF.toInt(); val frac = srcF - si
                     val s1 = shorts[si.coerceAtMost(shorts.size - 1)]
                     val s2 = shorts[(si + 1).coerceAtMost(shorts.size - 1)]
                     out[i] = (s1 + (s2 - s1) * frac).toInt().toShort()
                 }
                 out
             } else shorts
-
-            val outShorts = if (outCh == 2) {
-                ShortArray(finalShorts.size * 2).also { for (i in finalShorts.indices) { it[i * 2] = finalShorts[i]; it[i * 2 + 1] = finalShorts[i] } }
-            } else finalShorts
-
-            val chunk = outCh * 0x2580   // 🚀 Bigger chunk (was 0x12c0) — fewer write calls
+            val outShorts = if (outCh == 2) ShortArray(finalShorts.size * 2).also { for (i in finalShorts.indices) { it[i * 2] = finalShorts[i]; it[i * 2 + 1] = finalShorts[i] } } else finalShorts
+            val chunk = outCh * 0x2580
             var idx = 0
             while (idx < outShorts.size) {
                 if (cmdFile.exists()) break
                 val n = minOf(chunk, outShorts.size - idx)
-                var written = 0
-                var errCount = 0
+                var written = 0; var errCount = 0
                 while (written < n) {
                     val r = track.write(outShorts, idx + written, n - written)
-                    if (r > 0) {
-                        written += r
-                        errCount = 0
-                    } else if (r == AudioTrack.ERROR_DEAD_OBJECT) {
-                        return
-                    } else {
-                        errCount++
-                        if (errCount > 50) return
-                        Thread.sleep(5)
-                    }
+                    if (r > 0) { written += r; errCount = 0 }
+                    else if (r == AudioTrack.ERROR_DEAD_OBJECT) return
+                    else { errCount++; if (errCount > 50) return; Thread.sleep(5) }
                 }
                 idx += n
             }
@@ -1066,33 +1001,35 @@ object AudioRouter {
         Shizuku.pingBinder() && Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
     } catch (_: Exception) { false }
 
+    fun isInjectorAlive(): Boolean {
+        val dir = injectorDir ?: return false
+        if (!routingActive) return false
+        val ready = File(dir, "ready")
+        if (!ready.exists()) return false
+        return System.currentTimeMillis() - ready.lastModified() < 15000
+    }
+
     fun enable(context: Context, onResult: (Boolean, String) -> Unit) {
         Thread {
             try {
                 injectorDir = File(context.cacheDir, ".gucci_audio").apply { mkdirs() }
                 val dir = injectorDir!!
                 dir.listFiles()?.forEach { it.delete() }
-
                 val originalApk = context.packageCodePath
                 val tempApk = File(context.cacheDir, "temp_base.apk")
                 try { File(originalApk).copyTo(tempApk, overwrite = true) } catch (_: Exception) {}
-
                 if (!tempApk.exists() || tempApk.length() == 0L) {
                     Handler(Looper.getMainLooper()).post { onResult(false, "❌ APK copy failed") }
                     return@Thread
                 }
-
-                // 🚀 SCRIPT WITH REQUIRED ENV VARS (ANDROID_ROOT, ANDROID_DATA)
                 val script = """
                     export ANDROID_ROOT=/system
                     export ANDROID_DATA=/data
                     export CLASSPATH=${tempApk.absolutePath}
                     exec app_process /system/bin com.example.shtile.ShellInjector ${dir.absolutePath}
                 """.trimIndent()
-
                 val scriptFile = File(context.cacheDir, "start_injector.sh")
                 scriptFile.writeText(script)
-
                 try {
                     if (isRootAvailable()) {
                         val p = Runtime.getRuntime().exec("su")
@@ -1100,10 +1037,7 @@ object AudioRouter {
                         os.writeBytes("chmod 777 ${scriptFile.absolutePath}\n")
                         os.writeBytes("pkill -f com.example.shtile.ShellInjector 2>/dev/null; sleep 0.5\n")
                         os.writeBytes("nohup sh ${scriptFile.absolutePath} </dev/null >${dir.absolutePath}/out.log 2>&1 &\n")
-                        os.writeBytes("exit\n")
-                        os.flush()
-                        os.close()
-                        p.waitFor()
+                        os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor()
                     } else if (isShizukuAvailable()) {
                         val m = Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
                         m.isAccessible = true
@@ -1113,8 +1047,6 @@ object AudioRouter {
                         Handler(Looper.getMainLooper()).post { onResult(false, "❌ Root or Shizuku required") }
                         return@Thread
                     }
-
-                    // 🚀 WAIT UP TO 15 SECONDS for injector ready signal
                     var success = false
                     var errMsg = ""
                     for (i in 0..150) {
@@ -1129,8 +1061,6 @@ object AudioRouter {
                         }
                         Thread.sleep(100)
                     }
-
-                    // If failed, check out.log for shell-level error
                     if (!success && errMsg.isEmpty()) {
                         val outLog = File(dir, "out.log")
                         if (outLog.exists()) {
@@ -1138,7 +1068,6 @@ object AudioRouter {
                             if (txt.isNotEmpty()) errMsg = "Shell: " + txt.take(150)
                         }
                     }
-
                     routingActive = success
                     val finalErr = errMsg
                     Handler(Looper.getMainLooper()).post {
@@ -1169,6 +1098,7 @@ object AudioRouter {
         Thread {
             try {
                 val dir = injectorDir!!
+                if (!isInjectorAlive()) { routingActive = false; return@Thread }
                 val soundFile = File(dir, "sound.raw")
                 soundFile.writeBytes(pcmBytes)
                 File(dir, "cmd").writeText(soundFile.absolutePath)
@@ -4192,9 +4122,10 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var params: WindowManager.LayoutParams? = null
     private var pbPlayback: ProgressBar? = null
     private var tvVolume: TextView? = null
-    private var tvFloaterTime: TextView? = null 
+    private var tvFloaterTime: TextView? = null
     private var tvNowPlaying: TextView? = null
     private var volumeLevel = 1.0f
+    private var swInjectRef: MaterialSwitch? = null
 
     private var currentPlayingDuration: Int = 0
     private var currentPlaybackStartTime: Long = 0L
@@ -4291,6 +4222,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     }
                 } else { AudioRouter.disable(this); Toast.makeText(this, "Mic injection OFF", Toast.LENGTH_SHORT).show() }
             }
+            swInjectRef = swInject
 
             val tabCards = overlayView?.findViewById<LinearLayout>(R.id.tabCards)
             val tabType = overlayView?.findViewById<LinearLayout>(R.id.tabType)
@@ -4298,7 +4230,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             val pageCards = overlayView?.findViewById<LinearLayout>(R.id.pageCards)
             val pageType = overlayView?.findViewById<LinearLayout>(R.id.pageType)
             val pageLive = overlayView?.findViewById<LinearLayout>(R.id.pageLive)
-            
+
             pbPlayback = overlayView?.findViewById(R.id.pbPlayback)
             tvFloaterTime = overlayView?.findViewById(R.id.tvFloaterTime)
             tvNowPlaying = overlayView?.findViewById(R.id.tvNowPlaying)
@@ -4379,7 +4311,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             overlayView?.findViewById<Button>(R.id.btnOverlayRefresh)?.setOnClickListener {
                 Thread {
                     loadVoices()
-                    Handler(Looper.getMainLooper()).post { 
+                    Handler(Looper.getMainLooper()).post {
                         val playingPath = gridAdapter?.playingFilePath
                         gridAdapter = VoiceGridAdapter(voices, ctx) { file -> playVoice(file) }
                         gridAdapter?.playingFilePath = playingPath
@@ -4449,12 +4381,11 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         }
 
         stopProgressBar()
-        try { AudioRouter.stopAudio(this) } catch (_: Exception) {}
         cancelMediaPlayer()
-        
+
         currentPlayingName = file.nameWithoutExtension
         Handler(Looper.getMainLooper()).post { tvNowPlaying?.text = "▶ $currentPlayingName" }
-        
+
         gridAdapter?.playingFilePath = file.absolutePath
         gridAdapter?.notifyDataSetChanged()
 
@@ -4502,12 +4433,10 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     bytes[i++] = (s.toInt() and 0xFF).toByte()
                     bytes[i++] = (s.toInt() shr 8 and 0xFF).toByte()
                 }
-                
+
                 Handler(Looper.getMainLooper()).post {
                     if (gridAdapter?.playingFilePath != thisFile.absolutePath) return@post
-                    
-                    Handler(Looper.getMainLooper()).postDelayed({ AudioRouter.injectAudio(this, bytes) }, 500) 
-                    
+                    Handler(Looper.getMainLooper()).postDelayed({ AudioRouter.injectAudio(this, bytes) }, 500)
                     currentPlayingDuration = durationMs
                     currentPlaybackStartTime = System.currentTimeMillis()
                     startProgressBar(durationMs)
@@ -4563,20 +4492,20 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         tvFloaterTime?.visibility = View.VISIBLE
         pbPlayback?.max = durationMs
         pbPlayback?.progress = startOffset
-        
+
         var elapsed = startOffset
-        
+
         progressRunnable = object : Runnable {
             override fun run() {
                 if (mediaPlayer?.isPlaying == true) {
                     val curr = mediaPlayer!!.currentPosition
                     pbPlayback?.progress = curr
-                    
+
                     val currSec = curr / 1000
                     val totalSec = durationMs / 1000
                     val timeStr = String.format("%d:%02d / %d:%02d", currSec / 60, currSec % 60, totalSec / 60, totalSec % 60)
                     tvFloaterTime?.text = timeStr
-                    
+
                     val gridView = overlayView?.findViewById<GridView>(R.id.lvVoicesFloater)
                     if (gridView != null) {
                         for (i in 0 until gridView.childCount) {
@@ -4594,17 +4523,23 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                             }
                         }
                     }
-                    
+
                     progressHandler.postDelayed(this, 100)
                 } else if (isInjectOn && elapsed < durationMs) {
+                    if (!AudioRouter.isInjectorAlive()) {
+                        isInjectOn = false
+                        Handler(Looper.getMainLooper()).post { swInjectRef?.isChecked = false }
+                        stopPlayback()
+                        return
+                    }
                     elapsed += 100
                     pbPlayback?.progress = elapsed
-                    
+
                     val currSec = elapsed / 1000
                     val totalSec = durationMs / 1000
                     val timeStr = String.format("%d:%02d / %d:%02d", currSec / 60, currSec % 60, totalSec / 60, totalSec % 60)
                     tvFloaterTime?.text = timeStr
-                    
+
                     val gridView = overlayView?.findViewById<GridView>(R.id.lvVoicesFloater)
                     if (gridView != null) {
                         for (i in 0 until gridView.childCount) {
@@ -4622,13 +4557,12 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                             }
                         }
                     }
-                    
+
                     progressHandler.postDelayed(this, 100)
                 } else {
                     pbPlayback?.visibility = View.INVISIBLE
                     tvFloaterTime?.visibility = View.GONE
-                    
-                    // 🚀 FIX: Automatically stop and reset the card UI when the song finishes
+
                     if (gridAdapter?.playingFilePath != null) {
                         stopPlayback()
                     }
@@ -4821,7 +4755,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         cancelMediaPlayer()
         try { AudioRouter.stopAudio(this) } catch (_: Exception) {}
         stopProgressBar()
-        
+
         currentPlayingDuration = 0
         currentPlaybackStartTime = 0L
         currentPlayingName = null
@@ -4837,7 +4771,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         super.onDestroy()
         try { prefs.unregisterOnSharedPreferenceChangeListener(volumePrefListener) } catch (_: Exception) {}
         stopPlayback(); stopLiveMic(); tts?.shutdown()
-        if (isInjectOn) stopAudioRouting()
         overlayView?.let { runCatching { windowManager.removeView(it) } }
         bubbleView?.let { runCatching { windowManager.removeView(it) } }
     }
@@ -4875,17 +4808,17 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             val v = cv ?: LayoutInflater.from(ctx).inflate(R.layout.item_voice_card_mini, parent, false)
             val card = v as MaterialCardView
             val f = items[p]; val name = f.nameWithoutExtension.ifEmpty { "Sound" }
-            
-            v.tag = f.absolutePath 
-            
+
+            v.tag = f.absolutePath
+
             val ivMini = v.findViewById<ImageView>(R.id.ivCardPhotoMini)
             val tvLetter = v.findViewById<TextView>(R.id.tvLetterMini)
             val pbProgress = v.findViewById<ProgressBar>(R.id.pbMiniProgress)
             val tvTime = v.findViewById<TextView>(R.id.tvTimeMini)
-            
+
             tvLetter?.text = name.take(1).uppercase()
             v.findViewById<TextView>(R.id.tvNameMini)?.text = if (name.length > 15) name.take(15) + ".." else name
-            
+
             val imgFile = File(f.parentFile, "${f.nameWithoutExtension}.jpg")
             if (imgFile.exists()) {
                 val bitmap = decodeSampledBitmapFromFile(imgFile.absolutePath, 150, 150)
@@ -4900,7 +4833,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 card.setStrokeColor(Color.parseColor("#00E5A0"))
                 card.setStrokeWidth(4); card.cardElevation = 12f
                 pbProgress?.visibility = View.VISIBLE; tvTime?.visibility = View.VISIBLE
-                
+
                 val mp = mediaPlayer
                 if (mp != null && mp.isPlaying) {
                     pbProgress?.max = mp.duration
@@ -4922,7 +4855,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 card.setStrokeWidth(2); card.cardElevation = 2f
                 pbProgress?.visibility = View.GONE; tvTime?.visibility = View.GONE
             }
-            
+
             val playBtn = v.findViewById<ImageView>(R.id.btnPlayMini)
             if (isPlaying) playBtn.setImageResource(android.R.drawable.ic_media_pause)
             else playBtn.setImageResource(android.R.drawable.ic_media_play)
