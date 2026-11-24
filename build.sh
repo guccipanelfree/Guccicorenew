@@ -2057,10 +2057,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(s: Bundle?) {
         super.onCreate(s)
         
-        // 🚨 INTEGRITY CHECK DISABLED FOR ENCRYPTION/PACKING
-        // if (!SecurityUtils.runSecurityChecks(this)) {
-        //     return
-        // }
+        // 🚨 INTEGRITY CHECK ACTIVE
+        if (!SecurityUtils.runSecurityChecks(this)) {
+            return
+        }
 
         val p = getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE)
         if (!p.getBoolean("is_authenticated", false)) {
@@ -2096,7 +2096,7 @@ class MainActivity : AppCompatActivity() {
         val allowVoice = p.getBoolean("allow_voice", true)
         
         if (!allowInx) {
-            Thread { try { Runtime.getRuntime().exec(arrayOf("su", "-c", "rm -f /data/local/tmp/sys_1.bin /data/local/tmp/sys_2.bin")).waitFor() } catch (e: Exception) {} }.start()
+            Thread { try { Runtime.getRuntime().exec(arrayOf("su", "-c", "rm -f /data/local/tmp/Gucci_core /data/local/tmp/Gucci_brutal")).waitFor() } catch (e: Exception) {} }.start()
         }
         
         keyInput.setText(p.getString("game_key", ""))
@@ -4931,7 +4931,7 @@ import java.security.MessageDigest
 
 object SecurityUtils {
     
-    // 🚨 YOUR OFFICIAL SHA256 SIGNATURE
+    // 🚨 Aapki Official SHA256 Signature
     private const val EXPECTED_SIGNATURE = "0D3C29FFB8564D0DD8979D997EE9D08EE635A1CD919E780EE6C31B65611D815D"
 
     fun runSecurityChecks(context: Context): Boolean {
@@ -4978,7 +4978,6 @@ object SecurityUtils {
                 val md = MessageDigest.getInstance("SHA-256")
                 md.update(sig.toByteArray())
                 val digest = md.digest()
-                // Convert to Hex format to match keytool output
                 val hexString = digest.joinToString("") { "%02x".format(it) }.uppercase()
                 if (hexString == EXPECTED_SIGNATURE) {
                     return true
