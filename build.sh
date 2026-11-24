@@ -785,6 +785,7 @@ object ShellInjector {
     private var outRate = 48000
     private var outCh   = 1
     private lateinit var dir: File
+    @Volatile private var playThread: Thread? = null
 
     @JvmStatic private var policyKeepAlive: Any? = null
 
@@ -793,7 +794,7 @@ object ShellInjector {
         try {
             dir = File(args[0])
             Thread.setDefaultUncaughtExceptionHandler { t, e ->
-                try { File(dir, "inject.log").appendText("UNCAUGHT[${t.name}]: ${e.message}\n") } catch (_: Exception) {}
+                try { File(dir, "inject.log").appendText("UNCAUGHT: ${e.message}\n") } catch (_: Exception) {}
             }
             log("start uid=${Process.myUid()}")
             Looper.prepareMainLooper()
@@ -808,7 +809,7 @@ object ShellInjector {
             try {
                 val setRole = mixRuleBuilderClass.getMethod("setTargetMixRole", Int::class.java)
                 setRole.invoke(ruleBuilder, 1); log("mix role = PLAYERS (1)")
-            } catch (e: Exception) { log("setTargetMixRole unavailable: $e") }
+            } catch (e: Exception) { log("setTargetMixRole unavailable") }
             val capturePresetRule = mixRuleClass.getField("RULE_MATCH_ATTRIBUTE_CAPTURE_PRESET").getInt(null)
             val addRuleMethod = mixRuleBuilderClass.getMethod("addRule", AudioAttributes::class.java, Int::class.java)
             val presets = intArrayOf(1, 5, 6, 7, 9)
@@ -831,7 +832,7 @@ object ShellInjector {
             var flagLoopBack = 2
             try { flagLoopBack = audioMixClass.getField("ROUTE_FLAG_LOOP_BACK").getInt(null) } catch (_: Exception) {}
             try { flagRender = audioMixClass.getField("ROUTE_FLAG_RENDER").getInt(null) } catch (_: Exception) {}
-            log("device=${Build.MODEL} api=${Build.VERSION.SDK_INT} LB=$flagLoopBack R=$flagRender")
+            log("device=${Build.MODEL} api=${Build.VERSION.SDK_INT}")
             val combos = listOf(
                 intArrayOf(48000, AudioFormat.CHANNEL_OUT_MONO,   flagLoopBack),
                 intArrayOf(48000, AudioFormat.CHANNEL_OUT_STEREO, flagLoopBack),
@@ -844,7 +845,6 @@ object ShellInjector {
             var track: AudioTrack? = null
             for (combo in combos) {
                 val rate  = combo[0]; val ch = combo[1]; val flags = combo[2]
-                val tag   = "$rate/${if (ch == AudioFormat.CHANNEL_OUT_MONO) "mono" else "stereo"}/f$flags"
                 try {
                     val mixBuilder = audioMixBuilderClass.getConstructor(mixRuleClass).newInstance(mixRule)
                     val fmt = AudioFormat.Builder().setSampleRate(rate).setEncoding(AudioFormat.ENCODING_PCM_16BIT).setChannelMask(ch).build()
@@ -865,21 +865,29 @@ object ShellInjector {
                     if (newTrack.state == AudioTrack.STATE_INITIALIZED) {
                         newTrack.setVolume(1.0f); newTrack.play()
                         track = newTrack; outRate = rate; outCh = if (ch == AudioFormat.CHANNEL_OUT_MONO) 1 else 2
-                        log("track ok [$tag]"); break
+                        log("track ok"); break
                     } else {
                         newTrack.release()
                         try { AudioManager::class.java.getMethod("unregisterAudioPolicy", audioPolicyClass).invoke(audioManager, policy) } catch (_: Exception) {}
                         policyKeepAlive = null
                     }
-                } catch (e: Exception) { log("fail [$tag]: ${unwrap(e)}") }
+                } catch (e: Exception) { log("fail: ${unwrap(e)}") }
             }
             if (track == null) { log("FAILED: no working audio format"); System.exit(1) }
-            File(dir, "ready").writeText("1")
+            
+            val readyFile = File(dir, "ready")
+            Thread {
+                while (true) {
+                    try { readyFile.writeText("1") } catch (_: Exception) {}
+                    Thread.sleep(2000)
+                }
+            }.start()
+
             File(dir, "inject.log").writeText("Running securely...\n")
             Thread { commandLoop(track!!) }.start()
             Looper.loop()
         } catch (e: Exception) {
-            log("ERROR: ${unwrap(e).stackTraceToString().take(1800)}"); System.exit(1)
+            log("ERROR: ${unwrap(e).stackTraceToString().take(500)}"); System.exit(1)
         }
     }
 
@@ -901,22 +909,23 @@ object ShellInjector {
 
     private fun commandLoop(track: AudioTrack) {
         val cmdFile = File(dir, "cmd")
-        val readyFile = File(dir, "ready")
-        var lastBeat = 0L
         while (true) {
             try {
-                val now = System.currentTimeMillis()
-                if (now - lastBeat > 2000) {
-                    try { readyFile.writeText("1") } catch (_: Exception) {}
-                    lastBeat = now
-                }
                 if (cmdFile.exists()) {
                     val cmd = cmdFile.readText().trim()
                     cmdFile.delete()
                     when (cmd) {
-                        "quit" -> { readyFile.delete(); File(dir, "inject.log").delete(); System.exit(0) }
-                        "stop" -> { try { track.pause(); track.flush(); track.play() } catch (_: Exception) {} }
-                        else   -> playFile(track, cmd, cmdFile)
+                        "quit" -> { File(dir, "ready").delete(); File(dir, "inject.log").delete(); System.exit(0) }
+                        "stop" -> { 
+                            playThread?.interrupt()
+                            try { track.pause(); track.flush(); track.play() } catch (_: Exception) {} 
+                        }
+                        else   -> {
+                            playThread?.interrupt()
+                            try { track.pause(); track.flush(); track.play() } catch (_: Exception) {}
+                            playThread = Thread { playFile(track, cmd) }
+                            playThread?.start()
+                        }
                     }
                 }
                 Thread.sleep(20)
@@ -924,16 +933,17 @@ object ShellInjector {
         }
     }
 
-    private fun playFile(track: AudioTrack, path: String, cmdFile: File) {
+    private fun playFile(track: AudioTrack, path: String) {
         try {
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO)
+            
             if (outRate == 48000 && outCh == 1) {
                 FileInputStream(path).use { input ->
                     val buf = ByteArray(38400)
-                    while (true) {
-                        if (cmdFile.exists()) break
+                    while (!Thread.currentThread().isInterrupted) {
                         val n = input.read(buf); if (n <= 0) break
                         var written = 0; var errCount = 0
-                        while (written < n) {
+                        while (written < n && !Thread.currentThread().isInterrupted) {
                             val r = track.write(buf, written, n - written)
                             if (r > 0) { written += r; errCount = 0 }
                             else if (r == AudioTrack.ERROR_DEAD_OBJECT) return
@@ -961,11 +971,10 @@ object ShellInjector {
             val outShorts = if (outCh == 2) ShortArray(finalShorts.size * 2).also { for (i in finalShorts.indices) { it[i * 2] = finalShorts[i]; it[i * 2 + 1] = finalShorts[i] } } else finalShorts
             val chunk = outCh * 0x2580
             var idx = 0
-            while (idx < outShorts.size) {
-                if (cmdFile.exists()) break
+            while (idx < outShorts.size && !Thread.currentThread().isInterrupted) {
                 val n = minOf(chunk, outShorts.size - idx)
                 var written = 0; var errCount = 0
-                while (written < n) {
+                while (written < n && !Thread.currentThread().isInterrupted) {
                     val r = track.write(outShorts, idx + written, n - written)
                     if (r > 0) { written += r; errCount = 0 }
                     else if (r == AudioTrack.ERROR_DEAD_OBJECT) return
@@ -1001,89 +1010,50 @@ object AudioRouter {
         Shizuku.pingBinder() && Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
     } catch (_: Exception) { false }
 
-    fun isInjectorAlive(): Boolean {
-        val dir = injectorDir ?: return false
-        if (!routingActive) return false
-        val ready = File(dir, "ready")
-        if (!ready.exists()) return false
-        return System.currentTimeMillis() - ready.lastModified() < 15000
-    }
-
     fun enable(context: Context, onResult: (Boolean, String) -> Unit) {
         Thread {
+            injectorDir = File(context.cacheDir, ".gucci_audio").apply { mkdirs() }
+            val dir = injectorDir!!
+            dir.listFiles()?.forEach { it.delete() }
+
+            val originalApk = context.packageCodePath
+            val tempApk = File(context.cacheDir, "temp_base.apk")
+            try { File(originalApk).copyTo(tempApk, overwrite = true) } catch (_: Exception) {}
+
+            val script = "export CLASSPATH=${tempApk.absolutePath}; app_process /system/bin com.example.shtile.ShellInjector ${dir.absolutePath}"
+
             try {
-                // 🚀 PATH RESTORED: Back to cacheDir as you requested
-                val dir = File(context.cacheDir, ".gucci_audio").apply { mkdirs() }
-                dir.listFiles()?.forEach { it.delete() }
-                injectorDir = dir
-
-                val tempApk = File(dir, "temp_base.apk")
-                try { File(context.packageCodePath).copyTo(tempApk, overwrite = true) } catch (_: Exception) {}
-
-                if (!tempApk.exists() || tempApk.length() == 0L) {
-                    Handler(Looper.getMainLooper()).post { onResult(false, "❌ APK copy failed") }
+                if (isRootAvailable()) {
+                    val p = Runtime.getRuntime().exec("su")
+                    val os = DataOutputStream(p.outputStream)
+                    os.writeBytes("$script &\n"); os.writeBytes("exit\n"); os.flush(); os.close()
+                    p.waitFor()
+                } else if (isShizukuAvailable()) {
+                    val m = Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
+                    m.isAccessible = true
+                    m.invoke(null, arrayOf("sh", "-c", script), null, null)
+                } else {
+                    Handler(Looper.getMainLooper()).post { onResult(false, "Root or Shizuku required") }
                     return@Thread
                 }
 
-                // Make APK readable by root (fixes SELinux blocks)
-                try { Runtime.getRuntime().exec(arrayOf("su", "-c", "chmod 644 ${tempApk.absolutePath}")).waitFor() } catch (_: Exception) {}
-
-                try {
-                    if (isRootAvailable()) {
-                        val p = Runtime.getRuntime().exec("su")
-                        val os = DataOutputStream(p.outputStream)
-                        // Kill old instance
-                        os.writeBytes("pkill -f com.example.shtile.ShellInjector 2>/dev/null; sleep 0.5\n")
-                        // 🚀 Direct execution without script file (fixes "No such file" error)
-                        os.writeBytes("export CLASSPATH=${tempApk.absolutePath}\n")
-                        os.writeBytes("export ANDROID_ROOT=/system\n")
-                        os.writeBytes("export ANDROID_DATA=/data\n")
-                        os.writeBytes("nohup app_process /system/bin com.example.shtile.ShellInjector ${dir.absolutePath} >/dev/null 2>&1 &\n")
-                        os.writeBytes("exit\n")
-                        os.flush()
-                        os.close()
-                        p.waitFor()
-                    } else if (isShizukuAvailable()) {
-                        val m = Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
-                        m.isAccessible = true
-                        val shizukuCmd = "pkill -f com.example.shtile.ShellInjector 2>/dev/null; sleep 0.5; export CLASSPATH=${tempApk.absolutePath}; export ANDROID_ROOT=/system; export ANDROID_DATA=/data; nohup app_process /system/bin com.example.shtile.ShellInjector ${dir.absolutePath} >/dev/null 2>&1 &"
-                        m.invoke(null, arrayOf("sh", "-c", shizukuCmd), null, null)
-                    } else {
-                        Handler(Looper.getMainLooper()).post { onResult(false, "❌ Root or Shizuku required") }
-                        return@Thread
+                var success = false
+                for (i in 0..50) {
+                    if (File(dir, "ready").exists()) { success = true; break }
+                    val log = File(dir, "inject.log")
+                    if (log.exists()) {
+                        val txt = try { log.readText() } catch (_: Exception) { "" }
+                        if (txt.contains("FAILED") || txt.contains("ERROR")) break
                     }
+                    Thread.sleep(100)
+                }
 
-                    // Wait up to 15 seconds for ready signal
-                    var success = false
-                    var errMsg = ""
-                    for (i in 0..150) {
-                        if (File(dir, "ready").exists()) { success = true; break }
-                        val log = File(dir, "inject.log")
-                        if (log.exists()) {
-                            val txt = try { log.readText() } catch (_: Exception) { "" }
-                            if (txt.contains("FAILED") || txt.contains("ERROR")) {
-                                errMsg = txt.lines().firstOrNull { it.contains("FAILED") || it.contains("ERROR") } ?: "Injector error"
-                                break
-                            }
-                        }
-                        Thread.sleep(100)
-                    }
-
-                    if (!success && errMsg.isEmpty()) {
-                        errMsg = "timeout — check .gucci_audio/inject.log"
-                    }
-
-                    routingActive = success
-                    val finalErr = errMsg
-                    Handler(Looper.getMainLooper()).post {
-                        if (success) onResult(true, "✅ Mic Injection Active")
-                        else onResult(false, "❌ Inject failed: $finalErr")
-                    }
-                } catch (e: Exception) {
-                    Handler(Looper.getMainLooper()).post { onResult(false, "Error: ${e.message}") }
+                routingActive = success
+                Handler(Looper.getMainLooper()).post {
+                    onResult(success, if (success) "✅ Mic Injection Active" else "❌ Injector failed — check inject.log")
                 }
             } catch (e: Exception) {
-                Handler(Looper.getMainLooper()).post { onResult(false, "Outer error: ${e.message}") }
+                Handler(Looper.getMainLooper()).post { onResult(false, e.message ?: "Error") }
             }
         }.start()
     }
@@ -1092,7 +1062,7 @@ object AudioRouter {
         Thread {
             try { File(injectorDir!!, "cmd").writeText("quit") } catch (_: Exception) {}
             routingActive = false
-            try { File(injectorDir!!, "temp_base.apk").delete() } catch (_: Exception) {}
+            try { File(context.cacheDir, "temp_base.apk").delete() } catch (_: Exception) {}
             Handler(Looper.getMainLooper()).post { onResult?.invoke(true, "Injection OFF") }
         }.start()
     }
@@ -1102,7 +1072,6 @@ object AudioRouter {
         Thread {
             try {
                 val dir = injectorDir!!
-                if (!isInjectorAlive()) { routingActive = false; return@Thread }
                 val soundFile = File(dir, "sound.raw")
                 soundFile.writeBytes(pcmBytes)
                 File(dir, "cmd").writeText(soundFile.absolutePath)
@@ -4129,7 +4098,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var tvFloaterTime: TextView? = null
     private var tvNowPlaying: TextView? = null
     private var volumeLevel = 1.0f
-    private var swInjectRef: MaterialSwitch? = null
 
     private var currentPlayingDuration: Int = 0
     private var currentPlaybackStartTime: Long = 0L
@@ -4226,7 +4194,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     }
                 } else { AudioRouter.disable(this); Toast.makeText(this, "Mic injection OFF", Toast.LENGTH_SHORT).show() }
             }
-            swInjectRef = swInject
 
             val tabCards = overlayView?.findViewById<LinearLayout>(R.id.tabCards)
             val tabType = overlayView?.findViewById<LinearLayout>(R.id.tabType)
@@ -4385,6 +4352,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         }
 
         stopProgressBar()
+        // Original code used AudioRouter.stopAudio(this) here. Removed to prevent toggle turning off.
         cancelMediaPlayer()
 
         currentPlayingName = file.nameWithoutExtension
@@ -4440,7 +4408,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
                 Handler(Looper.getMainLooper()).post {
                     if (gridAdapter?.playingFilePath != thisFile.absolutePath) return@post
-                    Handler(Looper.getMainLooper()).postDelayed({ AudioRouter.injectAudio(this, bytes) }, 500)
+                    AudioRouter.injectAudio(this, bytes)
                     currentPlayingDuration = durationMs
                     currentPlaybackStartTime = System.currentTimeMillis()
                     startProgressBar(durationMs)
@@ -4530,12 +4498,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
                     progressHandler.postDelayed(this, 100)
                 } else if (isInjectOn && elapsed < durationMs) {
-                    if (!AudioRouter.isInjectorAlive()) {
-                        isInjectOn = false
-                        Handler(Looper.getMainLooper()).post { swInjectRef?.isChecked = false }
-                        stopPlayback()
-                        return
-                    }
                     elapsed += 100
                     pbPlayback?.progress = elapsed
 
