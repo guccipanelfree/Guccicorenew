@@ -30,8 +30,8 @@ dependencyResolutionManagement {
         maven { url 'https://maven.aliyun.com/repository/public' }
         maven { url 'https://maven.aliyun.com/repository/google' }
         mavenCentral() 
-        maven { url 'https://jitpack.io' } // StringFog ke liye
-        maven { url 'https://europe-west3-maven.pkg.dev/talsec-artifact-repository/freerasp' } // freeRASP ke liye
+        maven { url 'https://jitpack.io' } # StringFog ke liye
+        maven { url 'https://europe-west3-maven.pkg.dev/talsec-artifact-repository/freerasp' } # freeRASP ke liye
     } 
 }
 rootProject.name = "GucciLoader"
