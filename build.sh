@@ -142,7 +142,7 @@ dependencies {
     implementation 'dev.rikka.shizuku:provider:13.1.5'
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation 'com.aheaditec.talsec.security:TalsecSecurity-Community:13.2.0' // freeRASP
-    implementation 'com.github.megatronking.stringfog.xor:library:5.0.0' // StringFog
+    implementation 'com.github.megatronking.stringfog:xor:5.0.0' // StringFog (sahi naam)
 }
 EOF
 cat > app/proguard-rules.pro << 'EOF'
