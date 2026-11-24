@@ -31,7 +31,6 @@ dependencyResolutionManagement {
         maven { url 'https://maven.aliyun.com/repository/google' }
         mavenCentral() 
         maven { url 'https://jitpack.io' } // StringFog ke liye
-        maven { url 'https://europe-west3-maven.pkg.dev/talsec-artifact-repository/freerasp' } // freeRASP ke liye
     } 
 }
 rootProject.name = "GucciLoader"
@@ -141,8 +140,7 @@ dependencies {
     implementation 'dev.rikka.shizuku:api:13.1.5'
     implementation 'dev.rikka.shizuku:provider:13.1.5'
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation 'com.aheaditec.talsec.security:TalsecSecurity-Community:13.2.0' // freeRASP
-    implementation 'com.github.megatronking.stringfog:xor:5.0.0' // StringFog (sahi naam)
+    implementation 'com.github.megatronking.stringfog:xor:5.0.0' // StringFog
 }
 EOF
 cat > app/proguard-rules.pro << 'EOF'
@@ -155,9 +153,6 @@ cat > app/proguard-rules.pro << 'EOF'
 # Shizuku Protect
 -keep class rikka.shizuku.** { *; }
 -dontwarn rikka.shizuku.**
-
-# freeRASP Protect
--keep class com.aheaditec.talsec_security.** { *; }
 
 # Standard Android
 -keepattributes *Annotation*
@@ -218,12 +213,8 @@ mkdir -p app/src/main/res/xml
 cat > app/src/main/res/xml/network_security_config.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <domain-config>
-        <domain includeSubdomains="true">api.github.com</domain>
-        <pin-set>
-            <!-- Yahan apni server ki certificate ka SHA-256 Base64 hash daalein. Filhal khali hai. -->
-        </pin-set>
-    </domain-config>
+    <!-- System default trust store use hoga -->
+    <!-- Baad me SSL pinning add kar sakte ho jab cert hash ready ho -->
 </network-security-config>
 EOF
 cat > app/src/main/res/values/styles.xml << 'EOF'
@@ -2070,13 +2061,7 @@ import android.text.TextWatcher
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.aheaditec.talsec_security.security.api.SuspiciousAppInfo
-import com.aheaditec.talsec_security.security.api.Talsec
-import com.aheaditec.talsec_security.security.api.TalsecConfig
-import com.aheaditec.talsec_security.security.api.TalsecMode
-import com.aheaditec.talsec_security.security.api.ThreatListener
 import rikka.shizuku.Shizuku
-
 class MainActivity : AppCompatActivity() {
     private val REQUEST_CODE = 1001
     private var isAdbMode = false
@@ -2103,26 +2088,6 @@ class MainActivity : AppCompatActivity() {
         if (!SecurityUtils.runSecurityChecks(this)) {
             return
         }
-
-        // 🚨 FREE RASP — CORRECT API (Builder + ThreatListener.ThreatDetected)
-        val threatDetectedListener = object : ThreatListener.ThreatDetected() {
-            override fun onRootDetected() { /* Ignore Root! App needs it */ }
-            override fun onDebuggerDetected() { finishAffinity() }
-            override fun onEmulatorDetected() { /* Optional: finishAffinity() */ }
-            override fun onTamperDetected() { finishAffinity() }
-            override fun onHookDetected() { finishAffinity() }
-            override fun onUntrustedInstallationSourceDetected() { finishAffinity() }
-            override fun onSuspiciousAppDetected(suspiciousApps: List<SuspiciousAppInfo>) {}
-            override fun onMultiInstanceDetected() {}
-        }
-
-        val talsecConfig = TalsecConfig.Builder(
-            "com.example.shtile",   // packageName
-            "YOUR_CERT_HASH_HERE"   // certificate hash (baad me apna daalna)
-        ).watcherMail("gucci@example.com").build()
-
-        Talsec.start(this, talsecConfig, TalsecMode.BACKGROUND)
-        ThreatListener(threatDetectedListener).registerListener(this)
 
         val p = getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE)
         if (!p.getBoolean("is_authenticated", false)) {
