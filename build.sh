@@ -30,8 +30,8 @@ dependencyResolutionManagement {
         maven { url 'https://maven.aliyun.com/repository/public' }
         maven { url 'https://maven.aliyun.com/repository/google' }
         mavenCentral() 
-        maven { url 'https://jitpack.io' } # StringFog ke liye
-        maven { url 'https://europe-west3-maven.pkg.dev/talsec-artifact-repository/freerasp' } # freeRASP ke liye
+        maven { url 'https://jitpack.io' } // StringFog ke liye
+        maven { url 'https://europe-west3-maven.pkg.dev/talsec-artifact-repository/freerasp' } // freeRASP ke liye
     } 
 }
 rootProject.name = "GucciLoader"
@@ -116,7 +116,7 @@ android {
             signingConfig signingConfigs.release
         }
         debug {
-            minifyEnabled false # Debug mein off rakha hai taaki testing mein audio injection na toote
+            minifyEnabled false // Debug mein off rakha hai taaki testing mein audio injection na toote
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
@@ -141,8 +141,8 @@ dependencies {
     implementation 'dev.rikka.shizuku:api:13.1.5'
     implementation 'dev.rikka.shizuku:provider:13.1.5'
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation 'com.aheaditec.talsec.security:TalsecSecurity-Community:13.2.0' # freeRASP
-    implementation 'com.github.megatronking.stringfog.xor:library:5.0.0' # StringFog
+    implementation 'com.aheaditec.talsec.security:TalsecSecurity-Community:13.2.0' // freeRASP
+    implementation 'com.github.megatronking.stringfog.xor:library:5.0.0' // StringFog
 }
 EOF
 cat > app/proguard-rules.pro << 'EOF'
