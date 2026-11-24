@@ -1012,26 +1012,39 @@ object AudioRouter {
     fun enable(context: Context, onResult: (Boolean, String) -> Unit) {
         Thread {
             try {
-                injectorDir = File(context.cacheDir, ".gucci_audio").apply { mkdirs() }
-                val dir = injectorDir!!
-                dir.listFiles()?.forEach { it.delete() }
+                // 🚀 Use /data/local/tmp for universal compatibility
+                val tmpDir = File("/data/local/tmp/.gucci_audio")
+                tmpDir.mkdirs()
+                tmpDir.listFiles()?.forEach { it.delete() }
+                injectorDir = tmpDir
+
+                val dir = tmpDir
                 val originalApk = context.packageCodePath
-                val tempApk = File(context.cacheDir, "temp_base.apk")
+                val tempApk = File(dir, "temp_base.apk")
                 try { File(originalApk).copyTo(tempApk, overwrite = true) } catch (_: Exception) {}
+
+                try {
+                    Runtime.getRuntime().exec(arrayOf("su", "-c", "chmod 644 ${tempApk.absolutePath}")).waitFor()
+                } catch (_: Exception) {}
+
                 if (!tempApk.exists() || tempApk.length() == 0L) {
                     Handler(Looper.getMainLooper()).post { onResult(false, "❌ APK copy failed") }
                     return@Thread
                 }
+
                 val script = """
                     export ANDROID_ROOT=/system
                     export ANDROID_DATA=/data
                     export CLASSPATH=${tempApk.absolutePath}
                     exec app_process /system/bin com.example.shtile.ShellInjector ${dir.absolutePath}
                 """.trimIndent()
-                val scriptFile = File(context.cacheDir, "start_injector.sh")
+
+                val scriptFile = File(dir, "start_injector.sh")
                 scriptFile.writeText(script)
+
                 try {
                     if (isRootAvailable()) {
+                        // 🚀 Simple root shell, works on all versions
                         val p = Runtime.getRuntime().exec("su")
                         val os = DataOutputStream(p.outputStream)
                         os.writeBytes("chmod 777 ${scriptFile.absolutePath}\n")
@@ -1047,6 +1060,8 @@ object AudioRouter {
                         Handler(Looper.getMainLooper()).post { onResult(false, "❌ Root or Shizuku required") }
                         return@Thread
                     }
+
+                    // Wait for ready signal
                     var success = false
                     var errMsg = ""
                     for (i in 0..150) {
@@ -1061,6 +1076,7 @@ object AudioRouter {
                         }
                         Thread.sleep(100)
                     }
+
                     if (!success && errMsg.isEmpty()) {
                         val outLog = File(dir, "out.log")
                         if (outLog.exists()) {
@@ -1068,6 +1084,7 @@ object AudioRouter {
                             if (txt.isNotEmpty()) errMsg = "Shell: " + txt.take(150)
                         }
                     }
+
                     routingActive = success
                     val finalErr = errMsg
                     Handler(Looper.getMainLooper()).post {
@@ -1087,8 +1104,8 @@ object AudioRouter {
         Thread {
             try { File(injectorDir!!, "cmd").writeText("quit") } catch (_: Exception) {}
             routingActive = false
-            try { File(context.cacheDir, "temp_base.apk").delete() } catch (_: Exception) {}
-            try { File(context.cacheDir, "start_injector.sh").delete() } catch (_: Exception) {}
+            try { File(injectorDir!!, "temp_base.apk").delete() } catch (_: Exception) {}
+            try { File(injectorDir!!, "start_injector.sh").delete() } catch (_: Exception) {}
             Handler(Looper.getMainLooper()).post { onResult?.invoke(true, "Injection OFF") }
         }.start()
     }
