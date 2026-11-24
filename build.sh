@@ -963,21 +963,32 @@ object ShellInjector {
         }
     }
 
+    // 🚀 FLICKER FIX: bigger buffers, retry on temporary error (no mid-song cuts, no gaps)
     private fun playFile(track: AudioTrack, path: String, cmdFile: File) {
         try {
             if (outRate == 48000 && outCh == 1) {
                 FileInputStream(path).use { input ->
-                    val buf = ByteArray(19200) 
+                    val buf = ByteArray(38400)   // 🚀 Bigger buffer (400ms) — less I/O calls, fewer underruns
                     while (true) {
                         if (cmdFile.exists()) break
                         val n = input.read(buf)
                         if (n <= 0) break
                         var written = 0
+                        var errCount = 0
                         while (written < n) {
                             val r = track.write(buf, written, n - written)
-                            if (r > 0) written += r else if (r < 0) break 
+                            if (r > 0) {
+                                written += r
+                                errCount = 0
+                            } else if (r == AudioTrack.ERROR_DEAD_OBJECT) {
+                                return
+                            } else {
+                                // 🚀 Retry on temporary error (don't stop playback)
+                                errCount++
+                                if (errCount > 50) return
+                                Thread.sleep(5)
+                            }
                         }
-                        if (written < n) break 
                     }
                 }
                 return
@@ -1005,15 +1016,25 @@ object ShellInjector {
                 ShortArray(finalShorts.size * 2).also { for (i in finalShorts.indices) { it[i * 2] = finalShorts[i]; it[i * 2 + 1] = finalShorts[i] } }
             } else finalShorts
 
-            val chunk = outCh * 0x12c0 
+            val chunk = outCh * 0x2580   // 🚀 Bigger chunk (was 0x12c0) — fewer write calls
             var idx = 0
             while (idx < outShorts.size) {
                 if (cmdFile.exists()) break
                 val n = minOf(chunk, outShorts.size - idx)
                 var written = 0
+                var errCount = 0
                 while (written < n) {
                     val r = track.write(outShorts, idx + written, n - written)
-                    if (r > 0) written += r else Thread.sleep(5)
+                    if (r > 0) {
+                        written += r
+                        errCount = 0
+                    } else if (r == AudioTrack.ERROR_DEAD_OBJECT) {
+                        return
+                    } else {
+                        errCount++
+                        if (errCount > 50) return
+                        Thread.sleep(5)
+                    }
                 }
                 idx += n
             }
@@ -1321,7 +1342,7 @@ object VoiceProcessor {
         }
     }
 
-    // 🚀 FIX: ULTRA LOUD & CRYSTAL CLEAR BOOST (Forced Injection Volume)
+    // 🚀 ULTRA LOUD — softer clip (0.97) reduces flicker, 200% gives 30% extra boost
     fun applyBoost(input: ShortArray, gain: Float): ShortArray {
         if (input.isEmpty()) return input.copyOf()
         val out = ShortArray(input.size)
@@ -1338,7 +1359,8 @@ object VoiceProcessor {
         val gainDouble = gain.toDouble()
         
         // Force at least 1.8x boost even if user left slider at 100% (for injection clarity)
-        val effectiveGain = if (gainDouble <= 1.0) 1.8 else gainDouble
+        // 🚀 200% pe 1.3x extra boost (louder for friends to hear)
+        val effectiveGain = if (gainDouble <= 1.0) 1.8 else gainDouble * 1.3
         
         // Max limit 8.0x to prevent absolute breaking, but allows extreme loudness
         val dynamicGain = (effectiveGain * normalizeFactor).coerceAtMost(8.0)
@@ -1347,10 +1369,10 @@ object VoiceProcessor {
             val s = input[i] / 32768.0
             val boosted = s * dynamicGain
             
-            // 3. Hard Soft-Clip (Limits perfectly at 0.95 to prevent digital crackling)
+            // 🚀 Softer clip at 0.97 (was 0.95) — less distortion/flicker, same max loudness
             val clipped = when {
-                boosted > 0.95 -> 0.95 + 0.05 * tanh((boosted - 0.95) / 0.05)
-                boosted < -0.95 -> -0.95 + 0.05 * tanh((boosted + 0.95) / 0.05)
+                boosted > 0.97 -> 0.97 + 0.03 * tanh((boosted - 0.97) / 0.03)
+                boosted < -0.97 -> -0.97 + 0.03 * tanh((boosted + 0.97) / 0.03)
                 else -> boosted
             }
             out[i] = (clipped * 32767.0).toInt().coerceIn(-32768, 32767).toShort()
