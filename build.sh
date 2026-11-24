@@ -65,7 +65,7 @@ EOF
 # 1. GENERATE KEYSTORE
 # ==========================================
 if [ ! -f "my-release-key.jks" ]; then
-    keytool -genkey -v -keystore my-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias my-alias -storepass password123 -keypass password123 -dname "CN=Gucci, OU=Dev, O=Gucci, L=City, S=State, C=US"
+    keytool -genkey -v -keystore my-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias mykey -storepass 123456 -keypass 123456 -dname "CN=Gucci, OU=Dev, O=Gucci, L=City, S=State, C=US"
 fi
 # ==========================================
 # 2. APP BUILD GRADLE
