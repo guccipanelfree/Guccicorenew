@@ -2651,7 +2651,6 @@ class FloaterOverlayService : Service() {
     private fun applyFloater(number: Int, on: Boolean) {
         if (number == 3) { 
             val error = copyAssetToTarget(if (on) floater3OnAsset else floater3OffAsset, "fileinfo", glooTargetDir)
-            // 🚀 CRASH FIX: Wrapped Toast in Handler so it runs on the UI thread
             Handler(Looper.getMainLooper()).post {
                 if (error == null) Toast.makeText(this, if (on) "✅ GLOO CROSS Activated" else "✅ GLOO CROSS Deactivated", Toast.LENGTH_SHORT).show() 
                 else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
@@ -2683,49 +2682,59 @@ class FloaterOverlayService : Service() {
             else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
         }
     }
+
+    // 🚀 FIX: Direct SU command run without creating .sh file in cacheDir
     private fun copyWithBackup(assetName: String, targetName: String, targetDir: String, enable: Boolean, bakName: String): String? {
         try {
-            val scriptFile = File(cacheDir, "backup_script.sh")
+            val tmp = File(cacheDir, assetName)
             if (enable) {
-                val tmp = File(cacheDir, assetName)
                 assets.open(assetName).use { input -> tmp.outputStream().use { input.copyTo(it) } }
-                scriptFile.writeText("""
-                    #!/system/bin/sh
-                    TARGET_DIR="$targetDir"
-                    TARGET_FILE="${'$'}TARGET_DIR/$targetName"
-                    BAK_FILE="${'$'}TARGET_DIR/$bakName"
-                    MOD_FILE="${tmp.absolutePath}"
-                    mkdir -p "${'$'}TARGET_DIR"
-                    if [ -f "${'$'}TARGET_FILE" ] && [ ! -f "${'$'}BAK_FILE" ]; then mv "${'$'}TARGET_FILE" "${'$'}BAK_FILE"; fi
-                    cp -f "${'$'}MOD_FILE" "${'$'}TARGET_FILE"
-                    chmod 777 "${'$'}TARGET_FILE"
-                    chcon --reference="${'$'}TARGET_DIR" "${'$'}TARGET_FILE" 2>/dev/null
-                    echo "SUCCESS_ON"
-                """.trimIndent())
-            } else {
-                scriptFile.writeText("""
-                    #!/system/bin/sh
-                    TARGET_DIR="$targetDir"
-                    TARGET_FILE="${'$'}TARGET_DIR/$targetName"
-                    BAK_FILE="${'$'}TARGET_DIR/$bakName"
-                    if [ -f "${'$'}TARGET_FILE" ]; then rm -f "${'$'}TARGET_FILE"; fi
-                    if [ -f "${'$'}BAK_FILE" ]; then mv "${'$'}BAK_FILE" "${'$'}TARGET_FILE"; fi
-                    echo "SUCCESS_OFF"
-                """.trimIndent())
+                // Make file readable by root
+                try { Runtime.getRuntime().exec(arrayOf("su", "-c", "chmod 644 ${tmp.absolutePath}")).waitFor() } catch (_: Exception) {}
             }
-            val chmodP = ProcessBuilder("su", "-c", "chmod 777 " + scriptFile.absolutePath).start(); chmodP.waitFor()
-            val p = ProcessBuilder("su", "-mm", "-c", "sh " + scriptFile.absolutePath).redirectErrorStream(true).start()
-            val output = p.inputStream.bufferedReader().readText(); val code = p.waitFor()
-            scriptFile.delete()
+            
+            val cmd = if (enable) {
+                """
+                TARGET_DIR="$targetDir"
+                TARGET_FILE="${'$'}TARGET_DIR/$targetName"
+                BAK_FILE="${'$'}TARGET_DIR/$bakName"
+                MOD_FILE="${tmp.absolutePath}"
+                mkdir -p "${'$'}TARGET_DIR"
+                if [ -f "${'$'}TARGET_FILE" ] && [ ! -f "${'$'}BAK_FILE" ]; then mv "${'$'}TARGET_FILE" "${'$'}BAK_FILE"; fi
+                cp -f "${'$'}MOD_FILE" "${'$'}TARGET_FILE"
+                chmod 777 "${'$'}TARGET_FILE"
+                chcon --reference="${'$'}TARGET_DIR" "${'$'}TARGET_FILE" 2>/dev/null
+                echo "SUCCESS_ON"
+                """.trimIndent()
+            } else {
+                """
+                TARGET_DIR="$targetDir"
+                TARGET_FILE="${'$'}TARGET_DIR/$targetName"
+                BAK_FILE="${'$'}TARGET_DIR/$bakName"
+                if [ -f "${'$'}TARGET_FILE" ]; then rm -f "${'$'}TARGET_FILE"; fi
+                if [ -f "${'$'}BAK_FILE" ]; then mv "${'$'}BAK_FILE" "${'$'}TARGET_FILE"; fi
+                echo "SUCCESS_OFF"
+                """.trimIndent()
+            }
+
+            val p = ProcessBuilder("su", "-c", cmd).redirectErrorStream(true).start()
+            val output = p.inputStream.bufferedReader().readText()
+            val code = p.waitFor()
+            tmp.delete()
+            
             return if (output.contains("SUCCESS_") && code == 0) null else { "Check Root. Output: $output" }
         } catch (e: Exception) { return e.message }
     }
+
+    // 🚀 FIX: Direct SU command run without creating .sh file in cacheDir
     private fun copyAssetToTarget(name: String, targetFileName: String, targetDir: String): String? {
         try {
-            val tmp = File(cacheDir, name); assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
-            val scriptFile = File(cacheDir, "paste.sh")
-            scriptFile.writeText("""
-                #!/system/bin/sh
+            val tmp = File(cacheDir, name)
+            assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
+            // Make file readable by root
+            try { Runtime.getRuntime().exec(arrayOf("su", "-c", "chmod 644 ${tmp.absolutePath}")).waitFor() } catch (_: Exception) {}
+
+            val cmd = """
                 TARGET_DIR="$targetDir"
                 mkdir -p "${'$'}TARGET_DIR"
                 FULL_PATH="${'$'}TARGET_DIR/$targetFileName"
@@ -2733,14 +2742,17 @@ class FloaterOverlayService : Service() {
                 chmod 777 "${'$'}FULL_PATH"
                 chcon --reference="${'$'}TARGET_DIR" "${'$'}FULL_PATH" 2>/dev/null
                 echo "PASTE_SUCCESSFUL"
-            """.trimIndent())
-            val chmodP = ProcessBuilder("su", "-c", "chmod 777 " + scriptFile.absolutePath).start(); chmodP.waitFor()
-            val p = ProcessBuilder("su", "-mm", "-c", "sh " + scriptFile.absolutePath).redirectErrorStream(true).start()
-            val output = p.inputStream.bufferedReader().readText(); val code = p.waitFor()
-            tmp.delete(); scriptFile.delete()
+            """.trimIndent()
+
+            val p = ProcessBuilder("su", "-c", cmd).redirectErrorStream(true).start()
+            val output = p.inputStream.bufferedReader().readText()
+            val code = p.waitFor()
+            tmp.delete()
+            
             return if (output.contains("PASTE_SUCCESSFUL") && code == 0) null else { "Check Root. Output: $output" }
         } catch (e: Exception) { return e.message }
     }
+
     override fun onDestroy() { panel?.let { runCatching { wm.removeView(it) } }; bubble?.let { runCatching { wm.removeView(it) } }; super.onDestroy() }
 }
 EOF
