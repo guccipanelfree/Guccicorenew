@@ -48,6 +48,19 @@
       "allowVoice": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
+    },
+    "BILLU": {
+      "deviceIds": [],
+      "hwidNames": {},
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1798089049018,
+      "allowInx": false,
+      "allowFloater": true,
+      "allowKernel": false,
+      "allowVoice": false,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     }
   },
   "reboot_global_time": 0,
