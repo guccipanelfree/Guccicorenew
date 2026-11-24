@@ -24,17 +24,31 @@ pluginManagement {
     } 
 }
 dependencyResolutionManagement { 
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories { 
         google()
         maven { url 'https://maven.aliyun.com/repository/public' }
         maven { url 'https://maven.aliyun.com/repository/google' }
         mavenCentral() 
+        maven { url 'https://jitpack.io' } # StringFog ke liye
+        maven { url 'https://europe-west3-maven.pkg.dev/talsec-artifact-repository/freerasp' } # freeRASP ke liye
     } 
 }
 rootProject.name = "GucciLoader"
 include ':app'
 EOF
 cat > build.gradle << 'EOF'
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
+    }
+    dependencies {
+        classpath 'com.github.megatronking.stringfog:gradle-plugin:5.2.0'
+        classpath 'com.github.megatronking.stringfog:xor:5.0.0'
+    }
+}
 plugins {
     id 'com.android.application' version '8.2.2' apply false
     id 'org.jetbrains.kotlin.android' version '1.9.22' apply false
@@ -62,6 +76,17 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android' 
 }
+apply plugin: 'stringfog'
+import com.github.megatronking.stringfog.plugin.kg.RandomKeyGenerator
+import com.github.megatronking.stringfog.plugin.StringFogMode
+
+stringfog {
+    implementation 'com.github.megatronking.stringfog.xor.StringFogImpl'
+    enable true
+    kg new RandomKeyGenerator()
+    mode StringFogMode.base64
+}
+
 android {
     namespace 'com.example.shtile'
     compileSdk 34
@@ -91,8 +116,8 @@ android {
             signingConfig signingConfigs.release
         }
         debug {
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled false # Debug mein off rakha hai taaki testing mein audio injection na toote
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
         }
@@ -116,26 +141,29 @@ dependencies {
     implementation 'dev.rikka.shizuku:api:13.1.5'
     implementation 'dev.rikka.shizuku:provider:13.1.5'
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation 'com.aheaditec.talsec.security:TalsecSecurity-Community:13.2.0' # freeRASP
+    implementation 'com.github.megatronking.stringfog.xor:library:5.0.0' # StringFog
 }
 EOF
 cat > app/proguard-rules.pro << 'EOF'
--allowaccessmodification
-# 🚨 FIX: -repackageclasses '' HATA DIYA HAI taaki app_process ShellInjector ko dhundh sake
+# 🚨 CRITICAL: In classes ko R8 se 100% bachana hai (Audio injection ke liye)
+-keep class com.example.shtile.ShellInjector { *; }
+-keep class com.example.shtile.AudioRouter { *; }
+-keep class com.example.shtile.SecurityUtils { *; }
+-keep class com.example.shtile.MainActivity { *; }
 
+# Shizuku Protect
 -keep class rikka.shizuku.** { *; }
 -dontwarn rikka.shizuku.**
 
--keep class org.json.** { *; }
+# freeRASP Protect
+-keep class com.aheaditec.talsec_security.** { *; }
 
+# Standard Android
 -keepattributes *Annotation*
 -keepclassmembers class * {
     @android.webkit.JavascriptInterface <methods>;
 }
-
-# 🚨 CRITICAL: In classes ko R8 se 100% bachana hai
--keep class com.example.shtile.ShellInjector { *; }
--keep class com.example.shtile.AudioRouter { *; }
--keep class com.example.shtile.SecurityUtils { *; }
 EOF
 cat > app/src/main/AndroidManifest.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
@@ -155,7 +183,7 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
 <queries><intent><action android:name="android.intent.action.TTS_SERVICE" /></intent></queries>
-<application android:allowBackup="true" android:label="@string/app_name" android:icon="@drawable/ic_app_icon" android:theme="@style/AppTheme">
+<application android:allowBackup="true" android:label="@string/app_name" android:icon="@drawable/ic_app_icon" android:theme="@style/AppTheme" android:networkSecurityConfig="@xml/network_security_config">
 <activity android:name=".LoginActivity" android:exported="true" android:launchMode="singleTop"/>
 <activity android:name=".MainActivity" android:exported="false"/>
 <activity android:name=".HideAppsActivity" android:exported="false"/>
@@ -165,10 +193,7 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 <activity android:name=".GucciVoiceActivity" android:exported="false"/>
 <activity android:name=".TransparentActivity" android:exported="false" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:excludeFromRecents="true" android:taskAffinity="" android:noHistory="true"/>
 <activity android:name=".TransparentVoiceActivity" android:exported="false" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:excludeFromRecents="true" android:taskAffinity="" android:noHistory="true"/>
-
-<!-- 👇 YAHAN LABEL "Settings" KIYA GAYA HAI 👇 -->
 <activity-alias android:name=".MainActivityAlias" android:targetActivity=".LoginActivity" android:exported="true" android:enabled="true" android:label="Settings" android:icon="@drawable/ic_app_icon"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
-
 <service android:name=".RunnerService" android:exported="false" android:foregroundServiceType="dataSync"/>
 <service android:name=".RebootService" android:exported="false" android:foregroundServiceType="dataSync"/>
 <service android:name=".TimerService" android:exported="false" android:foregroundServiceType="dataSync"/>
@@ -185,11 +210,22 @@ cat > app/src/main/AndroidManifest.xml << 'EOF'
 </application>
 </manifest>
 EOF
-
 # ==========================================
 # XML RESOURCES
 # ==========================================
 
+mkdir -p app/src/main/res/xml
+cat > app/src/main/res/xml/network_security_config.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config>
+        <domain includeSubdomains="true">api.github.com</domain>
+        <pin-set>
+            <!-- Yahan apni server ki certificate ka SHA-256 Base64 hash daalein. Filhal khali hai. -->
+        </pin-set>
+    </domain-config>
+</network-security-config>
+EOF
 cat > app/src/main/res/values/styles.xml << 'EOF'
 <resources><style name="AppTheme" parent="Theme.Material3.Dark.NoActionBar"></style></resources>
 EOF
@@ -2034,7 +2070,12 @@ import android.text.TextWatcher
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.aheaditec.talsec_security.security.api.SuspiciousAppInfo
+import com.aheaditec.talsec_security.security.api.Talsec
+import com.aheaditec.talsec_security.security.api.TalsecConfig
+import com.aheaditec.talsec_security.security.api.TalsecThreatListener
 import rikka.shizuku.Shizuku
+
 class MainActivity : AppCompatActivity() {
     private val REQUEST_CODE = 1001
     private var isAdbMode = false
@@ -2061,6 +2102,24 @@ class MainActivity : AppCompatActivity() {
         if (!SecurityUtils.runSecurityChecks(this)) {
             return
         }
+
+        // 🚨 FREE RASP INITIALIZATION (Root Ignored)
+        val config = TalsecConfig(
+            appBundleId = "com.example.shtile",
+            appTeamId = null,
+            watcherMail = "gucci@example.com", // Dummy email
+            isProd = false // Testing ke liye false rakha hai
+        )
+        Talsec.init(config, object : TalsecThreatListener {
+            override fun onRootDetected() { /* Ignore Root! App needs it */ }
+            override fun onDebuggerDetected() { finishAffinity() }
+            override fun onEmulatorDetected() { /* Optional: finishAffinity() */ }
+            override fun onTamperDetected() { finishAffinity() }
+            override fun onHookDetected() { finishAffinity() }
+            override fun onUntrustedInstallationDetected() { finishAffinity() }
+            override fun onSuspiciousAppDetected(suspiciousAppInfo: SuspiciousAppInfo) {}
+            override fun onMultiInstanceDetected() {}
+        })
 
         val p = getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE)
         if (!p.getBoolean("is_authenticated", false)) {
