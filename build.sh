@@ -65,7 +65,7 @@ EOF
 # 1. GENERATE KEYSTORE
 # ==========================================
 if [ ! -f "my-release-key.jks" ]; then
-    keytool -genkey -v -keystore my-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias mykey -storepass 123456 -keypass 123456 -dname "CN=Gucci, OU=Dev, O=Gucci, L=City, S=State, C=US"
+    keytool -genkey -v -keystore my-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias my-alias -storepass password123 -keypass password123 -dname "CN=Gucci, OU=Dev, O=Gucci, L=City, S=State, C=US"
 fi
 # ==========================================
 # 2. APP BUILD GRADLE
@@ -102,9 +102,9 @@ android {
     signingConfigs {
         release {
             storeFile rootProject.file('my-release-key.jks')
-            storePassword "123456"
-            keyAlias "mykey"
-            keyPassword "123456"
+            storePassword "password123"
+            keyAlias "my-alias"
+            keyPassword "password123"
         }
     }
     buildTypes {
@@ -4980,15 +4980,10 @@ import java.security.MessageDigest
 
 object SecurityUtils {
     
-    // 🚨 Official SHA-256 Signature (your keystore)
-    private const val EXPECTED_SIGNATURE = "904D17C00016E39F79E4610DAD3C38989F1BCD7797F763A9F0A1214AC35C773A"
-
-    // 🔒 PRODUCTION MODE: false = security ON
-    private const val BYPASS_SECURITY = false
+    // 🚨 Aapki Official SHA256 Signature
+    private const val EXPECTED_SIGNATURE = "0D3C29FFB8564D0DD8979D997EE9D08EE635A1CD919E780EE6C31B65611D815D"
 
     fun runSecurityChecks(context: Context): Boolean {
-        if (BYPASS_SECURITY) return true
-        
         if (isDebuggerConnected()) {
             fail(context, "Debugger detected!")
             return false
@@ -5042,10 +5037,7 @@ object SecurityUtils {
     }
 
     private fun fail(context: Context, msg: String) {
-        android.os.Handler(android.os.Looper.getMainLooper()).post {
-            Toast.makeText(context, "🔒 Security Error: $msg", Toast.LENGTH_LONG).show()
-        }
-        try { Thread.sleep(1500) } catch (_: Exception) {}
+        Toast.makeText(context, "🔒 Security Error: $msg", Toast.LENGTH_LONG).show()
         android.os.Process.killProcess(android.os.Process.myPid())
         System.exit(1)
     }
