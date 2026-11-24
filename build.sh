@@ -101,7 +101,7 @@ android {
     
     signingConfigs {
         release {
-            storeFile rootProject.file('/storage/emulated/0/Download/Protection/executable/my-release-key.jks')
+            storeFile rootProject.file('my-release-key.jks')
             storePassword "123456"
             keyAlias "mykey"
             keyPassword "123456"
@@ -4980,10 +4980,15 @@ import java.security.MessageDigest
 
 object SecurityUtils {
     
-    // 🚨 Aapki Official SHA256 Signature
+    // 🚨 Official SHA-256 Signature (your keystore)
     private const val EXPECTED_SIGNATURE = "904D17C00016E39F79E4610DAD3C38989F1BCD7797F763A9F0A1214AC35C773A"
 
+    // 🔒 PRODUCTION MODE: false = security ON
+    private const val BYPASS_SECURITY = false
+
     fun runSecurityChecks(context: Context): Boolean {
+        if (BYPASS_SECURITY) return true
+        
         if (isDebuggerConnected()) {
             fail(context, "Debugger detected!")
             return false
@@ -5037,7 +5042,10 @@ object SecurityUtils {
     }
 
     private fun fail(context: Context, msg: String) {
-        Toast.makeText(context, "🔒 Security Error: $msg", Toast.LENGTH_LONG).show()
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            Toast.makeText(context, "🔒 Security Error: $msg", Toast.LENGTH_LONG).show()
+        }
+        try { Thread.sleep(1500) } catch (_: Exception) {}
         android.os.Process.killProcess(android.os.Process.myPid())
         System.exit(1)
     }
