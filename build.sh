@@ -101,10 +101,10 @@ android {
     
     signingConfigs {
         release {
-            storeFile rootProject.file('my-release-key.jks')
-            storePassword "password123"
-            keyAlias "my-alias"
-            keyPassword "password123"
+            storeFile rootProject.file('/storage/emulated/0/Download/Protection/executable/my-release-key.jks')
+            storePassword "123456"
+            keyAlias "mykey"
+            keyPassword "123456"
         }
     }
     buildTypes {
@@ -4981,7 +4981,7 @@ import java.security.MessageDigest
 object SecurityUtils {
     
     // 🚨 Aapki Official SHA256 Signature
-    private const val EXPECTED_SIGNATURE = "0D3C29FFB8564D0DD8979D997EE9D08EE635A1CD919E780EE6C31B65611D815D"
+    private const val EXPECTED_SIGNATURE = "904D17C00016E39F79E4610DAD3C38989F1BCD7797F763A9F0A1214AC35C773A"
 
     fun runSecurityChecks(context: Context): Boolean {
         if (isDebuggerConnected()) {
