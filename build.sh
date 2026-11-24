@@ -1012,56 +1012,48 @@ object AudioRouter {
     fun enable(context: Context, onResult: (Boolean, String) -> Unit) {
         Thread {
             try {
-                // 🚀 Use /data/local/tmp for universal compatibility
-                val tmpDir = File("/data/local/tmp/.gucci_audio")
-                tmpDir.mkdirs()
-                tmpDir.listFiles()?.forEach { it.delete() }
-                injectorDir = tmpDir
+                // 🚀 PATH RESTORED: Back to cacheDir as you requested
+                val dir = File(context.cacheDir, ".gucci_audio").apply { mkdirs() }
+                dir.listFiles()?.forEach { it.delete() }
+                injectorDir = dir
 
-                val dir = tmpDir
-                val originalApk = context.packageCodePath
                 val tempApk = File(dir, "temp_base.apk")
-                try { File(originalApk).copyTo(tempApk, overwrite = true) } catch (_: Exception) {}
-
-                try {
-                    Runtime.getRuntime().exec(arrayOf("su", "-c", "chmod 644 ${tempApk.absolutePath}")).waitFor()
-                } catch (_: Exception) {}
+                try { File(context.packageCodePath).copyTo(tempApk, overwrite = true) } catch (_: Exception) {}
 
                 if (!tempApk.exists() || tempApk.length() == 0L) {
                     Handler(Looper.getMainLooper()).post { onResult(false, "❌ APK copy failed") }
                     return@Thread
                 }
 
-                val script = """
-                    export ANDROID_ROOT=/system
-                    export ANDROID_DATA=/data
-                    export CLASSPATH=${tempApk.absolutePath}
-                    exec app_process /system/bin com.example.shtile.ShellInjector ${dir.absolutePath}
-                """.trimIndent()
-
-                val scriptFile = File(dir, "start_injector.sh")
-                scriptFile.writeText(script)
+                // Make APK readable by root (fixes SELinux blocks)
+                try { Runtime.getRuntime().exec(arrayOf("su", "-c", "chmod 644 ${tempApk.absolutePath}")).waitFor() } catch (_: Exception) {}
 
                 try {
                     if (isRootAvailable()) {
-                        // 🚀 Simple root shell, works on all versions
                         val p = Runtime.getRuntime().exec("su")
                         val os = DataOutputStream(p.outputStream)
-                        os.writeBytes("chmod 777 ${scriptFile.absolutePath}\n")
+                        // Kill old instance
                         os.writeBytes("pkill -f com.example.shtile.ShellInjector 2>/dev/null; sleep 0.5\n")
-                        os.writeBytes("nohup sh ${scriptFile.absolutePath} </dev/null >${dir.absolutePath}/out.log 2>&1 &\n")
-                        os.writeBytes("exit\n"); os.flush(); os.close(); p.waitFor()
+                        // 🚀 Direct execution without script file (fixes "No such file" error)
+                        os.writeBytes("export CLASSPATH=${tempApk.absolutePath}\n")
+                        os.writeBytes("export ANDROID_ROOT=/system\n")
+                        os.writeBytes("export ANDROID_DATA=/data\n")
+                        os.writeBytes("nohup app_process /system/bin com.example.shtile.ShellInjector ${dir.absolutePath} >/dev/null 2>&1 &\n")
+                        os.writeBytes("exit\n")
+                        os.flush()
+                        os.close()
+                        p.waitFor()
                     } else if (isShizukuAvailable()) {
                         val m = Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
                         m.isAccessible = true
-                        val cmd = "pkill -f com.example.shtile.ShellInjector 2>/dev/null; sleep 0.5; nohup sh ${scriptFile.absolutePath} </dev/null >${dir.absolutePath}/out.log 2>&1 &"
-                        m.invoke(null, arrayOf("sh", "-c", cmd), null, null)
+                        val shizukuCmd = "pkill -f com.example.shtile.ShellInjector 2>/dev/null; sleep 0.5; export CLASSPATH=${tempApk.absolutePath}; export ANDROID_ROOT=/system; export ANDROID_DATA=/data; nohup app_process /system/bin com.example.shtile.ShellInjector ${dir.absolutePath} >/dev/null 2>&1 &"
+                        m.invoke(null, arrayOf("sh", "-c", shizukuCmd), null, null)
                     } else {
                         Handler(Looper.getMainLooper()).post { onResult(false, "❌ Root or Shizuku required") }
                         return@Thread
                     }
 
-                    // Wait for ready signal
+                    // Wait up to 15 seconds for ready signal
                     var success = false
                     var errMsg = ""
                     for (i in 0..150) {
@@ -1078,18 +1070,14 @@ object AudioRouter {
                     }
 
                     if (!success && errMsg.isEmpty()) {
-                        val outLog = File(dir, "out.log")
-                        if (outLog.exists()) {
-                            val txt = try { outLog.readText().trim() } catch (_: Exception) { "" }
-                            if (txt.isNotEmpty()) errMsg = "Shell: " + txt.take(150)
-                        }
+                        errMsg = "timeout — check .gucci_audio/inject.log"
                     }
 
                     routingActive = success
                     val finalErr = errMsg
                     Handler(Looper.getMainLooper()).post {
                         if (success) onResult(true, "✅ Mic Injection Active")
-                        else onResult(false, "❌ Inject failed: ${finalErr.ifEmpty { "timeout — check .gucci_audio/inject.log" }}")
+                        else onResult(false, "❌ Inject failed: $finalErr")
                     }
                 } catch (e: Exception) {
                     Handler(Looper.getMainLooper()).post { onResult(false, "Error: ${e.message}") }
@@ -1105,7 +1093,6 @@ object AudioRouter {
             try { File(injectorDir!!, "cmd").writeText("quit") } catch (_: Exception) {}
             routingActive = false
             try { File(injectorDir!!, "temp_base.apk").delete() } catch (_: Exception) {}
-            try { File(injectorDir!!, "start_injector.sh").delete() } catch (_: Exception) {}
             Handler(Looper.getMainLooper()).post { onResult?.invoke(true, "Injection OFF") }
         }.start()
     }
