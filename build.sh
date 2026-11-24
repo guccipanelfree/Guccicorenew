@@ -2073,7 +2073,8 @@ import androidx.appcompat.app.AppCompatActivity
 import com.aheaditec.talsec_security.security.api.SuspiciousAppInfo
 import com.aheaditec.talsec_security.security.api.Talsec
 import com.aheaditec.talsec_security.security.api.TalsecConfig
-import com.aheaditec.talsec_security.security.api.TalsecThreatListener
+import com.aheaditec.talsec_security.security.api.TalsecMode
+import com.aheaditec.talsec_security.security.api.ThreatListener
 import rikka.shizuku.Shizuku
 
 class MainActivity : AppCompatActivity() {
@@ -2103,23 +2104,25 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // 🚨 FREE RASP INITIALIZATION (Root Ignored)
-        val config = TalsecConfig(
-            appBundleId = "com.example.shtile",
-            appTeamId = null,
-            watcherMail = "gucci@example.com", // Dummy email
-            isProd = false // Testing ke liye false rakha hai
-        )
-        Talsec.init(config, object : TalsecThreatListener {
+        // 🚨 FREE RASP — CORRECT API (Builder + ThreatListener.ThreatDetected)
+        val threatDetectedListener = object : ThreatListener.ThreatDetected() {
             override fun onRootDetected() { /* Ignore Root! App needs it */ }
             override fun onDebuggerDetected() { finishAffinity() }
             override fun onEmulatorDetected() { /* Optional: finishAffinity() */ }
             override fun onTamperDetected() { finishAffinity() }
             override fun onHookDetected() { finishAffinity() }
-            override fun onUntrustedInstallationDetected() { finishAffinity() }
-            override fun onSuspiciousAppDetected(suspiciousAppInfo: SuspiciousAppInfo) {}
+            override fun onUntrustedInstallationSourceDetected() { finishAffinity() }
+            override fun onSuspiciousAppDetected(suspiciousApps: List<SuspiciousAppInfo>) {}
             override fun onMultiInstanceDetected() {}
-        })
+        }
+
+        val talsecConfig = TalsecConfig.Builder(
+            "com.example.shtile",   // packageName
+            "YOUR_CERT_HASH_HERE"   // certificate hash (baad me apna daalna)
+        ).watcherMail("gucci@example.com").build()
+
+        Talsec.start(this, talsecConfig, TalsecMode.BACKGROUND)
+        ThreatListener(threatDetectedListener).registerListener(this)
 
         val p = getSharedPreferences("GucciPrefs", Context.MODE_PRIVATE)
         if (!p.getBoolean("is_authenticated", false)) {
