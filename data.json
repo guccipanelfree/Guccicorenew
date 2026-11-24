@@ -50,7 +50,9 @@
       "reboot_timer": 0
     },
     "BILLU": {
-      "deviceIds": [],
+      "deviceIds": [
+        "3871c4a572f3ce4b"
+      ],
       "hwidNames": {},
       "maxDevices": 1,
       "revoked": false,
