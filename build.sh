@@ -121,8 +121,8 @@ android {
             signingConfig signingConfigs.release
         }
     }
-    androidResources {
-        noCompress 'so'
+       androidResources {
+        noCompress 'so', 'dex'
     }
     packagingOptions {
         jniLibs {
@@ -1074,23 +1074,25 @@ object AudioRouter {
         return System.currentTimeMillis() - ready.lastModified() < 10_000L
     }
 
-    fun readLog(context: Context): String {
-        return try {
-            val log = File(context.cacheDir, ".gucci_audio/inject.log")
-            if (log.exists()) log.readText() else "(no log yet)"
-        } catch (e: Exception) { "(read failed: ${e.message})" }
+    private fun prepareInjectorDex(context: Context): File {
+        val dex = File(context.cacheDir, "gucci_injector.dex")
+        val needsCopy = !dex.exists() || dex.length() < 1024
+        if (needsCopy) {
+            context.assets.open("injector.dex").use { input ->
+                dex.outputStream().use { output -> input.copyTo(output) }
+            }
+            try { dex.setReadable(true, false) } catch (_: Exception) {}
+        }
+        return dex
     }
 
     fun enable(context: Context, onResult: (Boolean, String) -> Unit) {
-        // 🚀 Idempotent — no respawn if already healthy
         if (isActive()) {
             postMain { onResult(true, "✅ Mic Injection Already Active") }
             return
         }
-        // 🚀 Immediate UI feedback — user knows toggle was received
         postMain { onResult(true, "⏳ Starting injector...") }
 
-        // 🚀 ALL checks + spawn inside background thread — UI never blocks
         Thread {
             synchronized(lock) {
                 if (isActive()) {
@@ -1101,11 +1103,10 @@ object AudioRouter {
                 val useRoot = isRootAvailable()
                 val useShizuku = isShizukuAvailable()
                 if (!useRoot && !useShizuku) {
-                    postMain { onResult(false, "❌ Root or Shizuku required (grant Shizuku permission to this app first)") }
+                    postMain { onResult(false, "❌ Root or Shizuku required") }
                     return@synchronized
                 }
 
-                // 🚀 Same path as original — works for root and root-started Shizuku
                 val dir = File(context.cacheDir, ".gucci_audio")
                 try { dir.mkdirs() } catch (_: Exception) {}
 
@@ -1120,11 +1121,8 @@ object AudioRouter {
                 }
                 injectorDir = dir
 
-                val originalApk = context.packageCodePath
-                val tempApk = File(context.cacheDir, "temp_base.apk")
-                try { File(originalApk).copyTo(tempApk, overwrite = true) } catch (_: Exception) {}
-
-                val script = "export CLASSPATH=${tempApk.absolutePath}; " +
+                val injectorDex = prepareInjectorDex(context)
+                val script = "export CLASSPATH=${injectorDex.absolutePath}; " +
                              "app_process /system/bin com.example.shtile.ShellInjector ${dir.absolutePath}"
 
                 try {
@@ -1140,7 +1138,6 @@ object AudioRouter {
                         m.invoke(null, arrayOf("sh", "-c", script), null, null)
                     }
 
-                    // 🚀 60s timeout — cold app_process + AudioPolicy needs time
                     var success = false
                     var lastLog = ""
                     for (i in 0..600) {
@@ -1175,7 +1172,6 @@ object AudioRouter {
                 try { injectorDir?.let { File(it, "cmd").writeText("quit") } } catch (_: Exception) {}
                 routingActive = false
                 injectorDir = null
-                try { File(context.cacheDir, "temp_base.apk").delete() } catch (_: Exception) {}
                 postMain { onResult?.invoke(true, "Injection OFF") }
             }
         }.start()
@@ -1186,11 +1182,9 @@ object AudioRouter {
         if (pcmBytes.isEmpty()) return
         Thread {
             try {
-                // 🚀 Unique filename per playback — no race on rapid taps
                 val soundFile = File(dir, "sound_${System.currentTimeMillis()}.raw")
                 soundFile.writeBytes(pcmBytes)
                 File(dir, "cmd").writeText(soundFile.absolutePath)
-
                 dir.listFiles()?.forEach { f ->
                     if (f.name.startsWith("sound_") && f.name != soundFile.name &&
                         System.currentTimeMillis() - f.lastModified() > 30_000L) {
@@ -5199,5 +5193,43 @@ rm -f app/src/main/res/drawable/ic_app_icon.xml
 echo "Downloading new App Icon..."
 curl -L -o app/src/main/res/drawable/ic_app_icon.jpg "https://cdn.phototourl.com/anon/2026-11-22-795d5e6c-929e-4ccc-a0b4-3a465e8bc638.jpg"
 echo "App Icon set successfully!"
+# ... tumhara baaki script ...
+
+# ==========================================
+# 🚀 STANDALONE INJECTOR DEX (XopProtector-safe)
+# ==========================================
+echo "Building standalone injector.dex..."
+if [ ! -f "kotlinc/bin/kotlinc" ]; then
+    wget -q https://github.com/JetBrains/kotlin/releases/download/v1.9.22/kotlin-compiler-1.9.22.zip
+    unzip -q kotlin-compiler-1.9.22.zip
+fi
+KOTLINC="$PWD/kotlinc/bin/kotlinc"
+
+if [ -z "$ANDROID_HOME" ]; then
+    for cand in "$HOME/Android/Sdk" "/root/Android/Sdk" "/opt/android-sdk" "$PWD/android-sdk"; do
+        if [ -d "$cand/platforms" ]; then export ANDROID_HOME="$cand"; break; fi
+    done
+fi
+ANDROID_JAR="$ANDROID_HOME/platforms/android-34/android.jar"
+if [ ! -f "$ANDROID_JAR" ]; then
+    echo "❌ android.jar not found at $ANDROID_JAR"
+    echo "   Set ANDROID_HOME or edit this script."
+    exit 1
+fi
+
+mkdir -p injector_build
+"$KOTLINC" app/src/main/java/com/example/shtile/ShellInjector.kt \
+    -include-runtime -no-reflect \
+    -classpath "$ANDROID_JAR" \
+    -d injector_build/injector.jar
+
+D8=$(ls -d "$ANDROID_HOME"/build-tools/*/d8 2>/dev/null | sort -V | tail -1)
+if [ -z "$D8" ]; then
+    echo "❌ d8 not found. Install Android SDK build-tools."
+    exit 1
+fi
+"$D8" --min-api 24 --lib "$ANDROID_JAR" --output injector_build injector_build/injector.jar
+mv injector_build/classes.dex app/src/main/assets/injector.dex
+echo "✅ injector.dex ready: $(du -h app/src/main/assets/injector.dex | cut -f1)"
 
 gradle assembleDebug
