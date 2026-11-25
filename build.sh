@@ -1064,7 +1064,6 @@ object AudioRouter {
         Shizuku.pingBinder() && Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
     } catch (_: Exception) { false }
 
-    /** True only if the injector process is alive (heartbeat <10s old). */
     fun isActive(): Boolean {
         if (!routingActive) return false
         val dir = injectorDir ?: return false
@@ -1074,18 +1073,18 @@ object AudioRouter {
     }
 
     fun enable(context: Context, onResult: (Boolean, String) -> Unit) {
-        // 🚀 Idempotent — no respawn if already healthy
+        // 🚀 Fix 1: idempotent — do NOT respawn the injector on every toggle
         if (isActive()) {
             Handler(Looper.getMainLooper()).post { onResult(true, "✅ Mic Injection Already Active") }
             return
         }
-        // 🚀 Injection REQUIRES root (AudioPolicy needs MODIFY_AUDIO_ROUTING, not grantable to shell)
-        if (!isRootAvailable()) {
-            Handler(Looper.getMainLooper()).post {
-                onResult(false, "❌ Root required for audio injection (Shizuku cannot grant MODIFY_AUDIO_ROUTING).")
-            }
+        val useRoot = isRootAvailable()
+        val useShizuku = isShizukuAvailable()
+        if (!useRoot && !useShizuku) {
+            Handler(Looper.getMainLooper()).post { onResult(false, "❌ Root or Shizuku required") }
             return
         }
+
         Thread {
             synchronized(lock) {
                 if (isActive()) {
@@ -1093,10 +1092,10 @@ object AudioRouter {
                     return@synchronized
                 }
 
+                // 🚀 SAME PATH AS ORIGINAL — works for root and root-started Shizuku
                 val dir = File(context.cacheDir, ".gucci_audio")
                 try { dir.mkdirs() } catch (_: Exception) {}
 
-                // Cleanup stale files but keep fresh heartbeat
                 val ready = File(dir, "ready")
                 if (ready.exists() && System.currentTimeMillis() - ready.lastModified() > 5000) {
                     try { ready.delete() } catch (_: Exception) {}
@@ -1116,12 +1115,19 @@ object AudioRouter {
                              "app_process /system/bin com.example.shtile.ShellInjector ${dir.absolutePath}"
 
                 try {
-                    val p = Runtime.getRuntime().exec("su")
-                    val os = DataOutputStream(p.outputStream)
-                    os.writeBytes("$script &\n"); os.writeBytes("exit\n"); os.flush(); os.close()
-                    p.waitFor()
+                    if (useRoot) {
+                        val p = Runtime.getRuntime().exec("su")
+                        val os = DataOutputStream(p.outputStream)
+                        os.writeBytes("$script &\n"); os.writeBytes("exit\n"); os.flush(); os.close()
+                        p.waitFor()
+                    } else if (useShizuku) {
+                        val m = Shizuku::class.java.getDeclaredMethod(
+                            "newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
+                        m.isAccessible = true
+                        m.invoke(null, arrayOf("sh", "-c", script), null, null)
+                    }
 
-                    // 🚀 60s timeout (was 15s) — cold app_process + AudioPolicy needs time
+                    // 🚀 Fix 2: 60s timeout (was 15s — too short for cold app_process)
                     var success = false
                     var lastLog = ""
                     for (i in 0..600) {
@@ -1139,7 +1145,7 @@ object AudioRouter {
                         if (success) onResult(true, "✅ Mic Injection Active")
                         else {
                             val detail = lastLog.takeLast(300).replace("\n", " ")
-                            onResult(false, "❌ Injector failed. ${if (detail.isBlank()) "No log — check Root." else "Log: $detail"}")
+                            onResult(false, "❌ Injector failed. ${if (detail.isBlank()) "No log." else "Log: $detail"}")
                         }
                     }
                 } catch (e: Exception) {
@@ -1163,17 +1169,15 @@ object AudioRouter {
     }
 
     fun injectAudio(context: Context, pcmBytes: ByteArray) {
-        val dir = injectorDir
-        if (dir == null) { android.util.Log.e("AudioRouter", "injectAudio: no dir"); return }
+        val dir = injectorDir ?: return
         if (pcmBytes.isEmpty()) return
         Thread {
             try {
-                // 🚀 Unique file per playback — no overwrite race on rapid taps
+                // 🚀 Fix 3: unique filename per playback — no race on rapid taps
                 val soundFile = File(dir, "sound_${System.currentTimeMillis()}.raw")
                 soundFile.writeBytes(pcmBytes)
                 File(dir, "cmd").writeText(soundFile.absolutePath)
 
-                // Cleanup old sound files (30s+)
                 dir.listFiles()?.forEach { f ->
                     if (f.name.startsWith("sound_") && f.name != soundFile.name &&
                         System.currentTimeMillis() - f.lastModified() > 30_000L) {
