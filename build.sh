@@ -1012,33 +1012,46 @@ object AudioRouter {
 
     fun enable(context: Context, onResult: (Boolean, String) -> Unit) {
         Thread {
-            injectorDir = File(context.cacheDir, ".gucci_audio").apply { mkdirs() }
-            val dir = injectorDir!!
+            val dir = File(context.cacheDir, ".gucci_audio").apply { mkdirs() }
             dir.listFiles()?.forEach { it.delete() }
+            injectorDir = dir
 
             val originalApk = context.packageCodePath
             val tempApk = File(context.cacheDir, "temp_base.apk")
             try { File(originalApk).copyTo(tempApk, overwrite = true) } catch (_: Exception) {}
 
-            val script = "export CLASSPATH=${tempApk.absolutePath}; app_process /system/bin com.example.shtile.ShellInjector ${dir.absolutePath}"
+            val scriptFile = File(context.cacheDir, "start_injector.sh")
+            scriptFile.writeText("""
+                #!/system/bin/sh
+                export CLASSPATH="${tempApk.absolutePath}"
+                export ANDROID_ROOT=/system
+                export ANDROID_DATA=/data
+                app_process /system/bin com.example.shtile.ShellInjector "${dir.absolutePath}"
+            """.trimIndent())
 
             try {
                 if (isRootAvailable()) {
                     val p = Runtime.getRuntime().exec("su")
                     val os = DataOutputStream(p.outputStream)
-                    os.writeBytes("$script &\n"); os.writeBytes("exit\n"); os.flush(); os.close()
+                    os.writeBytes("chmod 777 ${scriptFile.absolutePath}\n")
+                    os.writeBytes("pkill -f com.example.shtile.ShellInjector 2>/dev/null; sleep 0.5\n")
+                    // 🚀 Powerful su -mm Code (Same as Floater)
+                    os.writeBytes("su -mm -c 'sh ${scriptFile.absolutePath} >/dev/null 2>&1 &'\n")
+                    os.writeBytes("exit\n"); os.flush(); os.close()
                     p.waitFor()
                 } else if (isShizukuAvailable()) {
                     val m = Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
                     m.isAccessible = true
-                    m.invoke(null, arrayOf("sh", "-c", script), null, null)
+                    val cmd = "pkill -f com.example.shtile.ShellInjector 2>/dev/null; sleep 0.5; sh ${scriptFile.absolutePath} >/dev/null 2>&1 &"
+                    m.invoke(null, arrayOf("sh", "-c", cmd), null, null)
                 } else {
                     Handler(Looper.getMainLooper()).post { onResult(false, "Root or Shizuku required") }
                     return@Thread
                 }
 
                 var success = false
-                for (i in 0..50) {
+                // 🚀 15 Second Timeout (150 loops of 100ms)
+                for (i in 0..150) {
                     if (File(dir, "ready").exists()) { success = true; break }
                     val log = File(dir, "inject.log")
                     if (log.exists()) {
@@ -1063,6 +1076,7 @@ object AudioRouter {
             try { File(injectorDir!!, "cmd").writeText("quit") } catch (_: Exception) {}
             routingActive = false
             try { File(context.cacheDir, "temp_base.apk").delete() } catch (_: Exception) {}
+            try { File(context.cacheDir, "start_injector.sh").delete() } catch (_: Exception) {}
             Handler(Looper.getMainLooper()).post { onResult?.invoke(true, "Injection OFF") }
         }.start()
     }
@@ -4230,7 +4244,10 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                     }
                     AudioRouter.enable(this) { ok, msg ->
                         if (ok) Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-                        else { Toast.makeText(this, msg, Toast.LENGTH_LONG).show(); swInject.isChecked = false }
+                        else { 
+                            Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+                            // 🚀 Auto-Off fully removed. Toggle ON rahega.
+                        }
                     }
                 } else { AudioRouter.disable(this); Toast.makeText(this, "Mic injection OFF", Toast.LENGTH_SHORT).show() }
             }
@@ -4392,7 +4409,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         }
 
         stopProgressBar()
-        // Original code used AudioRouter.stopAudio(this) here. Removed to prevent toggle turning off.
         cancelMediaPlayer()
 
         currentPlayingName = file.nameWithoutExtension
