@@ -51,7 +51,7 @@
       "maxDevices": 50,
       "revoked": false,
       "expiresAt": 1795694062467,
-      "allowInx": true,
+      "allowInx": false,
       "allowFloater": true,
       "allowKernel": true,
       "allowVoice": true,
