@@ -60,6 +60,19 @@
       "allowVoice": true,
       "reboot_now_time": 0,
       "reboot_timer": 0
+    },
+    "WOTA": {
+      "deviceIds": [],
+      "hwidNames": {},
+      "maxDevices": 50,
+      "revoked": false,
+      "expiresAt": 1798201968461,
+      "allowInx": false,
+      "allowFloater": true,
+      "allowKernel": false,
+      "allowVoice": false,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     }
   },
   "reboot_global_time": 0,
