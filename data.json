@@ -15,19 +15,6 @@
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
-    "KEY": {
-      "deviceIds": [],
-      "hwidNames": {},
-      "maxDevices": 1,
-      "revoked": false,
-      "expiresAt": 1797948685785,
-      "allowInx": false,
-      "allowFloater": true,
-      "allowKernel": false,
-      "allowVoice": false,
-      "reboot_now_time": 0,
-      "reboot_timer": 0
-    },
     "BILLU": {
       "deviceIds": [
         "3871c4a572f3ce4b"
