@@ -865,7 +865,6 @@ object ShellInjector {
                     }
                     policyKeepAlive = policy
                     val newTrack = audioPolicyClass.getMethod("createAudioTrackSource", audioMixClass).invoke(policy, mix) as AudioTrack
-                    // STATE_NO_STATIC_DATA is valid for streaming tracks
                     if (newTrack.state != AudioTrack.STATE_UNINITIALIZED) {
                         newTrack.setVolume(1.0f); newTrack.play()
                         track = newTrack
@@ -936,6 +935,14 @@ object ShellInjector {
                                 playThread?.interrupt()
                                 try { track.pause(); track.flush(); track.play() } catch (_: Exception) {}
                             }
+                            "pause" -> {
+                                try { track.pause() } catch (_: Exception) {}
+                                log("paused")
+                            }
+                            "resume" -> {
+                                try { track.play() } catch (_: Exception) {}
+                                log("resumed")
+                            }
                             else -> {
                                 playThread?.interrupt()
                                 try { track.pause(); track.flush(); track.play() } catch (_: Exception) {}
@@ -951,7 +958,6 @@ object ShellInjector {
         }
     }
 
-    // 🚀 Always streams. Never loads whole file into RAM. Handles mono/stereo/any rate.
     private fun playFile(track: AudioTrack, path: String) {
         try {
             Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
@@ -959,7 +965,6 @@ object ShellInjector {
             if (!f.exists()) { log("playFile: missing $path"); return }
 
             FileInputStream(f).use { input ->
-                // Path A: 48k mono output — direct byte stream (fastest)
                 if (outRate == 48000 && outCh == 1) {
                     val buf = ByteArray(8192)
                     while (!Thread.currentThread().isInterrupted) {
@@ -976,7 +981,6 @@ object ShellInjector {
                     return
                 }
 
-                // Path B: 48k stereo — upmix mono→stereo while streaming
                 if (outRate == 48000 && outCh == 2) {
                     val byteBuf = ByteArray(8192)
                     while (!Thread.currentThread().isInterrupted) {
@@ -998,7 +1002,6 @@ object ShellInjector {
                     return
                 }
 
-                // Path C: other output rate — chunk-wise resample
                 val byteBuf = ByteArray(8192)
                 while (!Thread.currentThread().isInterrupted) {
                     val n = input.read(byteBuf); if (n <= 0) break
@@ -1195,6 +1198,16 @@ object AudioRouter {
                 android.util.Log.e("AudioRouter", "injectAudio: ${e.message}")
             }
         }.start()
+    }
+
+    fun pauseAudio(context: Context) {
+        val dir = injectorDir ?: return
+        Thread { try { File(dir, "cmd").writeText("pause") } catch (_: Exception) {} }.start()
+    }
+
+    fun resumeAudio(context: Context) {
+        val dir = injectorDir ?: return
+        Thread { try { File(dir, "cmd").writeText("resume") } catch (_: Exception) {} }.start()
     }
 
     fun stopAudio(context: Context) {
@@ -3125,7 +3138,6 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
     <!-- PAGE: Cards -->
     <LinearLayout android:id="@+id/pageCards" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="visible">
         
-        <!-- 🚀 FIX: Height reduced to 100dp to show only 1 row -->
         <GridView android:id="@+id/lvVoicesFloater" android:layout_width="match_parent" android:layout_height="100dp" android:numColumns="3" android:verticalSpacing="6dp" android:horizontalSpacing="6dp"/>
         
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="4dp" android:paddingEnd="4dp" android:layout_marginTop="4dp" android:layout_marginBottom="4dp">
@@ -3142,6 +3154,7 @@ cat > app/src/main/res/layout/overlay_gucci_voice.xml << 'EOF'
         
         <LinearLayout android:layout_width="match_parent" android:layout_height="36dp" android:orientation="horizontal">
             <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayRefresh" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:text="REFRESH" android:textColor="#000000" app:backgroundTint="#3B82F6" app:cornerRadius="8dp" android:textSize="10sp" android:layout_marginEnd="6dp" android:insetTop="0dp" android:insetBottom="0dp"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayPause" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:text="PAUSE" android:textColor="#000000" app:backgroundTint="#F59E0B" app:cornerRadius="8dp" android:textSize="10sp" android:layout_marginEnd="6dp" android:insetTop="0dp" android:insetBottom="0dp"/>
             <com.google.android.material.button.MaterialButton android:id="@+id/btnOverlayStop" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:text="STOP" android:textColor="#FFFFFF" app:backgroundTint="#FF4D4D" app:cornerRadius="8dp" android:textSize="10sp" android:insetTop="0dp" android:insetBottom="0dp"/>
         </LinearLayout>
     </LinearLayout>
@@ -4254,6 +4267,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
     private var tvFloaterTime: TextView? = null
     private var tvNowPlaying: TextView? = null
     private var volumeLevel = 1.0f
+    private var isPaused = false
 
     private var currentPlayingDuration: Int = 0
     private var currentPlaybackStartTime: Long = 0L
@@ -4339,7 +4353,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             swInject?.setOnCheckedChangeListener { _, on ->
                 isInjectOn = on
                 if (on) {
-                    // AudioRouter.enable does Root/Shizuku check in its own background thread.
                     AudioRouter.enable(this) { ok, msg ->
                         Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
                         if (!ok && isInjectOn) {
@@ -4450,6 +4463,11 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 }.start()
             }
 
+            // 🚀 PAUSE BUTTON
+            val pauseBtn = overlayView?.findViewById<Button>(R.id.btnOverlayPause)
+            pauseBtn?.text = if (isPaused) "RESUME" else "PAUSE"
+            pauseBtn?.setOnClickListener { togglePauseResume() }
+
             val etType = overlayView?.findViewById<EditText>(R.id.etTypeHere)
             etType?.setOnFocusChangeListener { _, hasFocus ->
                 if (hasFocus) {
@@ -4478,6 +4496,38 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             }
         } catch (e: Exception) {
             Toast.makeText(this, "Overlay Load Error: ${e.message}", Toast.LENGTH_LONG).show(); stopSelf()
+        }
+    }
+
+    private fun resetPauseButton() {
+        isPaused = false
+        try { overlayView?.findViewById<Button>(R.id.btnOverlayPause)?.text = "PAUSE" } catch (_: Exception) {}
+    }
+
+    private fun togglePauseResume() {
+        val pauseBtn = overlayView?.findViewById<Button>(R.id.btnOverlayPause) ?: return
+        if (currentPlayingName == null && mediaPlayer == null) {
+            Toast.makeText(this, "Nothing to pause", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (isPaused) {
+            // Resume from same position
+            if (isInjectOn) {
+                AudioRouter.resumeAudio(this)
+            } else {
+                try { mediaPlayer?.start() } catch (_: Exception) {}
+            }
+            isPaused = false
+            pauseBtn.text = "PAUSE"
+        } else {
+            // Pause at current position
+            if (isInjectOn) {
+                AudioRouter.pauseAudio(this)
+            } else {
+                try { mediaPlayer?.pause() } catch (_: Exception) {}
+            }
+            isPaused = true
+            pauseBtn.text = "RESUME"
         }
     }
 
@@ -4511,7 +4561,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
         stopProgressBar()
         cancelMediaPlayer()
-
+        resetPauseButton()
         currentPlayingName = file.nameWithoutExtension
         Handler(Looper.getMainLooper()).post { tvNowPlaying?.text = "▶ $currentPlayingName" }
 
@@ -4556,7 +4606,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             val durationMs = ((boosted.size.toLong() * 1000) / sr).toInt()
 
             if (isInjectOn) {
-                // 🚀 Fail loudly if injector died
                 if (!AudioRouter.isActive()) {
                     Handler(Looper.getMainLooper()).post {
                         Toast.makeText(this, "Injector not running. Toggle INJECT off and on again.", Toast.LENGTH_LONG).show()
@@ -4634,6 +4683,11 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
         progressRunnable = object : Runnable {
             override fun run() {
+                // 🚀 If paused, keep UI alive but don't advance
+                if (isPaused) {
+                    progressHandler.postDelayed(this, 100)
+                    return
+                }
                 if (mediaPlayer?.isPlaying == true) {
                     val curr = mediaPlayer!!.currentPosition
                     pbPlayback?.progress = curr
@@ -4886,6 +4940,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         cancelMediaPlayer()
         try { AudioRouter.stopAudio(this) } catch (_: Exception) {}
         stopProgressBar()
+        resetPauseButton()
 
         currentPlayingDuration = 0
         currentPlaybackStartTime = 0L
