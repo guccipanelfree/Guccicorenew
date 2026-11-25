@@ -79,7 +79,9 @@
       "reboot_timer": 0
     },
     "WARTH": {
-      "deviceIds": [],
+      "deviceIds": [
+        "a5d9ba23f0924a5ak6899v164OPPOOP5EE9L1mt6899CPH2761CPH2761INunknown"
+      ],
       "hwidNames": {},
       "maxDevices": 1,
       "revoked": false,
