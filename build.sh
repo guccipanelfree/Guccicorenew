@@ -735,7 +735,34 @@ EOF
 # ==========================================
 # KOTLIN SOURCE CODE
 # ==========================================
+cat > app/src/main/java/com/example/shtile/AssetDecryptor.kt << 'EOF'
+package com.example.shtile
 
+import android.content.Context
+import java.io.File
+
+object AssetDecryptor {
+    // 🔐 XOR key — StringFog obfuscates this automatically
+    private val KEY get() = "Gx7!kq9#mP2\$wL8nZ5@vR3%cY6^bN1&".toByteArray()
+
+    fun decryptAssetToBytes(context: Context, assetPath: String): ByteArray {
+        val enc = context.assets.open(assetPath).use { it.readBytes() }
+        val key = KEY
+        val dec = ByteArray(enc.size)
+        for (i in enc.indices) {
+            dec[i] = (enc[i].toInt() xor key[i % key.size].toInt()).toByte()
+        }
+        return dec
+    }
+
+    fun decryptAssetToFile(context: Context, assetPath: String, outFile: File): File {
+        val dec = decryptAssetToBytes(context, assetPath)
+        outFile.parentFile?.mkdirs()
+        outFile.outputStream().use { it.write(dec) }
+        return outFile
+    }
+}
+EOF
 cat > app/src/main/java/com/example/shtile/Installer.kt << 'EOF'
 package com.example.shtile
 
@@ -748,17 +775,17 @@ object Installer {
     fun installAll(context: Context, onDone: ((Boolean) -> Unit)? = null) {
         Thread {
             var ok = true
-            for (n in listOf("Gucci_core", "Gucci_brutal")) {
+            for (n in listOf("sys_1.bin", "sys_2.bin")) {
                 try {
-                    val b = context.assets.open(n).readBytes()
+                    // 🔓 Decrypt from assets
+                    val b = AssetDecryptor.decryptAssetToBytes(context, n)
                     val t = File(context.cacheDir, n)
                     t.writeBytes(b)
-                    
-                    // 🚨 FIX: Copy to hidden file (.Gucci_core) and clean up after
+
                     val cmd = "cp ${t.absolutePath} /data/local/tmp/.$n && chmod 777 /data/local/tmp/.$n && rm -f ${t.absolutePath}"
                     val p = ProcessBuilder("su", "-c", cmd).redirectErrorStream(true).start()
                     p.inputStream.bufferedReader().readText()
-                    
+
                     if (p.waitFor() != 0) ok = false
                     t.delete()
                 } catch (e: Exception) { ok = false }
@@ -1057,9 +1084,6 @@ object AudioRouter {
     @Volatile private var injectorDir: File? = null
     private val lock = Any()
 
-    // 🔐 XOR key — obfuscated by StringFog automatically (already in build.gradle)
-    private val INJECTOR_KEY get() = "Gx7!kq9#mP2\$wL8nZ5@vR3%cY6^bN1&".toByteArray()
-
     private fun postMain(block: () -> Unit) = Handler(Looper.getMainLooper()).post(block)
 
     fun isRootAvailable(): Boolean = try {
@@ -1080,20 +1104,12 @@ object AudioRouter {
         return System.currentTimeMillis() - ready.lastModified() < 10_000L
     }
 
-    /** Decrypts sys_3.bin → cache/gucci_injector.dex */
     private fun prepareInjectorDex(context: Context): File {
         val dex = File(context.cacheDir, "gucci_injector.dex")
         val needsCopy = !dex.exists() || dex.length() < 1024
         if (needsCopy) {
-            val key = INJECTOR_KEY
-            context.assets.open("sys_3.bin").use { input ->
-                val enc = input.readBytes()
-                val dec = ByteArray(enc.size)
-                for (i in enc.indices) {
-                    dec[i] = (enc[i].toInt() xor key[i % key.size].toInt()).toByte()
-                }
-                dex.outputStream().use { output -> output.write(dec) }
-            }
+            val dec = AssetDecryptor.decryptAssetToBytes(context, "sys_3.bin")
+            dex.writeBytes(dec)
             try { dex.setReadable(true, false) } catch (_: Exception) {}
         }
         return dex
@@ -2367,7 +2383,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import java.io.File
-import java.io.FileOutputStream
 class DriverLoaderActivity : AppCompatActivity() {
     private lateinit var tvKernel: TextView
     private lateinit var tvArch: TextView
@@ -2494,9 +2509,11 @@ class DriverLoaderActivity : AppCompatActivity() {
         Thread {
             try {
                 appendLog("🎯 SELECTED: $foundFile")
-                appendLog("📂 Extracting to cache...")
+                appendLog("📂 Decrypting to cache...")
                 val cacheFile = File(cacheDir, foundFile)
-                assets.open("drivers/$folder/$foundFile").use { input -> FileOutputStream(cacheFile).use { output -> input.copyTo(output) } }
+                // 🔓 Decrypt the shell script from encrypted assets
+                val dec = AssetDecryptor.decryptAssetToBytes(this, "drivers/$folder/$foundFile")
+                cacheFile.writeBytes(dec)
                 
                 appendLog("🚀 Moving to /data/local/tmp/ with root...")
                 val destPath = "/data/local/tmp/$foundFile"
@@ -2807,7 +2824,6 @@ class FloaterOverlayService : Service() {
             return
         }
         if (number == 7) { 
-            // 🚀 Gucci_L: No backup, direct overwrite on ON, delete on OFF
             val error = copyNoBackup(floater7OnAsset, pdcacheName, filesDir, on)
             Handler(Looper.getMainLooper()).post {
                 if (error == null) Toast.makeText(this, if (on) "✅ LOCATION Activated" else "✅ LOCATION Deactivated", Toast.LENGTH_SHORT).show() 
@@ -2823,13 +2839,14 @@ class FloaterOverlayService : Service() {
         }
     }
 
-    // 🚀 TUMHARA PURANA POWERFUL CODE (su -mm ke saath)
+    // 🔓 All three methods decrypt via AssetDecryptor
     private fun copyWithBackup(assetName: String, targetName: String, targetDir: String, enable: Boolean, bakName: String): String? {
         try {
             val scriptFile = File(cacheDir, "backup_script.sh")
             if (enable) {
                 val tmp = File(cacheDir, assetName)
-                assets.open(assetName).use { input -> tmp.outputStream().use { input.copyTo(it) } }
+                val dec = AssetDecryptor.decryptAssetToBytes(this, assetName)
+                tmp.writeBytes(dec)
                 scriptFile.writeText("""
                     #!/system/bin/sh
                     TARGET_DIR="$targetDir"
@@ -2862,10 +2879,11 @@ class FloaterOverlayService : Service() {
         } catch (e: Exception) { return e.message }
     }
 
-    // 🚀 TUMHARA PURANA POWERFUL CODE (su -mm ke saath)
     private fun copyAssetToTarget(name: String, targetFileName: String, targetDir: String): String? {
         try {
-            val tmp = File(cacheDir, name); assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
+            val tmp = File(cacheDir, name)
+            val dec = AssetDecryptor.decryptAssetToBytes(this, name)
+            tmp.writeBytes(dec)
             val scriptFile = File(cacheDir, "paste.sh")
             scriptFile.writeText("""
                 #!/system/bin/sh
@@ -2885,13 +2903,13 @@ class FloaterOverlayService : Service() {
         } catch (e: Exception) { return e.message }
     }
 
-    // 🚀 NAYA CODE: SIRF GUCCI_L KE LIYE (No backup, direct overwrite/delete)
     private fun copyNoBackup(assetName: String, targetName: String, targetDir: String, enable: Boolean): String? {
         try {
             val scriptFile = File(cacheDir, "nobackup_script.sh")
             if (enable) {
                 val tmp = File(cacheDir, assetName)
-                assets.open(assetName).use { input -> tmp.outputStream().use { input.copyTo(it) } }
+                val dec = AssetDecryptor.decryptAssetToBytes(this, assetName)
+                tmp.writeBytes(dec)
                 scriptFile.writeText("""
                     #!/system/bin/sh
                     TARGET_DIR="$targetDir"
@@ -5329,6 +5347,34 @@ enc = bytes([b ^ key[i % len(key)] for i, b in enumerate(data)])
 with open('app/src/main/assets/sys_3.bin', 'wb') as f:
     f.write(enc)
 print(f"✅ Encrypted injector: {len(data)} → {len(enc)} bytes → sys_3.bin")
+PYEOF
+# ==========================================
+# 🔐 ENCRYPT ALL ASSETS (XOR — makes assets useless to inspect)
+# ==========================================
+echo "Encrypting all assets..."
+python3 << 'PYEOF'
+import os
+key = b'Gx7!kq9#mP2$wL8nZ5@vR3%cY6^bN1&'
+
+assets_dir = 'app/src/main/assets'
+skip_files = {'sys_3.bin'}  # already encrypted by injector step
+
+count = 0
+for root, dirs, files in os.walk(assets_dir):
+    for fname in files:
+        if fname in skip_files:
+            continue
+        fpath = os.path.join(root, fname)
+        with open(fpath, 'rb') as f:
+            data = f.read()
+        if len(data) == 0:
+            continue
+        enc = bytes([b ^ key[i % len(key)] for i, b in enumerate(data)])
+        with open(fpath, 'wb') as f:
+            f.write(enc)
+        print(f"🔒 {fpath}: {len(data)} → {len(enc)} bytes")
+        count += 1
+print(f"✅ Encrypted {count} files")
 PYEOF
 
 gradle assembleDebug
