@@ -46,7 +46,9 @@
       "reboot_timer": 0
     },
     "GUCCI-TRIAL-1D": {
-      "deviceIds": [],
+      "deviceIds": [
+        "0388377f34b22a16k6878v164iQOOI2410mt6878I2410I2410iunknown"
+      ],
       "hwidNames": {},
       "maxDevices": 50,
       "revoked": false,
