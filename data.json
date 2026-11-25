@@ -77,6 +77,19 @@
       "allowVoice": false,
       "reboot_now_time": 0,
       "reboot_timer": 0
+    },
+    "WARTH": {
+      "deviceIds": [],
+      "hwidNames": {},
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1798205462546,
+      "allowInx": false,
+      "allowFloater": false,
+      "allowKernel": false,
+      "allowVoice": true,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     }
   },
   "reboot_global_time": 0,
