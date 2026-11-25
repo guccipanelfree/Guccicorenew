@@ -1,9 +1,7 @@
 {
   "keys": {
     "RYZEN": {
-      "deviceIds": [
-        "3ceff1283b117b79eqemotorolaeqemotorolaedge50pro"
-      ],
+      "deviceIds": [],
       "hwidNames": {},
       "maxDevices": 1,
       "revoked": false,
