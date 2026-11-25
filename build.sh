@@ -865,7 +865,7 @@ object ShellInjector {
                     }
                     policyKeepAlive = policy
                     val newTrack = audioPolicyClass.getMethod("createAudioTrackSource", audioMixClass).invoke(policy, mix) as AudioTrack
-                    // 🚀 STATE_NO_STATIC_DATA is valid for streaming tracks
+                    // STATE_NO_STATIC_DATA is valid for streaming tracks
                     if (newTrack.state != AudioTrack.STATE_UNINITIALIZED) {
                         newTrack.setVolume(1.0f); newTrack.play()
                         track = newTrack
@@ -1054,6 +1054,8 @@ object AudioRouter {
     @Volatile private var injectorDir: File? = null
     private val lock = Any()
 
+    private fun postMain(block: () -> Unit) = Handler(Looper.getMainLooper()).post(block)
+
     fun isRootAvailable(): Boolean = try {
         val p = ProcessBuilder("su", "-c", "id").start()
         val out = p.inputStream.bufferedReader().readText(); p.waitFor()
@@ -1072,27 +1074,38 @@ object AudioRouter {
         return System.currentTimeMillis() - ready.lastModified() < 10_000L
     }
 
-    fun enable(context: Context, onResult: (Boolean, String) -> Unit) {
-        // 🚀 Fix 1: idempotent — do NOT respawn the injector on every toggle
-        if (isActive()) {
-            Handler(Looper.getMainLooper()).post { onResult(true, "✅ Mic Injection Already Active") }
-            return
-        }
-        val useRoot = isRootAvailable()
-        val useShizuku = isShizukuAvailable()
-        if (!useRoot && !useShizuku) {
-            Handler(Looper.getMainLooper()).post { onResult(false, "❌ Root or Shizuku required") }
-            return
-        }
+    fun readLog(context: Context): String {
+        return try {
+            val log = File(context.cacheDir, ".gucci_audio/inject.log")
+            if (log.exists()) log.readText() else "(no log yet)"
+        } catch (e: Exception) { "(read failed: ${e.message})" }
+    }
 
+    fun enable(context: Context, onResult: (Boolean, String) -> Unit) {
+        // 🚀 Idempotent — no respawn if already healthy
+        if (isActive()) {
+            postMain { onResult(true, "✅ Mic Injection Already Active") }
+            return
+        }
+        // 🚀 Immediate UI feedback — user knows toggle was received
+        postMain { onResult(true, "⏳ Starting injector...") }
+
+        // 🚀 ALL checks + spawn inside background thread — UI never blocks
         Thread {
             synchronized(lock) {
                 if (isActive()) {
-                    Handler(Looper.getMainLooper()).post { onResult(true, "✅ Mic Injection Already Active") }
+                    postMain { onResult(true, "✅ Mic Injection Already Active") }
                     return@synchronized
                 }
 
-                // 🚀 SAME PATH AS ORIGINAL — works for root and root-started Shizuku
+                val useRoot = isRootAvailable()
+                val useShizuku = isShizukuAvailable()
+                if (!useRoot && !useShizuku) {
+                    postMain { onResult(false, "❌ Root or Shizuku required (grant Shizuku permission to this app first)") }
+                    return@synchronized
+                }
+
+                // 🚀 Same path as original — works for root and root-started Shizuku
                 val dir = File(context.cacheDir, ".gucci_audio")
                 try { dir.mkdirs() } catch (_: Exception) {}
 
@@ -1120,14 +1133,14 @@ object AudioRouter {
                         val os = DataOutputStream(p.outputStream)
                         os.writeBytes("$script &\n"); os.writeBytes("exit\n"); os.flush(); os.close()
                         p.waitFor()
-                    } else if (useShizuku) {
+                    } else {
                         val m = Shizuku::class.java.getDeclaredMethod(
                             "newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
                         m.isAccessible = true
                         m.invoke(null, arrayOf("sh", "-c", script), null, null)
                     }
 
-                    // 🚀 Fix 2: 60s timeout (was 15s — too short for cold app_process)
+                    // 🚀 60s timeout — cold app_process + AudioPolicy needs time
                     var success = false
                     var lastLog = ""
                     for (i in 0..600) {
@@ -1141,8 +1154,8 @@ object AudioRouter {
                     }
 
                     routingActive = success
-                    Handler(Looper.getMainLooper()).post {
-                        if (success) onResult(true, "✅ Mic Injection Active")
+                    postMain {
+                        if (success) onResult(true, "✅ Mic Injection Active (${if (useRoot) "Root" else "Shizuku"})")
                         else {
                             val detail = lastLog.takeLast(300).replace("\n", " ")
                             onResult(false, "❌ Injector failed. ${if (detail.isBlank()) "No log." else "Log: $detail"}")
@@ -1150,7 +1163,7 @@ object AudioRouter {
                     }
                 } catch (e: Exception) {
                     routingActive = false
-                    Handler(Looper.getMainLooper()).post { onResult(false, "Enable error: ${e.message}") }
+                    postMain { onResult(false, "Enable error: ${e.message}") }
                 }
             }
         }.start()
@@ -1163,7 +1176,7 @@ object AudioRouter {
                 routingActive = false
                 injectorDir = null
                 try { File(context.cacheDir, "temp_base.apk").delete() } catch (_: Exception) {}
-                Handler(Looper.getMainLooper()).post { onResult?.invoke(true, "Injection OFF") }
+                postMain { onResult?.invoke(true, "Injection OFF") }
             }
         }.start()
     }
@@ -1173,7 +1186,7 @@ object AudioRouter {
         if (pcmBytes.isEmpty()) return
         Thread {
             try {
-                // 🚀 Fix 3: unique filename per playback — no race on rapid taps
+                // 🚀 Unique filename per playback — no race on rapid taps
                 val soundFile = File(dir, "sound_${System.currentTimeMillis()}.raw")
                 soundFile.writeBytes(pcmBytes)
                 File(dir, "cmd").writeText(soundFile.absolutePath)
@@ -4332,18 +4345,10 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             swInject?.setOnCheckedChangeListener { _, on ->
                 isInjectOn = on
                 if (on) {
-                    if (!AudioRouter.isRootAvailable() && !AudioRouter.isShizukuAvailable()) {
-                        Toast.makeText(this, "Root required for injection", Toast.LENGTH_LONG).show()
-                        swInject.isChecked = false
-                        isInjectOn = false
-                        return@setOnCheckedChangeListener
-                    }
+                    // AudioRouter.enable does Root/Shizuku check in its own background thread.
                     AudioRouter.enable(this) { ok, msg ->
-                        if (ok) {
-                            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
-                            // 🚀 FIX: reset toggle to OFF so user isn't stuck in broken state
+                        Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+                        if (!ok && isInjectOn) {
                             swInject.isChecked = false
                             isInjectOn = false
                         }
@@ -4557,7 +4562,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             val durationMs = ((boosted.size.toLong() * 1000) / sr).toInt()
 
             if (isInjectOn) {
-                // 🚀 FIX: fail loudly if injector is not actually running
+                // 🚀 Fail loudly if injector died
                 if (!AudioRouter.isActive()) {
                     Handler(Looper.getMainLooper()).post {
                         Toast.makeText(this, "Injector not running. Toggle INJECT off and on again.", Toast.LENGTH_LONG).show()
