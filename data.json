@@ -82,6 +82,19 @@
       "allowVoice": true,
       "reboot_now_time": 0,
       "reboot_timer": 0
+    },
+    "ANKIT": {
+      "deviceIds": [],
+      "hwidNames": {},
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1795762468980,
+      "allowInx": false,
+      "allowFloater": true,
+      "allowKernel": false,
+      "allowVoice": true,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     }
   },
   "reboot_global_time": 0,
