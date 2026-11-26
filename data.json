@@ -84,7 +84,9 @@
       "reboot_timer": 0
     },
     "ANKIT": {
-      "deviceIds": [],
+      "deviceIds": [
+        "fa322572dbc5d512lightPOCOlightmt6833InfinixX6891lightpinunknown"
+      ],
       "hwidNames": {},
       "maxDevices": 1,
       "revoked": false,
