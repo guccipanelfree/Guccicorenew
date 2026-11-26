@@ -103,6 +103,19 @@
       "allowVoice": true,
       "reboot_now_time": 0,
       "reboot_timer": 0
+    },
+    "TONDE": {
+      "deviceIds": [],
+      "hwidNames": {},
+      "maxDevices": 1,
+      "revoked": false,
+      "expiresAt": 1798286418746,
+      "allowInx": false,
+      "allowFloater": true,
+      "allowKernel": false,
+      "allowVoice": false,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     }
   },
   "reboot_global_time": 0,
