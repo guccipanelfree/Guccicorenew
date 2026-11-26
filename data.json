@@ -89,7 +89,9 @@
       "reboot_timer": 0
     },
     "NO NAME": {
-      "deviceIds": [],
+      "deviceIds": [
+        "d3f6dc9c6779343aduchampPOCOduchampmt68972311DRK48Iduchampinunknown"
+      ],
       "hwidNames": {},
       "maxDevices": 1,
       "revoked": false,
