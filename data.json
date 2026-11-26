@@ -104,7 +104,9 @@
       "reboot_timer": 0
     },
     "KRISHNA": {
-      "deviceIds": [],
+      "deviceIds": [
+        "22f1c0bb2b95841aexynos990samsungc2sexynos990SMN986Bc2sxxxunknown"
+      ],
       "hwidNames": {},
       "maxDevices": 1,
       "revoked": false,
