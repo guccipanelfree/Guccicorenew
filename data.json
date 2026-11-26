@@ -30,21 +30,6 @@
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
-    "GUCCI": {
-      "deviceIds": [
-        "01fc57517f46796choliOnePlusOP5958L1qcomCPH2467CPH2467unknown"
-      ],
-      "hwidNames": {},
-      "maxDevices": 1,
-      "revoked": false,
-      "expiresAt": 0,
-      "allowInx": true,
-      "allowFloater": true,
-      "allowKernel": true,
-      "allowVoice": true,
-      "reboot_now_time": 0,
-      "reboot_timer": 0
-    },
     "GUCCI-TRIAL-1D": {
       "deviceIds": [
         "0388377f34b22a16k6878v164iQOOI2410mt6878I2410I2410iunknown",
