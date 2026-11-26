@@ -78,7 +78,9 @@
       "reboot_timer": 0
     },
     "TONDE": {
-      "deviceIds": [],
+      "deviceIds": [
+        "16d5bfe0f226ab40k6835v264OPPOOP5F2BL1mt6835CPH2823CPH2823INunknown"
+      ],
       "hwidNames": {},
       "maxDevices": 1,
       "revoked": false,
