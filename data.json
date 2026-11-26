@@ -66,6 +66,19 @@
       "allowVoice": true,
       "reboot_now_time": 0,
       "reboot_timer": 0
+    },
+    "GUCCI": {
+      "deviceIds": [],
+      "hwidNames": {},
+      "maxDevices": 99,
+      "revoked": false,
+      "expiresAt": 0,
+      "allowInx": false,
+      "allowFloater": false,
+      "allowKernel": false,
+      "allowVoice": true,
+      "reboot_now_time": 0,
+      "reboot_timer": 0
     }
   },
   "reboot_global_time": 0,
