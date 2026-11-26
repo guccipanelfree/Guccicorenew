@@ -30,33 +30,6 @@
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
-    "GUCCI-TRIAL-1D": {
-      "deviceIds": [
-        "0388377f34b22a16k6878v164iQOOI2410mt6878I2410I2410iunknown",
-        "e3af752e1b35ea1asunnyRedmisunnyqcomM2101K7AIsunnyinunknown",
-        "d7ec395ee5a795cfk6835v264OPPOOP5EBBL1mt6835CPH2695CPH2695INunknown",
-        "e96cd87430faeb36atollvivo2025qcomV20252025Tunknown",
-        "8b1286b9d243a082atollvivo2025qcomV20252025Tunknown",
-        "a5d9ba23f0924a5ak6899v164OPPOOP5EE9L1mt6899CPH2761CPH2761INunknown",
-        "cf330a8e3b55617fduchampPOCOduchampmt68972311DRK48Iduchampinunknown",
-        "12bbb16828cbed6ek6989v264realmeRE60ADL1mt6989RMX5061RMX5061INunknown",
-        "22f1c0bb2b95841aexynos990samsungc2sexynos990SMN986Bc2sxxxunknown",
-        "8a92cd7c0e2d808cparrotrealmeRE5CA3L1qcomRMX3921RMX3921INunknown",
-        "d3f6dc9c6779343aduchampPOCOduchampmt68972311DRK48Iduchampinunknown",
-        "01fc57517f46796choliOnePlusOP5958L1qcomCPH2467CPH2467unknown",
-        "7191c21b7322d1ae"
-      ],
-      "hwidNames": {},
-      "maxDevices": 50,
-      "revoked": true,
-      "expiresAt": 1795694062467,
-      "allowInx": false,
-      "allowFloater": true,
-      "allowKernel": false,
-      "allowVoice": true,
-      "reboot_now_time": 0,
-      "reboot_timer": 0
-    },
     "WARTH": {
       "deviceIds": [
         "a5d9ba23f0924a5ak6899v164OPPOOP5EE9L1mt6899CPH2761CPH2761INunknown"
