@@ -48,7 +48,7 @@
       ],
       "hwidNames": {},
       "maxDevices": 50,
-      "revoked": false,
+      "revoked": true,
       "expiresAt": 1795694062467,
       "allowInx": false,
       "allowFloater": true,
