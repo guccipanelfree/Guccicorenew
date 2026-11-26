@@ -45,23 +45,6 @@
       "reboot_now_time": 0,
       "reboot_timer": 0
     },
-    "GUCCI": {
-      "deviceIds": [
-        "401f462be855169choliOnePlusOP5958L1qcomCPH2467CPH2467unknown",
-        "01fc57517f46796choliOnePlusOP5958L1qcomCPH2467CPH2467unknown",
-        "d3f6dc9c6779343aduchampPOCOduchampmt68972311DRK48Iduchampinunknown"
-      ],
-      "hwidNames": {},
-      "maxDevices": 99,
-      "revoked": true,
-      "expiresAt": 0,
-      "allowInx": false,
-      "allowFloater": true,
-      "allowKernel": false,
-      "allowVoice": true,
-      "reboot_now_time": 0,
-      "reboot_timer": 0
-    },
     "ANKIT": {
       "deviceIds": [
         "fa322572dbc5d512lightPOCOlightmt6833InfinixX6891lightpinunknown"
