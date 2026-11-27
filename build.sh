@@ -836,7 +836,7 @@ object ShellInjector {
             val attrBuilderClass = Class.forName("android.media.AudioAttributes\$Builder")
             val setUsage = attrBuilderClass.getMethod("setUsage", Int::class.java)
 
-            // 🚀 CRITICAL FIX: Add GAME and VOICE_COMMUNICATION so Free Fire/Calls pick up the audio
+            // 🚀 Match Media, Game, Voice Comm to ensure friend hears it
             val usages = intArrayOf(
                 AudioAttributes.USAGE_MEDIA,
                 AudioAttributes.USAGE_GAME,
@@ -898,7 +898,6 @@ object ShellInjector {
                             try { AudioManager::class.java.getMethod("unregisterAudioPolicy", audioPolicyClass).invoke(audioManager, policy) } catch (_: Exception) {}
                         }
                     } else {
-                        // Log the register error to stdout so the app can see it
                         System.out.println("REG_FAIL_$reg")
                     }
                 } catch (_: Exception) {}
@@ -909,9 +908,10 @@ object ShellInjector {
                 System.exit(1)
             }
 
+            // 🚀 FIX: track is now non-null (checked above)
+            val finalTrack = track!!
             System.out.println("READY")
-            
-            // Command loop via stdin (RAM only, no files)
+
             val input = DataInputStream(System.`in`)
             while (true) {
                 val cmd = try { input.readLine() } catch (_: Exception) { null } ?: break
@@ -923,24 +923,24 @@ object ShellInjector {
                             try { input.readFully(bytes) } catch (_: Exception) {}
                             isPaused = false
                             playThread?.interrupt()
-                            try { track.pause(); track.flush(); track.play() } catch (_: Exception) {}
-                            val t = Thread { playData(track, bytes) }
+                            try { finalTrack.pause(); finalTrack.flush(); finalTrack.play() } catch (_: Exception) {}
+                            val t = Thread { playData(finalTrack, bytes) }
                             playThread = t
                             t.start()
                         }
                     }
                     "PAUSE" -> {
                         isPaused = true
-                        try { track.pause() } catch (_: Exception) {}
+                        try { finalTrack.pause() } catch (_: Exception) {}
                     }
                     "RESUME" -> {
                         isPaused = false
-                        try { track.play() } catch (_: Exception) {}
+                        try { finalTrack.play() } catch (_: Exception) {}
                     }
                     "STOP" -> {
                         isPaused = false
                         playThread?.interrupt()
-                        try { track.pause(); track.flush(); track.play() } catch (_: Exception) {}
+                        try { finalTrack.pause(); finalTrack.flush(); finalTrack.play() } catch (_: Exception) {}
                     }
                     "QUIT" -> {
                         isPaused = false
@@ -978,7 +978,7 @@ object ShellInjector {
             Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
             val input = ByteArrayInputStream(pcmBytes)
             val buf = ByteArray(8192)
-            
+
             while (!Thread.currentThread().isInterrupted) {
                 waitIfPaused()
                 if (Thread.currentThread().isInterrupted) return
