@@ -39,7 +39,7 @@
       "revoked": false,
       "expiresAt": 1800797512415,
       "allowInx": false,
-      "allowFloater": false,
+      "allowFloater": true,
       "allowKernel": false,
       "allowVoice": false,
       "reboot_now_time": 0,
