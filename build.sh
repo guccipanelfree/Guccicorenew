@@ -836,7 +836,7 @@ object ShellInjector {
             val attrBuilderClass = Class.forName("android.media.AudioAttributes\$Builder")
             val setUsage = attrBuilderClass.getMethod("setUsage", Int::class.java)
 
-            // 🚀 Match Media, Game, Voice Comm to ensure friend hears it
+            // 🚀 CRITICAL FIX: Add GAME and VOICE_COMMUNICATION so Free Fire/Calls pick up the audio
             val usages = intArrayOf(
                 AudioAttributes.USAGE_MEDIA,
                 AudioAttributes.USAGE_GAME,
@@ -898,6 +898,7 @@ object ShellInjector {
                             try { AudioManager::class.java.getMethod("unregisterAudioPolicy", audioPolicyClass).invoke(audioManager, policy) } catch (_: Exception) {}
                         }
                     } else {
+                        // Log the register error to stdout so the app can see it
                         System.out.println("REG_FAIL_$reg")
                     }
                 } catch (_: Exception) {}
@@ -908,10 +909,9 @@ object ShellInjector {
                 System.exit(1)
             }
 
-            // 🚀 FIX: track is now non-null (checked above)
-            val finalTrack = track!!
             System.out.println("READY")
-
+            
+            // Command loop via stdin (RAM only, no files)
             val input = DataInputStream(System.`in`)
             while (true) {
                 val cmd = try { input.readLine() } catch (_: Exception) { null } ?: break
@@ -923,24 +923,24 @@ object ShellInjector {
                             try { input.readFully(bytes) } catch (_: Exception) {}
                             isPaused = false
                             playThread?.interrupt()
-                            try { finalTrack.pause(); finalTrack.flush(); finalTrack.play() } catch (_: Exception) {}
-                            val t = Thread { playData(finalTrack, bytes) }
+                            try { track.pause(); track.flush(); track.play() } catch (_: Exception) {}
+                            val t = Thread { playData(track, bytes) }
                             playThread = t
                             t.start()
                         }
                     }
                     "PAUSE" -> {
                         isPaused = true
-                        try { finalTrack.pause() } catch (_: Exception) {}
+                        try { track.pause() } catch (_: Exception) {}
                     }
                     "RESUME" -> {
                         isPaused = false
-                        try { finalTrack.play() } catch (_: Exception) {}
+                        try { track.play() } catch (_: Exception) {}
                     }
                     "STOP" -> {
                         isPaused = false
                         playThread?.interrupt()
-                        try { finalTrack.pause(); finalTrack.flush(); finalTrack.play() } catch (_: Exception) {}
+                        try { track.pause(); track.flush(); track.play() } catch (_: Exception) {}
                     }
                     "QUIT" -> {
                         isPaused = false
@@ -978,7 +978,7 @@ object ShellInjector {
             Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
             val input = ByteArrayInputStream(pcmBytes)
             val buf = ByteArray(8192)
-
+            
             while (!Thread.currentThread().isInterrupted) {
                 waitIfPaused()
                 if (Thread.currentThread().isInterrupted) return
@@ -1034,16 +1034,8 @@ object AudioRouter {
             val m = Shizuku::class.java.getDeclaredMethod(
                 "newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
             m.isAccessible = true
-            m.invoke(null, arrayOf("su", "-mm", "-c", cmd), null, null) as? Process
-        } catch (_: Exception) {
-            // Fallback if Shizuku is not running as root but shell
-            try {
-                val m = Shizuku::class.java.getDeclaredMethod(
-                    "newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
-                m.isAccessible = true
-                m.invoke(null, arrayOf("sh", "-c", cmd), null, null) as? Process
-            } catch (_: Exception) { null }
-        }
+            m.invoke(null, arrayOf("sh", "-c", cmd), null, null) as? Process
+        } catch (_: Exception) { null }
     }
 
     fun enable(context: Context, onResult: (Boolean, String) -> Unit) {
@@ -1070,31 +1062,25 @@ object AudioRouter {
                 try {
                     val dexBytes = AssetDecryptor.decryptAssetToBytes(context, "sys_3.bin")
                     
-                    // 🚀 FULLY HIDDEN APP CACHE PATH
-                    val dir = File(context.cacheDir, ".sys_${UUID.randomUUID().toString().replace("-", "")}").apply { mkdirs() }
-                    val tmpFile = File(dir, ".a_${UUID.randomUUID().toString().replace("-", "")}")
-                    val tmpPath = tmpFile.absolutePath
-                    val dirPath = dir.absolutePath
+                    // 🚀 100% Hidden Name: random alphanumeric string with dot prefix
+                    val tmpName = ".tmp_${UUID.randomUUID().toString().replace("-", "")}"
+                    val tmpPath = if (useRoot) File(context.cacheDir, tmpName).absolutePath else "/data/local/tmp/$tmpName"
 
                     if (useRoot) {
-                        tmpFile.writeBytes(dexBytes)
-                        ProcessBuilder("su", "-c", "chmod 700 '$dirPath' && chmod 400 '$tmpPath'").start().waitFor()
+                        File(tmpPath).writeBytes(dexBytes)
                     } else {
-                        // Write to app cache via Shizuku with proper SELinux context
-                        val writeCmd = "mkdir -p '$dirPath' && chmod 700 '$dirPath' && cat > '$tmpPath' && chmod 400 '$tmpPath' && chcon u:object_r:app_data_file:s0 '$tmpPath'"
-                        val p = shizukuProcess(writeCmd) ?: throw Exception("Shizuku write failed")
+                        val p = shizukuProcess("cat > '$tmpPath' && chmod 400 '$tmpPath'") ?: throw Exception("Shizuku failed")
                         p.outputStream.write(dexBytes)
                         p.outputStream.close()
                         p.waitFor()
                     }
 
-                    // 🚀 UNLINK TRICK + SELinux Context
+                    // 🚀 Unlink Trick: Start process, then IMMEDIATELY delete file
                     val script = """
                         export CLASSPATH='$tmpPath'
                         app_process /system/bin com.example.shtile.ShellInjector <&0 &
                         PID=${'$'}!
                         rm -f '$tmpPath'
-                        rmdir '$dirPath'
                         wait ${'$'}PID
                     """.trimIndent()
                     
@@ -1124,7 +1110,7 @@ object AudioRouter {
                             val line = try { reader.readLine() } catch (_: Exception) { null }
                             if (line != null) {
                                 if (line.contains("READY")) { success = true; break }
-                                if (line.contains("ERROR") || line.contains("REG_FAIL")) { errorMsg = line; break }
+                                if (line.contains("ERROR")) { errorMsg = line; break }
                             }
                         }
                         Thread.sleep(100)
