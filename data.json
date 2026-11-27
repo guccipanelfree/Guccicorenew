@@ -76,9 +76,7 @@
       "reboot_timer": 0
     },
     "GUCCI2": {
-      "deviceIds": [
-        "01fc57517f46796choliOnePlusOP5958L1qcomCPH2467CPH2467unknown"
-      ],
+      "deviceIds": [],
       "hwidNames": {},
       "maxDevices": 1,
       "revoked": false,
