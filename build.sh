@@ -831,36 +831,51 @@ object ShellInjector {
             val context = activityThreadClass.getMethod("getSystemContext").invoke(activityThread) as Context
             log("context ok")
             fakeShellIdentity(context)
-            val mixRuleClass        = Class.forName("android.media.audiopolicy.AudioMixingRule")
+
+            val mixRuleClass = Class.forName("android.media.audiopolicy.AudioMixingRule")
             val mixRuleBuilderClass = Class.forName("android.media.audiopolicy.AudioMixingRule\$Builder")
-            val ruleBuilder         = mixRuleBuilderClass.getConstructor().newInstance()
+            val ruleBuilder = mixRuleBuilderClass.getConstructor().newInstance()
+
+            // 🚀 FIX: Use USAGE rule (media playback) so our own AudioTrack gets looped back
             try {
                 val setRole = mixRuleBuilderClass.getMethod("setTargetMixRole", Int::class.java)
-                setRole.invoke(ruleBuilder, 1); log("mix role = PLAYERS (1)")
+                setRole.invoke(ruleBuilder, 1) // MIX_ROLE_PLAYERS
+                log("mix role = PLAYERS (1)")
             } catch (_: Exception) { log("setTargetMixRole unavailable") }
-            val capturePresetRule = mixRuleClass.getField("RULE_MATCH_ATTRIBUTE_CAPTURE_PRESET").getInt(null)
+
+            val usageRule = mixRuleClass.getField("RULE_MATCH_ATTRIBUTE_USAGE").getInt(null)
             val addRuleMethod = mixRuleBuilderClass.getMethod("addRule", AudioAttributes::class.java, Int::class.java)
-            val presets = intArrayOf(1, 5, 6, 7, 9)
             val attrBuilderClass = Class.forName("android.media.AudioAttributes\$Builder")
-            val setCapturePreset = attrBuilderClass.getMethod("setCapturePreset", Int::class.java)
-            for (p in presets) {
+
+            // Match USAGE_MEDIA (3) and USAGE_ASSISTANCE_SONIFICATION (13) for game/call audio
+            val usages = intArrayOf(
+                AudioAttributes.USAGE_MEDIA,
+                AudioAttributes.USAGE_ASSISTANCE_SONIFICATION
+            )
+            val setUsage = attrBuilderClass.getMethod("setUsage", Int::class.java)
+            for (u in usages) {
                 val b = attrBuilderClass.getConstructor().newInstance()
-                setCapturePreset.invoke(b, p)
+                setUsage.invoke(b, u)
                 val aa = attrBuilderClass.getMethod("build").invoke(b) as AudioAttributes
-                addRuleMethod.invoke(ruleBuilder, aa, capturePresetRule)
+                addRuleMethod.invoke(ruleBuilder, aa, usageRule)
             }
+
             val mixRule = mixRuleBuilderClass.getMethod("build").invoke(ruleBuilder)
-            log("rule ok")
-            val audioMixClass         = Class.forName("android.media.audiopolicy.AudioMix")
-            val audioMixBuilderClass  = Class.forName("android.media.audiopolicy.AudioMix\$Builder")
-            val audioPolicyClass      = Class.forName("android.media.audiopolicy.AudioPolicy")
+            log("usage rule ok")
+
+            val audioMixClass = Class.forName("android.media.audiopolicy.AudioMix")
+            val audioMixBuilderClass = Class.forName("android.media.audiopolicy.AudioMix\$Builder")
+            val audioPolicyClass = Class.forName("android.media.audiopolicy.AudioPolicy")
             val audioPolicyBuilderClass = Class.forName("android.media.audiopolicy.AudioPolicy\$Builder")
             val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
             var flagRender   = 1
             var flagLoopBack = 2
             try { flagLoopBack = audioMixClass.getField("ROUTE_FLAG_LOOP_BACK").getInt(null) } catch (_: Exception) {}
             try { flagRender = audioMixClass.getField("ROUTE_FLAG_RENDER").getInt(null) } catch (_: Exception) {}
             log("device=${Build.MODEL} api=${Build.VERSION.SDK_INT}")
+
+            // Try different sample rates / channel masks for loopback
             val combos = listOf(
                 intArrayOf(48000, AudioFormat.CHANNEL_OUT_MONO,   flagLoopBack),
                 intArrayOf(48000, AudioFormat.CHANNEL_OUT_STEREO, flagLoopBack),
@@ -868,9 +883,7 @@ object ShellInjector {
                 intArrayOf(44100, AudioFormat.CHANNEL_OUT_STEREO, flagLoopBack),
                 intArrayOf(16000, AudioFormat.CHANNEL_OUT_MONO,   flagLoopBack),
                 intArrayOf(48000, AudioFormat.CHANNEL_OUT_MONO,   flagLoopBack or flagRender),
-                intArrayOf(48000, AudioFormat.CHANNEL_OUT_STEREO, flagLoopBack or flagRender),
-                intArrayOf(48000, AudioFormat.CHANNEL_OUT_MONO,   flagRender),
-                intArrayOf(48000, AudioFormat.CHANNEL_OUT_STEREO, flagRender)
+                intArrayOf(48000, AudioFormat.CHANNEL_OUT_STEREO, flagLoopBack or flagRender)
             )
             var track: AudioTrack? = null
             for (combo in combos) {
@@ -881,16 +894,19 @@ object ShellInjector {
                     audioMixBuilderClass.getMethod("setFormat", AudioFormat::class.java).invoke(mixBuilder, fmt)
                     audioMixBuilderClass.getMethod("setRouteFlags", Int::class.java).invoke(mixBuilder, flags)
                     val mix = audioMixBuilderClass.getMethod("build").invoke(mixBuilder)
+
                     val policyBuilder = audioPolicyBuilderClass.getConstructor(Context::class.java).newInstance(context)
                     try { audioPolicyBuilderClass.getMethod("setLooper", Looper::class.java).invoke(policyBuilder, Looper.getMainLooper()) } catch (_: Exception) {}
                     audioPolicyBuilderClass.getMethod("addMix", audioMixClass).invoke(policyBuilder, mix)
                     val policy = audioPolicyBuilderClass.getMethod("build").invoke(policyBuilder)
+
                     val reg = AudioManager::class.java.getMethod("registerAudioPolicy", audioPolicyClass).invoke(audioManager, policy) as Int
                     if (reg != 0) {
                         try { AudioManager::class.java.getMethod("unregisterAudioPolicy", audioPolicyClass).invoke(audioManager, policy) } catch (_: Exception) {}
                         log("policy rejected rate=$rate ch=$ch flags=$flags reg=$reg")
                         continue
                     }
+
                     policyKeepAlive = policy
                     val newTrack = audioPolicyClass.getMethod("createAudioTrackSource", audioMixClass).invoke(policy, mix) as AudioTrack
                     if (newTrack.state != AudioTrack.STATE_UNINITIALIZED) {
@@ -908,8 +924,10 @@ object ShellInjector {
                     }
                 } catch (e: Exception) { log("fail rate=$rate ch=$ch: ${unwrap(e).message}") }
             }
+
             if (track == null) { log("FAILED: no working audio format"); System.exit(1) }
 
+            // Heartbeat file so app knows we are alive
             val readyFile = File(dir, "ready")
             Thread {
                 while (true) {
@@ -992,7 +1010,6 @@ object ShellInjector {
         }
     }
 
-    // Waits while paused (used inside playFile loops)
     private fun waitIfPaused() {
         while (isPaused && !Thread.currentThread().isInterrupted) {
             try { Thread.sleep(50) } catch (_: InterruptedException) { Thread.currentThread().interrupt(); return }
@@ -1125,13 +1142,13 @@ object AudioRouter {
 
     fun isActive(): Boolean {
         if (!routingActive) return false
-        if (isShizukuMode) return true  // Trust flag; injector fails loudly if dead
+        if (isShizukuMode) return true
         val dir = injectorDir ?: return false
         val ready = File(dir, "ready")
         return ready.exists() && System.currentTimeMillis() - ready.lastModified() < 10_000L
     }
 
-    // 🚀 Shizuku helpers — all file I/O via Shizuku (shell cannot touch app cacheDir)
+    // ---- Shizuku helpers (file I/O as shell) ----
     private fun shizukuProcess(cmd: String): Process? {
         return try {
             val m = Shizuku::class.java.getDeclaredMethod(
@@ -1147,7 +1164,6 @@ object AudioRouter {
     }
 
     private fun runShizukuDetached(script: String) {
-        // ( subshell ) & → double-fork, shell exits, injector becomes orphan & keeps running
         shizukuProcess("( $script ) </dev/null >/dev/null 2>&1 &")?.waitFor()
     }
 
@@ -1212,26 +1228,29 @@ object AudioRouter {
                         dexPath = dex.absolutePath
                         isShizukuMode = false
                     } else {
-                        // 🚀 Shizuku: use /data/local/tmp (shell-owned dir)
-                        dirPath = "/data/local/tmp/gucci_audio"
-                        dexPath = "/data/local/tmp/gucci_injector.dex"
+                        // 🚀 Shizuku: hidden dir + cleanup after injector starts
+                        dirPath = "/data/local/tmp/.gucci_audio"
+                        dexPath = "/data/local/tmp/.gucci_audio/injector.dex"
                         isShizukuMode = true
 
-                        if (!runShizukuBlocking("mkdir -p '$dirPath' && chmod 777 '$dirPath' && rm -f '$dirPath/ready' '$dirPath/cmd' '$dirPath/inject.log'")) {
+                        // Prepare hidden directory
+                        if (!runShizukuBlocking("mkdir -p '$dirPath' && chmod 700 '$dirPath' && rm -f '$dirPath/ready' '$dirPath/cmd' '$dirPath/inject.log'")) {
                             postMain { onResult(false, "❌ Shizuku setup failed") }
                             return@synchronized
                         }
                         runShizukuBlocking("rm -f '$dirPath'/sound_*.raw 2>/dev/null")
 
+                        // Write encrypted dex, then delete after launch
                         val dexBytes = AssetDecryptor.decryptAssetToBytes(context, "sys_3.bin")
                         if (!writeViaShizuku(dexPath, dexBytes)) {
-                            postMain { onResult(false, "❌ Failed to write injector to /data/local/tmp (Shizuku)") }
+                            postMain { onResult(false, "❌ Failed to write injector (Shizuku)") }
                             return@synchronized
                         }
                     }
 
                     injectorDir = File(dirPath)
 
+                    // 🚀 FIXED: Use USAGE rule so our audio is looped back to mic
                     val script = "export CLASSPATH='$dexPath'; app_process /system/bin com.example.shtile.ShellInjector '$dirPath'"
 
                     if (useRoot) {
@@ -1243,13 +1262,13 @@ object AudioRouter {
                         runShizukuDetached(script)
                     }
 
+                    // Wait for ready
                     var success = false
                     var lastLog = ""
                     for (i in 0..600) {
                         val readyExists = if (useRoot) File(dirPath, "ready").exists()
                                           else fileExistsViaShizuku("$dirPath/ready")
                         if (readyExists) { success = true; break }
-
                         val log = if (useRoot) {
                             try { File(dirPath, "inject.log").readText() } catch (_: Exception) { "" }
                         } else (readViaShizuku("$dirPath/inject.log") ?: "")
@@ -1258,12 +1277,21 @@ object AudioRouter {
                         Thread.sleep(100)
                     }
 
+                    // 🚀 SECURITY: Delete dex after injector is running
+                    if (success) {
+                        if (useRoot) {
+                            try { File(dexPath).delete() } catch (_: Exception) {}
+                        } else {
+                            runShizukuBlocking("rm -f '$dexPath'")
+                        }
+                    }
+
                     routingActive = success
                     postMain {
                         if (success) onResult(true, "✅ Mic Injection Active (${if (useRoot) "Root" else "Shizuku"})")
                         else {
                             val detail = lastLog.takeLast(300).replace("\n", " ")
-                            onResult(false, "❌ Injector failed. ${if (detail.isBlank()) "No log — check root/Shizuku" else "Log: $detail"}")
+                            onResult(false, "❌ Injector failed. ${if (detail.isBlank()) "No log." else "Log: $detail"}")
                         }
                     }
                 } catch (e: Exception) {
