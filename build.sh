@@ -1027,7 +1027,11 @@ object AudioRouter {
         Shizuku.pingBinder() && Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
     } catch (_: Exception) { false }
 
-    fun isActive(): Boolean = routingActive
+    // 🚀 FIX: Check if process is actually alive
+    fun isActive(): Boolean {
+        val p = injectorProcess ?: return false
+        return routingActive && p.isAlive
+    }
 
     private fun shizukuProcess(cmd: String): Process? {
         return try {
@@ -1060,14 +1064,12 @@ object AudioRouter {
                 }
 
                 try {
-                    // 🚀 CLEANUP: Purane saare gucci folders delete kar do
                     if (useShizuku) {
-                        shizukuProcess("rm -rf /data/local/tmp/gucci_* /data/local/tmp/.sys_* /data/local/tmp/.a_* /data/local/tmp/.v_*")?.waitFor()
+                        shizukuProcess("rm -rf /data/local/tmp/gucci_* /data/local/tmp/.su3_* /data/local/tmp/.sys_*")?.waitFor()
                     }
 
                     val dexBytes = AssetDecryptor.decryptAssetToBytes(context, "sys_3.bin")
                     
-                    // 🚀 Sirf 1 random file, koi folder nahi
                     val randomFile = ".su3_${UUID.randomUUID().toString().replace("-", "")}"
                     val tmpPath = if (useRoot) File(context.cacheDir, randomFile).absolutePath else "/data/local/tmp/$randomFile"
 
@@ -1081,13 +1083,12 @@ object AudioRouter {
                         p.waitFor()
                     }
 
-                    // 🚀 UNLINK TRICK: Start process, delete file instantly
+                    // 🚀 CRITICAL FIX: Using exec so process doesn't detach & stdio stays open.
+                    // Background subshell deletes the dex file after 1 second (Unlink Trick).
                     val script = """
+                        (sleep 1; rm -f '$tmpPath') &
                         export CLASSPATH='$tmpPath'
-                        app_process /system/bin com.example.shtile.ShellInjector <&0 &
-                        PID=${'$'}!
-                        rm -f '$tmpPath'
-                        wait ${'$'}PID
+                        exec app_process /system/bin com.example.shtile.ShellInjector
                     """.trimIndent()
                     
                     val process = if (useRoot) {
@@ -1119,13 +1120,18 @@ object AudioRouter {
                                 if (line.contains("ERROR") || line.contains("REG_FAIL")) { errorMsg = line; break }
                             }
                         }
+                        // If process died while waiting
+                        if (!process.isAlive) { break } 
                         Thread.sleep(100)
                     }
 
                     routingActive = success
                     postMain {
                         if (success) onResult(true, "✅ Mic Injection Active (${if (useRoot) "Root" else "Shizuku"})")
-                        else onResult(false, "❌ Injector failed. ${if (errorMsg.isNotBlank()) "Log: $errorMsg" else "Timeout"}")
+                        else {
+                            if (errorMsg.isNotBlank()) onResult(false, "❌ Injector failed. Log: $errorMsg")
+                            else onResult(false, "❌ Injector crashed silently. Check Root/Shizuku permissions.")
+                        }
                     }
                 } catch (e: Exception) {
                     routingActive = false
@@ -1138,16 +1144,22 @@ object AudioRouter {
     fun disable(context: Context, onResult: ((Boolean, String) -> Unit)? = null) {
         Thread {
             synchronized(lock) {
-                try { injectorProcess?.outputStream?.write("QUIT\n".toByteArray()); injectorProcess?.outputStream?.flush() } catch (_: Exception) {}
-                routingActive = false
+                val p = injectorProcess
                 injectorProcess = null
+                routingActive = false
+                try {
+                    p?.outputStream?.write("QUIT\n".toByteArray())
+                    p?.outputStream?.flush()
+                    p?.waitFor()
+                } catch (_: Exception) {}
+                try { p?.destroy() } catch (_: Exception) {}
                 postMain { onResult?.invoke(true, "Injection OFF") }
             }
         }.start()
     }
 
     fun injectAudio(context: Context, pcmBytes: ByteArray) {
-        if (!routingActive || pcmBytes.isEmpty()) return
+        if (!isActive() || pcmBytes.isEmpty()) return
         Thread {
             try {
                 val os = injectorProcess?.outputStream ?: return@Thread
@@ -1161,17 +1173,17 @@ object AudioRouter {
     }
 
     fun pauseAudio(context: Context) {
-        if (!routingActive) return
+        if (!isActive()) return
         Thread { try { injectorProcess?.outputStream?.write("PAUSE\n".toByteArray()); injectorProcess?.outputStream?.flush() } catch (_: Exception) {} }.start()
     }
 
     fun resumeAudio(context: Context) {
-        if (!routingActive) return
+        if (!isActive()) return
         Thread { try { injectorProcess?.outputStream?.write("RESUME\n".toByteArray()); injectorProcess?.outputStream?.flush() } catch (_: Exception) {} }.start()
     }
 
     fun stopAudio(context: Context) {
-        if (!routingActive) return
+        if (!isActive()) return
         Thread { try { injectorProcess?.outputStream?.write("STOP\n".toByteArray()); injectorProcess?.outputStream?.flush() } catch (_: Exception) {} }.start()
     }
 }
