@@ -805,14 +805,14 @@ import android.os.Looper
 import android.os.Process
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 object ShellInjector {
     private var outRate = 48000
     private var outCh   = 1
     @Volatile private var playThread: Thread? = null
     @Volatile private var isPaused = false
-
-    @JvmStatic private var policyKeepAlive: Any? = null
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -823,100 +823,49 @@ object ShellInjector {
             val context = activityThreadClass.getMethod("getSystemContext").invoke(activityThread) as Context
             fakeShellIdentity(context)
 
-            val mixRuleClass = Class.forName("android.media.audiopolicy.AudioMixingRule")
-            val mixRuleBuilderClass = Class.forName("android.media.audiopolicy.AudioMixingRule\$Builder")
-            val ruleBuilder = mixRuleBuilderClass.getConstructor().newInstance()
-
-            try {
-                val setRole = mixRuleBuilderClass.getMethod("setTargetMixRole", Int::class.java)
-                setRole.invoke(ruleBuilder, 1) // MIX_ROLE_PLAYERS
-            } catch (_: Exception) {}
-
-            val usageRule = mixRuleClass.getField("RULE_MATCH_ATTRIBUTE_USAGE").getInt(null)
-            val addRuleMethod = mixRuleBuilderClass.getMethod("addRule", AudioAttributes::class.java, Int::class.java)
-            
-            val attrBuilderClass = Class.forName("android.media.AudioAttributes\$Builder")
-            val setUsage = attrBuilderClass.getMethod("setUsage", Int::class.java)
-            val setContentType = attrBuilderClass.getMethod("setContentType", Int::class.java)
-            val buildAttr = attrBuilderClass.getMethod("build")
-
-            // 🚀 Match Game, Media, and Voice to ensure it loops back to friend
-            val usages = intArrayOf(
-                AudioAttributes.USAGE_GAME,
-                AudioAttributes.USAGE_MEDIA,
-                AudioAttributes.USAGE_VOICE_COMMUNICATION,
-                AudioAttributes.USAGE_ASSISTANCE_SONIFICATION
-            )
-            for (u in usages) {
-                try {
-                    val b = attrBuilderClass.getConstructor().newInstance()
-                    setUsage.invoke(b, u)
-                    setContentType.invoke(b, AudioAttributes.CONTENT_TYPE_SPEECH)
-                    val aa = buildAttr.invoke(b) as AudioAttributes
-                    addRuleMethod.invoke(ruleBuilder, aa, usageRule)
-                } catch (_: Exception) {}
-            }
-
-            val mixRule = mixRuleBuilderClass.getMethod("build").invoke(ruleBuilder)
-            val audioMixClass = Class.forName("android.media.audiopolicy.AudioMix")
-            val audioMixBuilderClass = Class.forName("android.media.audiopolicy.AudioMix\$Builder")
-            val audioPolicyClass = Class.forName("android.media.audiopolicy.AudioPolicy")
-            val audioPolicyBuilderClass = Class.forName("android.media.audiopolicy.AudioPolicy\$Builder")
-            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-
-            var flagRender = 1
-            var flagLoopBack = 2
-            try { flagLoopBack = audioMixClass.getField("ROUTE_FLAG_LOOP_BACK").getInt(null) } catch (_: Exception) {}
-            try { flagRender = audioMixClass.getField("ROUTE_FLAG_RENDER").getInt(null) } catch (_: Exception) {}
-
-            // 🚀 Priority to RENDER, then LOOP_BACK+RENDER, then LOOP_BACK
-            val combos = listOf(
-                intArrayOf(48000, AudioFormat.CHANNEL_OUT_MONO,   flagRender),
-                intArrayOf(48000, AudioFormat.CHANNEL_OUT_STEREO, flagRender),
-                intArrayOf(48000, AudioFormat.CHANNEL_OUT_MONO,   flagLoopBack or flagRender),
-                intArrayOf(48000, AudioFormat.CHANNEL_OUT_STEREO, flagLoopBack or flagRender),
-                intArrayOf(44100, AudioFormat.CHANNEL_OUT_MONO,   flagRender),
-                intArrayOf(44100, AudioFormat.CHANNEL_OUT_STEREO, flagRender),
-                intArrayOf(48000, AudioFormat.CHANNEL_OUT_MONO,   flagLoopBack),
-                intArrayOf(48000, AudioFormat.CHANNEL_OUT_STEREO, flagLoopBack)
-            )
-            
+            // 🚀 Direct AudioTrack (No AudioPolicy needed)
             var track: AudioTrack? = null
+            val combos = listOf(
+                intArrayOf(48000, AudioFormat.CHANNEL_OUT_MONO),
+                intArrayOf(48000, AudioFormat.CHANNEL_OUT_STEREO),
+                intArrayOf(44100, AudioFormat.CHANNEL_OUT_MONO),
+                intArrayOf(44100, AudioFormat.CHANNEL_OUT_STEREO)
+            )
+
             for (combo in combos) {
-                val rate  = combo[0]; val ch = combo[1]; val flags = combo[2]
+                val rate = combo[0]; val ch = combo[1]
                 try {
-                    val mixBuilder = audioMixBuilderClass.getConstructor(mixRuleClass).newInstance(mixRule)
-                    val fmt = AudioFormat.Builder().setSampleRate(rate).setEncoding(AudioFormat.ENCODING_PCM_16BIT).setChannelMask(ch).build()
-                    audioMixBuilderClass.getMethod("setFormat", AudioFormat::class.java).invoke(mixBuilder, fmt)
-                    audioMixBuilderClass.getMethod("setRouteFlags", Int::class.java).invoke(mixBuilder, flags)
-                    val mix = audioMixBuilderClass.getMethod("build").invoke(mixBuilder)
+                    val bufSize = AudioTrack.getMinBufferSize(rate, ch, AudioFormat.ENCODING_PCM_16BIT).coerceAtLeast(4096) * 4
+                    val newTrack = AudioTrack.Builder()
+                        .setAudioAttributes(
+                            AudioAttributes.Builder()
+                                .setUsage(AudioAttributes.USAGE_GAME) // 🚀 Critical for loopback
+                                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                                .build()
+                        )
+                        .setAudioFormat(
+                            AudioFormat.Builder()
+                                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                                .setSampleRate(rate)
+                                .setChannelMask(ch)
+                                .build()
+                        )
+                        .setBufferSizeInBytes(bufSize)
+                        .setTransferMode(AudioTrack.MODE_STREAM)
+                        .build()
 
-                    val policyBuilder = audioPolicyBuilderClass.getConstructor(Context::class.java).newInstance(context)
-                    try { audioPolicyBuilderClass.getMethod("setLooper", Looper::class.java).invoke(policyBuilder, Looper.getMainLooper()) } catch (_: Exception) {}
-                    audioPolicyBuilderClass.getMethod("addMix", audioMixClass).invoke(policyBuilder, mix)
-                    val policy = audioPolicyBuilderClass.getMethod("build").invoke(policyBuilder)
-
-                    val reg = AudioManager::class.java.getMethod("registerAudioPolicy", audioPolicyClass).invoke(audioManager, policy) as Int
-                    if (reg == 0) {
-                        policyKeepAlive = policy
-                        val newTrack = audioPolicyClass.getMethod("createAudioTrackSource", audioMixClass).invoke(policy, mix) as AudioTrack
-                        if (newTrack.state != AudioTrack.STATE_UNINITIALIZED) {
-                            newTrack.setVolume(1.0f); newTrack.play()
-                            track = newTrack
-                            outRate = rate
-                            outCh = if (ch == AudioFormat.CHANNEL_OUT_MONO) 1 else 2
-                            System.out.println("READY")
-                            break
-                        } else {
-                            newTrack.release()
-                            try { AudioManager::class.java.getMethod("unregisterAudioPolicy", audioPolicyClass).invoke(audioManager, policy) } catch (_: Exception) {}
-                        }
+                    if (newTrack.state == AudioTrack.STATE_INITIALIZED) {
+                        newTrack.setVolume(1.0f)
+                        newTrack.play()
+                        track = newTrack
+                        outRate = rate
+                        outCh = if (ch == AudioFormat.CHANNEL_OUT_MONO) 1 else 2
+                        System.out.println("READY")
+                        break
                     } else {
-                        System.out.println("REG_FAIL_$reg")
+                        newTrack.release()
                     }
-                } catch (e: Exception) {
-                    System.out.println("MIX_FAIL_${e.message}")
-                }
+                } catch (_: Exception) {}
             }
 
             if (track == null) {
@@ -4379,12 +4328,14 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             tvCopy?.visibility = View.GONE
             swInject?.setOnCheckedChangeListener(null)
             swInject?.isChecked = isInjectOn
+            
+            // 🚀 FIXED TOGGLE
             swInject?.setOnCheckedChangeListener { _, on ->
                 isInjectOn = on
                 if (on) {
                     AudioRouter.enable(this) { ok, msg ->
                         Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
-                        if (!ok && isInjectOn) {
+                        if (!ok) {
                             swInject.isChecked = false
                             isInjectOn = false
                         }
@@ -4492,7 +4443,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
                 }.start()
             }
 
-            // 🚀 PAUSE BUTTON
             val pauseBtn = overlayView?.findViewById<Button>(R.id.btnOverlayPause)
             pauseBtn?.text = if (isPaused) "RESUME" else "PAUSE"
             pauseBtn?.setOnClickListener { togglePauseResume() }
@@ -4540,7 +4490,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             return
         }
         if (isPaused) {
-            // Resume from same position
             if (isInjectOn) {
                 AudioRouter.resumeAudio(this)
             } else {
@@ -4549,7 +4498,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
             isPaused = false
             pauseBtn.text = "PAUSE"
         } else {
-            // Pause at current position
             if (isInjectOn) {
                 AudioRouter.pauseAudio(this)
             } else {
@@ -4606,7 +4554,7 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
         pbPlayback?.progress = 0
         val thisFile = file
         Thread {
-            val boostKey = "${file.nameWithoutExtension}_${(volumeLevel * 100).toInt()}"
+            val boostKey = "${file.nameWithoutExtension}_${(volumeLevel * 100).toInt()}_v3"
             val cachedPcm = File(cacheDir, "pcm_$boostKey.raw")
 
             val boosted: ShortArray
@@ -4712,7 +4660,6 @@ class GucciVoiceService : Service(), TextToSpeech.OnInitListener {
 
         progressRunnable = object : Runnable {
             override fun run() {
-                // 🚀 If paused, keep UI alive but don't advance
                 if (isPaused) {
                     progressHandler.postDelayed(this, 100)
                     return
