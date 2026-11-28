@@ -1077,11 +1077,11 @@ object AudioRouter {
                         p.waitFor()
                     }
 
-                    // 🚀 FIXED: No '&' and no 'exit' - stream stays open
+                    // 🚀 CRITICAL FIX: No 'exit', keep STDIN open with 'tail -f /dev/null'
                     val script = """
                         (sleep 1; rm -f '$tmpPath') &
                         export CLASSPATH='$tmpPath'
-                        exec app_process /system/bin com.example.shtile.ShellInjector
+                        ( app_process /system/bin com.example.shtile.ShellInjector ; tail -f /dev/null )
                     """.trimIndent()
                     
                     val process = if (useRoot) {
@@ -1103,21 +1103,23 @@ object AudioRouter {
                     var success = false
                     var errorMsg = ""
                     val reader = DataInputStream(process.inputStream)
-                    val startTime = System.currentTimeMillis()
                     
+                    // 🚀 Use readLine() instead of available() to properly wait for input
+                    val startTime = System.currentTimeMillis()
+                    var line: String? = null
                     while (System.currentTimeMillis() - startTime < 60000) {
-                        if (reader.available() > 0) {
-                            val line = try { reader.readLine() } catch (_: Exception) { null }
-                            if (line != null) {
-                                if (line.contains("READY")) { success = true; break }
-                                if (line.contains("ERROR") || line.contains("REG_FAIL")) { errorMsg = line; break }
-                            }
-                        }
+                        try {
+                            line = reader.readLine()
+                        } catch (_: Exception) { break }
+                        
+                        if (line == null) break
+                        if (line.contains("READY")) { success = true; break }
+                        if (line.contains("ERROR") || line.contains("REG_FAIL")) { errorMsg = line; break }
+                        
                         if (!process.isAlive) {
                             errorMsg = "Process exited unexpectedly"
                             break
                         }
-                        Thread.sleep(100)
                     }
 
                     routingActive = success
