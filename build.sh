@@ -1091,11 +1091,11 @@ object AudioRouter {
                         p.waitFor()
                     }
 
-                    // 🚀 CRITICAL FIX: No 'exit', keep STDIN open with 'tail -f /dev/null'
+                    // 🚀 Use exec + tail -f to keep stream alive
                     val script = """
                         (sleep 1; rm -f '$tmpPath') &
                         export CLASSPATH='$tmpPath'
-                        ( app_process /system/bin com.example.shtile.ShellInjector ; tail -f /dev/null )
+                        exec app_process /system/bin com.example.shtile.ShellInjector
                     """.trimIndent()
                     
                     val process = if (useRoot) {
@@ -1117,35 +1117,41 @@ object AudioRouter {
                     var success = false
                     var errorMsg = ""
                     val reader = DataInputStream(process.inputStream)
-                    
-                    // 🚀 Use readLine() instead of available() to properly wait for input
                     val startTime = System.currentTimeMillis()
-                    var line: String? = null
-                    while (System.currentTimeMillis() - startTime < 60000) {
+                    
+                    // Wait max 15 seconds for READY signal
+                    while (System.currentTimeMillis() - startTime < 15000) {
                         try {
-                            line = reader.readLine()
+                            val line = reader.readLine()
+                            if (line != null) {
+                                if (line.contains("READY")) { success = true; break }
+                                if (line.contains("ERROR") || line.contains("REG_FAIL") || line.contains("MIX_FAIL")) { 
+                                    errorMsg = line; break 
+                                }
+                            }
                         } catch (_: Exception) { break }
                         
-                        if (line == null) break
-                        if (line.contains("READY")) { success = true; break }
-                        if (line.contains("ERROR") || line.contains("REG_FAIL")) { errorMsg = line; break }
-                        
                         if (!process.isAlive) {
-                            errorMsg = "Process exited unexpectedly"
+                            errorMsg = "Process died during setup"
                             break
                         }
+                        Thread.sleep(100)
                     }
 
                     routingActive = success
                     postMain {
-                        if (success) onResult(true, "✅ Mic Injection Active (${if (useRoot) "Root" else "Shizuku"})")
-                        else {
-                            if (errorMsg.isNotBlank()) onResult(false, "❌ Injector failed. Log: $errorMsg")
-                            else onResult(false, "❌ Injector crashed. Check Root/Shizuku.")
+                        if (success) {
+                            onResult(true, "✅ Mic Injection Active (${if (useRoot) "Root" else "Shizuku"})")
+                        } else {
+                            injectorProcess = null
+                            routingActive = false
+                            val finalMsg = if (errorMsg.isNotBlank()) "Log: $errorMsg" else "Timeout/No Response. Check device compatibility."
+                            onResult(false, "❌ Injector failed. $finalMsg")
                         }
                     }
                 } catch (e: Exception) {
                     routingActive = false
+                    injectorProcess = null
                     postMain { onResult(false, "Enable error: ${e.message}") }
                 }
             }
