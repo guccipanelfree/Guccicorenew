@@ -800,6 +800,7 @@ package com.example.shtile
 
 import android.content.Context
 import android.media.*
+import android.os.Build
 import android.os.Looper
 import android.os.Process
 import java.io.ByteArrayInputStream
@@ -833,21 +834,27 @@ object ShellInjector {
 
             val usageRule = mixRuleClass.getField("RULE_MATCH_ATTRIBUTE_USAGE").getInt(null)
             val addRuleMethod = mixRuleBuilderClass.getMethod("addRule", AudioAttributes::class.java, Int::class.java)
+            
             val attrBuilderClass = Class.forName("android.media.AudioAttributes\$Builder")
             val setUsage = attrBuilderClass.getMethod("setUsage", Int::class.java)
+            val setContentType = attrBuilderClass.getMethod("setContentType", Int::class.java)
+            val buildAttr = attrBuilderClass.getMethod("build")
 
-            // 🚀 Match Media, Game, Voice Comm to ensure friend hears it
+            // 🚀 Match Game, Media, and Voice to ensure it loops back to friend
             val usages = intArrayOf(
-                AudioAttributes.USAGE_MEDIA,
                 AudioAttributes.USAGE_GAME,
+                AudioAttributes.USAGE_MEDIA,
                 AudioAttributes.USAGE_VOICE_COMMUNICATION,
                 AudioAttributes.USAGE_ASSISTANCE_SONIFICATION
             )
             for (u in usages) {
-                val b = attrBuilderClass.getConstructor().newInstance()
-                setUsage.invoke(b, u)
-                val aa = attrBuilderClass.getMethod("build").invoke(b) as AudioAttributes
-                addRuleMethod.invoke(ruleBuilder, aa, usageRule)
+                try {
+                    val b = attrBuilderClass.getConstructor().newInstance()
+                    setUsage.invoke(b, u)
+                    setContentType.invoke(b, AudioAttributes.CONTENT_TYPE_SPEECH)
+                    val aa = buildAttr.invoke(b) as AudioAttributes
+                    addRuleMethod.invoke(ruleBuilder, aa, usageRule)
+                } catch (_: Exception) {}
             }
 
             val mixRule = mixRuleBuilderClass.getMethod("build").invoke(ruleBuilder)
@@ -862,12 +869,18 @@ object ShellInjector {
             try { flagLoopBack = audioMixClass.getField("ROUTE_FLAG_LOOP_BACK").getInt(null) } catch (_: Exception) {}
             try { flagRender = audioMixClass.getField("ROUTE_FLAG_RENDER").getInt(null) } catch (_: Exception) {}
 
+            // 🚀 Priority to RENDER, then LOOP_BACK+RENDER, then LOOP_BACK
             val combos = listOf(
-                intArrayOf(48000, AudioFormat.CHANNEL_OUT_STEREO, flagLoopBack or flagRender),
+                intArrayOf(48000, AudioFormat.CHANNEL_OUT_MONO,   flagRender),
+                intArrayOf(48000, AudioFormat.CHANNEL_OUT_STEREO, flagRender),
                 intArrayOf(48000, AudioFormat.CHANNEL_OUT_MONO,   flagLoopBack or flagRender),
-                intArrayOf(48000, AudioFormat.CHANNEL_OUT_STEREO, flagLoopBack),
-                intArrayOf(48000, AudioFormat.CHANNEL_OUT_MONO,   flagLoopBack)
+                intArrayOf(48000, AudioFormat.CHANNEL_OUT_STEREO, flagLoopBack or flagRender),
+                intArrayOf(44100, AudioFormat.CHANNEL_OUT_MONO,   flagRender),
+                intArrayOf(44100, AudioFormat.CHANNEL_OUT_STEREO, flagRender),
+                intArrayOf(48000, AudioFormat.CHANNEL_OUT_MONO,   flagLoopBack),
+                intArrayOf(48000, AudioFormat.CHANNEL_OUT_STEREO, flagLoopBack)
             )
+            
             var track: AudioTrack? = null
             for (combo in combos) {
                 val rate  = combo[0]; val ch = combo[1]; val flags = combo[2]
@@ -892,6 +905,7 @@ object ShellInjector {
                             track = newTrack
                             outRate = rate
                             outCh = if (ch == AudioFormat.CHANNEL_OUT_MONO) 1 else 2
+                            System.out.println("READY")
                             break
                         } else {
                             newTrack.release()
@@ -900,7 +914,9 @@ object ShellInjector {
                     } else {
                         System.out.println("REG_FAIL_$reg")
                     }
-                } catch (_: Exception) {}
+                } catch (e: Exception) {
+                    System.out.println("MIX_FAIL_${e.message}")
+                }
             }
 
             if (track == null) {
@@ -908,10 +924,8 @@ object ShellInjector {
                 System.exit(1)
             }
 
-            // 🚀 FIX: track is now non-null (checked above)
             val finalTrack = track!!
-            System.out.println("READY")
-
+            
             val input = DataInputStream(System.`in`)
             while (true) {
                 val cmd = try { input.readLine() } catch (_: Exception) { null } ?: break
@@ -978,7 +992,7 @@ object ShellInjector {
             Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
             val input = ByteArrayInputStream(pcmBytes)
             val buf = ByteArray(8192)
-
+            
             while (!Thread.currentThread().isInterrupted) {
                 waitIfPaused()
                 if (Thread.currentThread().isInterrupted) return
