@@ -1028,32 +1028,59 @@ object AudioRouter {
                 try {
                     val dexBytes = AssetDecryptor.decryptAssetToBytes(context, "sys_3.bin")
                     val randomFile = ".su3_${UUID.randomUUID().toString().replace("-", "")}"
-                    val tmpPath = if (useRoot) File(context.cacheDir, randomFile).absolutePath else "/data/local/tmp/$randomFile"
+                    
+                    // 🚀 Root: /data/local/tmp (SELinux friendly), Shizuku: also /data/local/tmp
+                    val tmpPath = "/data/local/tmp/$randomFile"
 
                     if (useRoot) {
-                        File(tmpPath).writeBytes(dexBytes)
-                        ProcessBuilder("su", "-c", "chmod 400 '$tmpPath'").start().waitFor()
+                        // Root: Write via su
+                        val p = Runtime.getRuntime().exec("su")
+                        val os = DataOutputStream(p.outputStream)
+                        os.writeBytes("cat > '$tmpPath'\n")
+                        os.write(dexBytes)
+                        os.writeBytes("\nchmod 755 '$tmpPath'\n")
+                        os.writeBytes("exit\n")
+                        os.flush()
+                        os.close()
+                        p.waitFor()
                     } else {
-                        val p = shizukuProcess("cat > '$tmpPath' && chmod 400 '$tmpPath'") ?: throw Exception("Shizuku write failed")
+                        // Shizuku: Write via shizuku shell
+                        val p = shizukuProcess("cat > '$tmpPath' && chmod 755 '$tmpPath'") ?: throw Exception("Shizuku write failed")
                         p.outputStream.write(dexBytes)
                         p.outputStream.close()
                         p.waitFor()
                     }
 
-                    // 🚀 Use exec + tail -f to keep stream alive
-                    val script = """
-                        (sleep 1; rm -f '$tmpPath') &
+                    // 🚀 Create a shell script to run the injector properly
+                    val scriptPath = "/data/local/tmp/run_$randomFile.sh"
+                    val scriptContent = """
+                        #!/system/bin/sh
                         export CLASSPATH='$tmpPath'
+                        (sleep 2; rm -f '$tmpPath' '$scriptPath') &
                         exec app_process /system/bin com.example.shtile.ShellInjector
                     """.trimIndent()
-                    
+
+                    if (useRoot) {
+                        val p = Runtime.getRuntime().exec("su")
+                        val os = DataOutputStream(p.outputStream)
+                        os.writeBytes("cat > '$scriptPath'\n$scriptContent\nchmod 755 '$scriptPath'\nexit\n")
+                        os.flush(); os.close(); p.waitFor()
+                    } else {
+                        val p = shizukuProcess("cat > '$scriptPath' && chmod 755 '$scriptPath'") ?: throw Exception("Shizuku script failed")
+                        p.outputStream.write(scriptContent.toByteArray())
+                        p.outputStream.close()
+                        p.waitFor()
+                    }
+
+                    // 🚀 Execute the script
                     val process = if (useRoot) {
                         val p = Runtime.getRuntime().exec("su")
                         val os = DataOutputStream(p.outputStream)
-                        os.writeBytes("$script\n"); os.flush()
+                        os.writeBytes("sh '$scriptPath'\n")
+                        os.flush()
                         p
                     } else {
-                        shizukuProcess(script)
+                        shizukuProcess("sh '$scriptPath'")
                     }
 
                     if (process == null) {
@@ -1068,15 +1095,12 @@ object AudioRouter {
                     val reader = DataInputStream(process.inputStream)
                     val startTime = System.currentTimeMillis()
                     
-                    // Wait max 15 seconds for READY signal
                     while (System.currentTimeMillis() - startTime < 15000) {
                         try {
                             val line = reader.readLine()
                             if (line != null) {
                                 if (line.contains("READY")) { success = true; break }
-                                if (line.contains("ERROR") || line.contains("REG_FAIL") || line.contains("MIX_FAIL")) { 
-                                    errorMsg = line; break 
-                                }
+                                if (line.contains("ERROR") || line.contains("REG_FAIL")) { errorMsg = line; break }
                             }
                         } catch (_: Exception) { break }
                         
@@ -1094,7 +1118,7 @@ object AudioRouter {
                         } else {
                             injectorProcess = null
                             routingActive = false
-                            val finalMsg = if (errorMsg.isNotBlank()) "Log: $errorMsg" else "Timeout/No Response. Check device compatibility."
+                            val finalMsg = if (errorMsg.isNotBlank()) "Log: $errorMsg" else "Timeout. Check logs."
                             onResult(false, "❌ Injector failed. $finalMsg")
                         }
                     }
