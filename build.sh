@@ -2703,20 +2703,27 @@ import androidx.appcompat.view.ContextThemeWrapper
 import com.google.android.material.materialswitch.MaterialSwitch
 import java.io.File
 class FloaterOverlayService : Service() {
+    // Assets mapping (Encrypted names)
     private val floater1OnAsset = "ui_1.bin"; private val floater1OffAsset = "ui_3.bin"
     private val floater2OnAsset = "ui_2.bin"; private val floater2OffAsset = "ui_3.bin"
     private val floater3OnAsset = "ui_4.bin"; private val floater3OffAsset = "ui_5.bin"
-    private val floater4OnAsset = "ui_6.bin"; private val floater5OnAsset = "ui_7.bin"
-    private val floater6OnAsset = "ui_8.bin"; private val floater7OnAsset = "ui_9.bin"
+    private val floater4OnAsset = "ui_6.bin" // CHS
+    private val floater5OnAsset = "ui_7.bin" // B
+    private val floater6OnAsset = "ui_8.bin" // M
+    private val floater7OnAsset = "ui_9.bin" // L
+    
     private val glooTargetDir = "/storage/emulated/0/Android/data/com.dts.freefiremax/files/contentcache/Optional/android/"
     private val compulsoryDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/"
     private val avatarDir = "/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/avatar/"
     private val filesDir = "/data/user/0/com.dts.freefiremax/files/"
+    
     private val cacheResName = "cache_res.0fNB3oXqZOJRyvBVnID6F8UK2IM~3D"
     private val pdcacheName = "split_asset_pack_install_time.apk.pdcache"
     private val assetIndexerName = "assetindexer.U0jVgfPVdG5YZ2HvIuO5tFkQcCM~3D"
+    
     private lateinit var wm: WindowManager; private var panel: View? = null; private var bubble: View? = null
     private val prefs by lazy { getSharedPreferences("FloaterPrefs", MODE_PRIVATE) }
+    
     override fun onBind(intent: Intent?): IBinder? = null
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (!Settings.canDrawOverlays(this)) { stopSelf(); return START_NOT_STICKY }
@@ -2729,7 +2736,9 @@ class FloaterOverlayService : Service() {
         if (panel == null && bubble == null) { try { showPanel() } catch (e: Exception) { Toast.makeText(this, "Draw Error: ${e.message}", Toast.LENGTH_LONG).show() } }
         return START_REDELIVER_INTENT
     }
+    
     private fun overlayParams(w: Int, h: Int) = WindowManager.LayoutParams(w, h, if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 100; y = 200 }
+    
     private fun showPanel() {
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
         val themedContext = ContextThemeWrapper(this, R.style.AppTheme)
@@ -2758,6 +2767,7 @@ class FloaterOverlayService : Service() {
         
         panel = v; wm.addView(v, params)
     }
+    
     private fun minimize() {
         panel?.let { runCatching { wm.removeView(it) } }; panel = null
         val b = LayoutInflater.from(this).inflate(R.layout.overlay_bubble, null); val params = overlayParams(120, 120)
@@ -2772,6 +2782,7 @@ class FloaterOverlayService : Service() {
         }
         bubble = b; wm.addView(b, params)
     }
+    
     private fun setupDrag(handle: View, rootView: View, params: WindowManager.LayoutParams) {
         handle.setOnTouchListener(object : View.OnTouchListener {
             var initialX = 0; var initialY = 0; var initialTouchX = 0f; var initialTouchY = 0f
@@ -2784,10 +2795,12 @@ class FloaterOverlayService : Service() {
             }
         })
     }
+    
     private fun close() { panel?.let { runCatching { wm.removeView(it) } }; panel = null; bubble?.let { runCatching { wm.removeView(it) } }; bubble = null; stopSelf() }
     
     private fun applyFloater(number: Int, on: Boolean) {
         if (number == 3) { 
+            // GLOO CROSS (Remains unchanged)
             val error = copyAssetToTarget(if (on) floater3OnAsset else floater3OffAsset, "fileinfo", glooTargetDir)
             Handler(Looper.getMainLooper()).post {
                 if (error == null) Toast.makeText(this, if (on) "✅ GLOO CROSS Activated" else "✅ GLOO CROSS Deactivated", Toast.LENGTH_SHORT).show() 
@@ -2795,17 +2808,8 @@ class FloaterOverlayService : Service() {
             }
             return
         }
-        if (number == 4 || number == 5 || number == 6) { 
-            val asset = when(number) { 4 -> floater4OnAsset; 5 -> floater5OnAsset; else -> floater6OnAsset }
-            val tag = when(number) { 4 -> "CHEST HS"; 5 -> "BODY HS"; else -> "MAGIC" }
-            val error = copyWithBackup(asset, cacheResName, compulsoryDir, on, "cache_res.bak")
-            Handler(Looper.getMainLooper()).post {
-                if (error == null) Toast.makeText(this, if (on) "✅ $tag Activated" else "✅ $tag Deactivated", Toast.LENGTH_SHORT).show() 
-                else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
-            }
-            return
-        }
         if (number == 7) { 
+            // LOCATION (Remains unchanged)
             val error = copyNoBackup(floater7OnAsset, pdcacheName, filesDir, on)
             Handler(Looper.getMainLooper()).post {
                 if (error == null) Toast.makeText(this, if (on) "✅ LOCATION Activated" else "✅ LOCATION Deactivated", Toast.LENGTH_SHORT).show() 
@@ -2813,54 +2817,40 @@ class FloaterOverlayService : Service() {
             }
             return
         }
-        val asset = when { number == 1 && on -> floater1OnAsset; number == 1 && !on -> floater1OffAsset; number == 2 && on -> floater2OnAsset; else -> floater2OffAsset }
-        val error = copyAssetToTarget(asset, assetIndexerName, avatarDir); val tag = if (number == 1) "GUCCI DETECTOR" else "GUCCI HS"
+
+        // 🚀 USER REQUEST: Switches 1, 2, 4 (CHS), 5 (B), 6 (M) will now use the SAME path as gucci_h (avatarDir / assetIndexerName)
+        // And when Toggled OFF, they will be replaced by gucci_O (ui_3.bin)
+        
+        val onAsset = when(number) {
+            1 -> floater1OnAsset
+            2 -> floater2OnAsset
+            4 -> floater4OnAsset // Gucci_CHS
+            5 -> floater5OnAsset // Gucci_B
+            6 -> floater6OnAsset // Gucci_M
+            else -> floater1OnAsset
+        }
+        val tag = when(number) {
+            1 -> "GUCCI DETECTOR"
+            2 -> "GUCCI HS"
+            4 -> "CHEST HS"
+            5 -> "BODY HS"
+            6 -> "MAGIC"
+            else -> "MOD"
+        }
+
+        // If ON -> Use their specific file. If OFF -> Use gucci_O (ui_3.bin)
+        val asset = if (on) onAsset else "ui_3.bin" 
+        
+        // Copy to avatarDir with assetIndexerName (Exactly like gucci_h)
+        val error = copyAssetToTarget(asset, assetIndexerName, avatarDir)
+        
         Handler(Looper.getMainLooper()).post {
             if (error == null) Toast.makeText(this, if (on) "✅ $tag Activated" else "✅ $tag Deactivated", Toast.LENGTH_SHORT).show() 
             else Toast.makeText(this, "❌ Paste Failed!\n$error", Toast.LENGTH_LONG).show()
         }
     }
 
-    // 🔓 All three methods decrypt via AssetDecryptor
-    private fun copyWithBackup(assetName: String, targetName: String, targetDir: String, enable: Boolean, bakName: String): String? {
-        try {
-            val scriptFile = File(cacheDir, "backup_script.sh")
-            if (enable) {
-                val tmp = File(cacheDir, assetName)
-                val dec = AssetDecryptor.decryptAssetToBytes(this, assetName)
-                tmp.writeBytes(dec)
-                scriptFile.writeText("""
-                    #!/system/bin/sh
-                    TARGET_DIR="$targetDir"
-                    TARGET_FILE="${'$'}TARGET_DIR/$targetName"
-                    BAK_FILE="${'$'}TARGET_DIR/$bakName"
-                    MOD_FILE="${tmp.absolutePath}"
-                    mkdir -p "${'$'}TARGET_DIR"
-                    if [ -f "${'$'}TARGET_FILE" ] && [ ! -f "${'$'}BAK_FILE" ]; then mv "${'$'}TARGET_FILE" "${'$'}BAK_FILE"; fi
-                    cp -f "${'$'}MOD_FILE" "${'$'}TARGET_FILE"
-                    chmod 777 "${'$'}TARGET_FILE"
-                    chcon --reference="${'$'}TARGET_DIR" "${'$'}TARGET_FILE" 2>/dev/null
-                    echo "SUCCESS_ON"
-                """.trimIndent())
-            } else {
-                scriptFile.writeText("""
-                    #!/system/bin/sh
-                    TARGET_DIR="$targetDir"
-                    TARGET_FILE="${'$'}TARGET_DIR/$targetName"
-                    BAK_FILE="${'$'}TARGET_DIR/$bakName"
-                    if [ -f "${'$'}TARGET_FILE" ]; then rm -f "${'$'}TARGET_FILE"; fi
-                    if [ -f "${'$'}BAK_FILE" ]; then mv "${'$'}BAK_FILE" "${'$'}TARGET_FILE"; fi
-                    echo "SUCCESS_OFF"
-                """.trimIndent())
-            }
-            val chmodP = ProcessBuilder("su", "-c", "chmod 777 " + scriptFile.absolutePath).start(); chmodP.waitFor()
-            val p = ProcessBuilder("su", "-mm", "-c", "sh " + scriptFile.absolutePath).redirectErrorStream(true).start()
-            val output = p.inputStream.bufferedReader().readText(); val code = p.waitFor()
-            scriptFile.delete()
-            return if (output.contains("SUCCESS_") && code == 0) null else { "Check Root. Output: $output" }
-        } catch (e: Exception) { return e.message }
-    }
-
+    // Helper to copy encrypted asset to game directory
     private fun copyAssetToTarget(name: String, targetFileName: String, targetDir: String): String? {
         try {
             val tmp = File(cacheDir, name)
@@ -2885,6 +2875,7 @@ class FloaterOverlayService : Service() {
         } catch (e: Exception) { return e.message }
     }
 
+    // Helper for Location Mod (No Backup, direct overwrite)
     private fun copyNoBackup(assetName: String, targetName: String, targetDir: String, enable: Boolean): String? {
         try {
             val scriptFile = File(cacheDir, "nobackup_script.sh")
