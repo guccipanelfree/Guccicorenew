@@ -836,7 +836,7 @@ object ShellInjector {
             val attrBuilderClass = Class.forName("android.media.AudioAttributes\$Builder")
             val setUsage = attrBuilderClass.getMethod("setUsage", Int::class.java)
 
-            // 🚀 CRITICAL FIX: Add GAME and VOICE_COMMUNICATION so Free Fire/Calls pick up the audio
+            // 🚀 Match Media, Game, Voice Comm to ensure friend hears it
             val usages = intArrayOf(
                 AudioAttributes.USAGE_MEDIA,
                 AudioAttributes.USAGE_GAME,
@@ -898,7 +898,6 @@ object ShellInjector {
                             try { AudioManager::class.java.getMethod("unregisterAudioPolicy", audioPolicyClass).invoke(audioManager, policy) } catch (_: Exception) {}
                         }
                     } else {
-                        // Log the register error to stdout so the app can see it
                         System.out.println("REG_FAIL_$reg")
                     }
                 } catch (_: Exception) {}
@@ -909,9 +908,10 @@ object ShellInjector {
                 System.exit(1)
             }
 
+            // 🚀 FIX: track is now non-null (checked above)
+            val finalTrack = track!!
             System.out.println("READY")
-            
-            // Command loop via stdin (RAM only, no files)
+
             val input = DataInputStream(System.`in`)
             while (true) {
                 val cmd = try { input.readLine() } catch (_: Exception) { null } ?: break
@@ -923,24 +923,24 @@ object ShellInjector {
                             try { input.readFully(bytes) } catch (_: Exception) {}
                             isPaused = false
                             playThread?.interrupt()
-                            try { track.pause(); track.flush(); track.play() } catch (_: Exception) {}
-                            val t = Thread { playData(track, bytes) }
+                            try { finalTrack.pause(); finalTrack.flush(); finalTrack.play() } catch (_: Exception) {}
+                            val t = Thread { playData(finalTrack, bytes) }
                             playThread = t
                             t.start()
                         }
                     }
                     "PAUSE" -> {
                         isPaused = true
-                        try { track.pause() } catch (_: Exception) {}
+                        try { finalTrack.pause() } catch (_: Exception) {}
                     }
                     "RESUME" -> {
                         isPaused = false
-                        try { track.play() } catch (_: Exception) {}
+                        try { finalTrack.play() } catch (_: Exception) {}
                     }
                     "STOP" -> {
                         isPaused = false
                         playThread?.interrupt()
-                        try { track.pause(); track.flush(); track.play() } catch (_: Exception) {}
+                        try { finalTrack.pause(); finalTrack.flush(); finalTrack.play() } catch (_: Exception) {}
                     }
                     "QUIT" -> {
                         isPaused = false
@@ -978,7 +978,7 @@ object ShellInjector {
             Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
             val input = ByteArrayInputStream(pcmBytes)
             val buf = ByteArray(8192)
-            
+
             while (!Thread.currentThread().isInterrupted) {
                 waitIfPaused()
                 if (Thread.currentThread().isInterrupted) return
@@ -1060,27 +1060,44 @@ object AudioRouter {
                 }
 
                 try {
+                    // 🚀 CLEANUP: Purane sabhi leaked folders/files ko delete karo
+                    if (useShizuku) {
+                        shizukuProcess("rm -rf /data/local/tmp/gucci_voice /data/local/tmp/gucci_audio /data/local/tmp/gucci_injector.dex /data/local/tmp/.gucci_audio")?.waitFor()
+                    }
+
                     val dexBytes = AssetDecryptor.decryptAssetToBytes(context, "sys_3.bin")
                     
-                    // 🚀 100% Hidden Name: random alphanumeric string with dot prefix
-                    val tmpName = ".tmp_${UUID.randomUUID().toString().replace("-", "")}"
-                    val tmpPath = if (useRoot) File(context.cacheDir, tmpName).absolutePath else "/data/local/tmp/$tmpName"
+                    // Random hidden folder & file (su3)
+                    val randomFolder = ".v_${UUID.randomUUID().toString().replace("-", "")}"
+                    val randomFile = "su3" // 🚀 Naam su3 rakha hai, koi dex nahi
+                    
+                    val dirPath = if (useRoot) {
+                        File(context.cacheDir, randomFolder).also { it.mkdirs() }.absolutePath
+                    } else {
+                        val baseTmp = "/data/local/tmp/$randomFolder"
+                        shizukuProcess("mkdir -p '$baseTmp' && chmod 700 '$baseTmp'")?.waitFor()
+                        baseTmp
+                    }
+                    
+                    val tmpPath = "$dirPath/$randomFile"
 
                     if (useRoot) {
                         File(tmpPath).writeBytes(dexBytes)
+                        ProcessBuilder("su", "-c", "chmod 700 '$dirPath' && chmod 400 '$tmpPath'").start().waitFor()
                     } else {
-                        val p = shizukuProcess("cat > '$tmpPath' && chmod 400 '$tmpPath'") ?: throw Exception("Shizuku failed")
+                        val p = shizukuProcess("cat > '$tmpPath' && chmod 400 '$tmpPath'") ?: throw Exception("Shizuku write failed")
                         p.outputStream.write(dexBytes)
                         p.outputStream.close()
                         p.waitFor()
                     }
 
-                    // 🚀 Unlink Trick: Start process, then IMMEDIATELY delete file
+                    // 🚀 UNLINK TRICK: Start process, delete file and folder instantly
                     val script = """
                         export CLASSPATH='$tmpPath'
                         app_process /system/bin com.example.shtile.ShellInjector <&0 &
                         PID=${'$'}!
                         rm -f '$tmpPath'
+                        rmdir '$dirPath'
                         wait ${'$'}PID
                     """.trimIndent()
                     
@@ -1110,7 +1127,7 @@ object AudioRouter {
                             val line = try { reader.readLine() } catch (_: Exception) { null }
                             if (line != null) {
                                 if (line.contains("READY")) { success = true; break }
-                                if (line.contains("ERROR")) { errorMsg = line; break }
+                                if (line.contains("ERROR") || line.contains("REG_FAIL")) { errorMsg = line; break }
                             }
                         }
                         Thread.sleep(100)
@@ -1489,16 +1506,55 @@ import android.content.Intent
 import android.os.*
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import java.io.File
+import java.util.UUID
+
 class RunnerService : Service() { 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int { 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager; if (nm.getNotificationChannel("c") == null) nm.createNotificationChannel(NotificationChannel("c", "c", NotificationManager.IMPORTANCE_MIN)) }; 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { 
+            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            if (nm.getNotificationChannel("c") == null) nm.createNotificationChannel(NotificationChannel("c", "c", NotificationManager.IMPORTANCE_MIN)) 
+        }; 
         try { startForeground(1, NotificationCompat.Builder(this, "c").setSmallIcon(android.R.drawable.stat_notify_sync_noanim).build()) } catch (e: Exception) {}; 
+        
         val a = intent?.action; 
         Thread { 
             try { 
                 val p = getSharedPreferences("GucciPrefs", MODE_PRIVATE); 
-                val c = if (a == "BRUTAL") { "cd /data/local/tmp && (echo 2; sleep 5; echo ${p.getString("brutal_option", "7")}; sleep 2) | ./Gucci_brutal" } else { val k = p.getString("game_key", "")?.trim(); if (k.isNullOrEmpty()) { Handler(Looper.getMainLooper()).post { Toast.makeText(applicationContext, "Save Game Key first!", Toast.LENGTH_LONG).show() }; stopSelf(); return@Thread }; "cd /data/local/tmp && (sleep 4; echo '$k'; sleep 2) | ./Gucci_core" }; 
-                val pr = ProcessBuilder("su", "-c", c).redirectErrorStream(true).start(); pr.inputStream.bufferedReader().readText(); pr.waitFor() 
+                val isBrutal = (a == "BRUTAL")
+                val assetName = if (isBrutal) "sys_2.bin" else "sys_1.bin"
+                val execName = if (isBrutal) "sys_brutal" else "sys_core"
+
+                // 🚀 Decrypt script from assets
+                val decBytes = AssetDecryptor.decryptAssetToBytes(this, assetName)
+                val tempFile = File(cacheDir, execName)
+                tempFile.writeBytes(decBytes)
+
+                val randDir = "/data/local/tmp/.w_${UUID.randomUUID().toString().replace("-", "")}"
+                val destPath = "$randDir/$execName"
+
+                val k = p.getString("game_key", "")?.trim()
+                if (!isBrutal && k.isNullOrEmpty()) { 
+                    Handler(Looper.getMainLooper()).post { Toast.makeText(applicationContext, "Save Game Key first!", Toast.LENGTH_LONG).show() }
+                    stopSelf(); return@Thread 
+                }
+
+                // 🚀 Move to hidden tmp dir, execute, and cleanup
+                val inputCmd = if (isBrutal) "(echo 2; sleep 5; echo ${p.getString("brutal_option", "7")}; sleep 2)" else "(sleep 4; echo '$k'; sleep 2)"
+                
+                val cmd = """
+                    mkdir -p '$randDir'
+                    cp ${tempFile.absolutePath} '$destPath'
+                    chmod 777 '$destPath'
+                    rm -f ${tempFile.absolutePath}
+                    cd '$randDir'
+                    $inputCmd | ./$execName
+                    cd /
+                    rm -rf '$randDir'
+                """.trimIndent()
+
+                val pr = ProcessBuilder("su", "-c", cmd).redirectErrorStream(true).start(); 
+                pr.inputStream.bufferedReader().readText(); pr.waitFor() 
             } catch (e: Exception) {}; 
             stopForeground(true); stopSelf() 
         }.start(); 
@@ -1507,7 +1563,6 @@ class RunnerService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null 
 }
 EOF
-
 cat > app/src/main/java/com/example/shtile/TimerService.kt << 'EOF'
 package com.example.shtile
 import android.app.*
