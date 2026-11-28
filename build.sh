@@ -1027,7 +1027,6 @@ object AudioRouter {
         Shizuku.pingBinder() && Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
     } catch (_: Exception) { false }
 
-    // 🚀 FIX: Check if process is actually alive
     fun isActive(): Boolean {
         val p = injectorProcess ?: return false
         return routingActive && p.isAlive
@@ -1064,12 +1063,7 @@ object AudioRouter {
                 }
 
                 try {
-                    if (useShizuku) {
-                        shizukuProcess("rm -rf /data/local/tmp/gucci_* /data/local/tmp/.su3_* /data/local/tmp/.sys_*")?.waitFor()
-                    }
-
                     val dexBytes = AssetDecryptor.decryptAssetToBytes(context, "sys_3.bin")
-                    
                     val randomFile = ".su3_${UUID.randomUUID().toString().replace("-", "")}"
                     val tmpPath = if (useRoot) File(context.cacheDir, randomFile).absolutePath else "/data/local/tmp/$randomFile"
 
@@ -1083,8 +1077,7 @@ object AudioRouter {
                         p.waitFor()
                     }
 
-                    // 🚀 CRITICAL FIX: Using exec so process doesn't detach & stdio stays open.
-                    // Background subshell deletes the dex file after 1 second (Unlink Trick).
+                    // 🚀 FIXED: No '&' and no 'exit' - stream stays open
                     val script = """
                         (sleep 1; rm -f '$tmpPath') &
                         export CLASSPATH='$tmpPath'
@@ -1094,7 +1087,7 @@ object AudioRouter {
                     val process = if (useRoot) {
                         val p = Runtime.getRuntime().exec("su")
                         val os = DataOutputStream(p.outputStream)
-                        os.writeBytes("$script\n"); os.writeBytes("exit\n"); os.flush(); os.close()
+                        os.writeBytes("$script\n"); os.flush()
                         p
                     } else {
                         shizukuProcess(script)
@@ -1120,8 +1113,10 @@ object AudioRouter {
                                 if (line.contains("ERROR") || line.contains("REG_FAIL")) { errorMsg = line; break }
                             }
                         }
-                        // If process died while waiting
-                        if (!process.isAlive) { break } 
+                        if (!process.isAlive) {
+                            errorMsg = "Process exited unexpectedly"
+                            break
+                        }
                         Thread.sleep(100)
                     }
 
@@ -1130,7 +1125,7 @@ object AudioRouter {
                         if (success) onResult(true, "✅ Mic Injection Active (${if (useRoot) "Root" else "Shizuku"})")
                         else {
                             if (errorMsg.isNotBlank()) onResult(false, "❌ Injector failed. Log: $errorMsg")
-                            else onResult(false, "❌ Injector crashed silently. Check Root/Shizuku permissions.")
+                            else onResult(false, "❌ Injector crashed. Check Root/Shizuku.")
                         }
                     }
                 } catch (e: Exception) {
@@ -1150,7 +1145,6 @@ object AudioRouter {
                 try {
                     p?.outputStream?.write("QUIT\n".toByteArray())
                     p?.outputStream?.flush()
-                    p?.waitFor()
                 } catch (_: Exception) {}
                 try { p?.destroy() } catch (_: Exception) {}
                 postMain { onResult?.invoke(true, "Injection OFF") }
